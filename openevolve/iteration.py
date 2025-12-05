@@ -95,17 +95,14 @@ async def run_iteration_with_shared_db(
             changes_summary = format_diff_summary(diff_blocks)
         else:
             # Parse full rewrite
-            from openevolve.utils.code_utils import merge_with_original
-            
             new_code = parse_full_rewrite(llm_response, config.language)
 
             if not new_code:
                 logger.warning(f"Iteration {iteration+1}: No valid code found in response")
                 return None
 
-            # Merge with original to preserve code outside EVOLVE-BLOCK (e.g., run_packing)
-            child_code = merge_with_original(parent.code, new_code)
-            changes_summary = "Full rewrite (with protected sections preserved)"
+            child_code = new_code
+            changes_summary = "Full rewrite"
 
         # Check code length
         if len(child_code) > config.max_code_length:

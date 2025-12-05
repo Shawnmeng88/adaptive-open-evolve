@@ -1,0 +1,48 @@
+{
+  "entries": [
+    {
+      "seed_prompt": "system_message\n\n## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)\n- ONLY modify code within the EVOLVE-BLOCK markers\n- DO NOT modify or remove code outside the EVOLVE-BLOCK\n- The function `run_packing()` MUST exist and be callable\n- DO NOT rename or remove the `run_packing()` function\n- The function `construct_packing()` MUST be defined (called by run_packing)\n\nViolating these requirements will cause the program to fail evaluation.\n\n## Optimization Tips\n- Focus on the algorithm inside the EVOLVE-BLOCK markers\n- Maximize the 'combined_score' metric while keeping 'validity' = 1.0\n- Try different mathematical approaches (linear programming, geometric optimization)\n- Ensure all constraints are satisfied before returning\n",
+      "outer_iteration": 0,
+      "timestamp": "2025-12-04T20:34:59.508234",
+      "was_improvement": true,
+      "key_changes": null,
+      "metrics": {
+        "convergence_rate": 6.453061224489794,
+        "final_best_score": 0.9297912713472489,
+        "iterations_to_plateau": 6,
+        "total_valid": 2,
+        "total_invalid": 4,
+        "stuck_patterns": [
+          "High invalidity rate: 4/6 programs invalid"
+        ],
+        "successful_strategies": [
+          "Made 2 improvements",
+          "Iteration 1: +0.5656 (changes: unknown)",
+          "Iteration 0: +0.3642 (changes: unknown)"
+        ]
+      }
+    },
+    {
+      "seed_prompt": "system_message\n\n## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)\n- ONLY modify code within the EVOLVE-BLOCK markers\n- DO NOT modify or remove code outside the EVOLVE-BLOCK\n- The function `run_packing()` MUST exist and be callable\n- DO NOT rename or remove the `run_packing()` function\n- The function `construct_packing()` MUST be defined (called by run_packing)\n\nViolating these requirements will cause the program to fail evaluation.\n\n## Current Best Score: 0.9298\n\n## What's Working\n- Explicit constraint mentions helped\n- Negative guidance (what to avoid) helped\n\n## Avoid These Approaches\n- DO NOT: Iteration 0: High invalidity rate - prompt may be too aggressive or unclear about constraints\n- DO NOT: Iteration 0: High invalidity rate: 4/6 programs invalid\n\n## Tips\n- Try a different algorithmic approach to improve the score\n- Focus on the algorithm inside the EVOLVE-BLOCK markers\n- Ensure all constraints are satisfied\n",
+      "outer_iteration": 1,
+      "timestamp": "2025-12-04T20:35:39.671427",
+      "was_improvement": true,
+      "key_changes": "added 'avoid'; expanded by 203 chars",
+      "metrics": {
+        "convergence_rate": 6.2601948261164795,
+        "final_best_score": 0.9584366248425703,
+        "iterations_to_plateau": 6,
+        "total_valid": 4,
+        "total_invalid": 2,
+        "stuck_patterns": [],
+        "successful_strategies": [
+          "Made 2 improvements",
+          "Iteration 0: +0.9298 (changes: unknown)",
+          "Iteration 4: +0.0286 (changes: unknown)"
+        ]
+      }
+    }
+  ],
+  "best_convergence_rate": 6.2601948261164795,
+  "best_prompt_index": 1
+}

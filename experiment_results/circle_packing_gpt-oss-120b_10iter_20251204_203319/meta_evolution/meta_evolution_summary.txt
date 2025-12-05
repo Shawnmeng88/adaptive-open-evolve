@@ -1,0 +1,11 @@
+============================================================
+META-EVOLUTION RESULTS
+============================================================
+Total outer iterations: 2
+Total inner iterations: 10
+Total wall clock time: 84.6s
+
+Best score achieved: 0.9584
+Best convergence rate: 6.26
+
+============================================================

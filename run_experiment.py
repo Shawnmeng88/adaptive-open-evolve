@@ -141,6 +141,11 @@ def parse_args():
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
     )
+    parser.add_argument(
+        "--verbose-prompts",
+        action="store_true",
+        help="Save all prompts (A: MetaLLM input, B: refinement input, C: system message, D: user message)"
+    )
     
     return parser.parse_args()
 
@@ -278,6 +283,7 @@ async def run_meta_evolution_experiment(
     outer_iterations: int,
     inner_iterations_per_outer: int,
     output_dir: str,
+    verbose_prompts: bool = False,
 ) -> Tuple[List[int], List[float], float]:
     """
     Run meta-evolution experiment (adaptive prompting with persistent islands/MAP-Elites)
@@ -317,6 +323,7 @@ async def run_meta_evolution_experiment(
         meta_llm_api_base=meta_base_config.llm.api_base,
         save_convergence_traces=True,
         save_all_prompts=True,
+        verbose_prompts=verbose_prompts,  # Save all prompts (A, B, C, D)
     )
     
     meta_controller = MetaEvolutionController(
@@ -606,6 +613,7 @@ async def main():
                 outer_iterations=args.outer_iterations,
                 inner_iterations_per_outer=inner_per_outer,
                 output_dir=output_dir,
+                verbose_prompts=args.verbose_prompts,
             )
         except Exception as e:
             logger.exception(f"Meta-evolution experiment failed: {e}")

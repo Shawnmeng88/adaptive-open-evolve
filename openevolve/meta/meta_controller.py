@@ -68,6 +68,7 @@ class MetaEvolutionConfig:
     # Output settings
     save_all_prompts: bool = True
     save_convergence_traces: bool = True
+    verbose_prompts: bool = False  # Save ALL prompts (A, B, C, D) in hierarchical structure
 
 
 @dataclass
@@ -189,6 +190,12 @@ class MetaEvolutionController:
         with open(initial_program_path, 'r') as f:
             self.initial_code = f.read()
         
+        # Store the ORIGINAL default prompt - this should NEVER be modified
+        # We use this as the base for all prompt generation to avoid accumulation
+        self._original_default_prompt = base_config.prompt.system_message or """You are an expert software developer tasked with iteratively improving a codebase.
+Your job is to analyze the current program and suggest improvements based on feedback from previous attempts.
+Focus on making targeted changes that will increase the program's performance metrics."""
+        
         # Create SINGLE OpenEvolve instance that persists across all outer iterations
         # This preserves islands, MAP-Elites grid, and all accumulated programs
         self.controller = OpenEvolve(
@@ -227,9 +234,9 @@ class MetaEvolutionController:
             
             # Step 1: Generate or refine seed prompt
             if outer_iter == 0:
-                seed_prompt = await self._generate_initial_seed_prompt()
+                seed_prompt = await self._generate_initial_seed_prompt(outer_iter)
             else:
-                seed_prompt = await self._refine_seed_prompt()
+                seed_prompt = await self._refine_seed_prompt(outer_iter)
             
             # Save prompt if configured
             if self.meta_config.save_all_prompts:
@@ -343,12 +350,10 @@ class MetaEvolutionController:
         
         return result
     
-    async def _generate_initial_seed_prompt(self) -> str:
+    async def _generate_initial_seed_prompt(self, outer_iter: int = 0) -> str:
         """Generate the initial seed prompt using meta-LLM"""
-        # Get the DEFAULT working system prompt - this is proven to work
-        default_prompt = self.base_config.prompt.system_message or """You are an expert software developer tasked with iteratively improving a codebase.
-Your job is to analyze the current program and suggest improvements based on feedback from previous attempts.
-Focus on making targeted changes that will increase the program's performance metrics."""
+        # Use the ORIGINAL default prompt - never the modified one
+        default_prompt = self._original_default_prompt
         
         format_requirements = self._extract_format_requirements()
         
@@ -366,14 +371,37 @@ Violating these requirements will cause the program to fail evaluation.
 - Try different mathematical approaches (linear programming, geometric optimization)
 - Ensure all constraints are satisfied before returning
 """
-        return default_prompt + optimization_hints
+        final_prompt = default_prompt + optimization_hints
+        
+        # Save verbose prompt (the components that went into building it)
+        if self.meta_config.verbose_prompts:
+            components = f"""# PROMPT CONSTRUCTION COMPONENTS
+# ================================
+
+## Component 1: Original Default Prompt
+{default_prompt}
+
+## Component 2: Format Requirements
+{format_requirements}
+
+## Component 3: Optimization Hints
+{optimization_hints}
+
+# ================================
+# FINAL CONSTRUCTED PROMPT (seed_prompt_0):
+# ================================
+
+{final_prompt}
+"""
+            self._save_verbose_prompt('A', components, outer_iter)
+        
+        return final_prompt
     
-    async def _refine_seed_prompt(self) -> str:
+    async def _refine_seed_prompt(self, outer_iter: int) -> str:
         """Refine the seed prompt based on convergence feedback"""
-        # Always start with the DEFAULT working system prompt
-        default_prompt = self.base_config.prompt.system_message or """You are an expert software developer tasked with iteratively improving a codebase.
-Your job is to analyze the current program and suggest improvements based on feedback from previous attempts.
-Focus on making targeted changes that will increase the program's performance metrics."""
+        # ALWAYS start fresh from the ORIGINAL default prompt
+        # This prevents accumulation of repeated blocks
+        default_prompt = self._original_default_prompt
         
         format_requirements = self._extract_format_requirements()
         
@@ -413,7 +441,60 @@ Violating these requirements will cause the program to fail evaluation.
 - Focus on the algorithm inside the EVOLVE-BLOCK markers
 - Ensure all constraints are satisfied
 """
-        return default_prompt + refinement_section
+        final_prompt = default_prompt + refinement_section
+        
+        # Save verbose prompt with all convergence feedback
+        if self.meta_config.verbose_prompts:
+            # Get detailed convergence info from last iteration
+            last_metrics = None
+            if self.iteration_results:
+                last_result = self.iteration_results[-1]
+                last_metrics = last_result.convergence_metrics
+            
+            components = f"""# PROMPT REFINEMENT - ITERATION {outer_iter}
+# ============================================
+
+## Convergence Feedback Used:
+
+### Successful Patterns (from history):
+{chr(10).join(f'- {p}' for p in successful_patterns) if successful_patterns else '(none detected)'}
+
+### Stuck Patterns (from history):
+{chr(10).join(f'- {p}' for p in stuck_patterns) if stuck_patterns else '(none detected)'}
+
+### Last Iteration Metrics:
+{f'''- Iterations to plateau: {last_metrics.iterations_to_plateau}
+- Final best score: {last_metrics.final_best_score:.4f}
+- Convergence rate: {last_metrics.convergence_rate:.4f}
+- Valid programs: {last_metrics.total_valid_programs}
+- Invalid programs: {last_metrics.total_invalid_programs}
+- Failure modes: {last_metrics.failure_modes}
+- Stuck patterns from analyzer: {last_metrics.stuck_patterns}
+- Successful strategies: {last_metrics.successful_strategies}''' if last_metrics else '(no previous iteration)'}
+
+### Current Best Score: {best_score:.4f}
+
+# ============================================
+## Components:
+
+### Original Default Prompt:
+{default_prompt}
+
+### Format Requirements:
+{format_requirements}
+
+### Refinement Section:
+{refinement_section}
+
+# ============================================
+# FINAL CONSTRUCTED PROMPT (seed_prompt_{outer_iter}):
+# ============================================
+
+{final_prompt}
+"""
+            self._save_verbose_prompt('B', components, outer_iter)
+        
+        return final_prompt
     
     async def _run_inner_evolution(
         self,
@@ -440,6 +521,10 @@ Violating these requirements will cause the program to fail evaluation.
         # Update the system prompt in the existing controller's prompt sampler
         self.controller.prompt_sampler.set_system_message(seed_prompt)
         self.controller.config.prompt.system_message = seed_prompt
+        
+        # Save the system message (Prompt C) if verbose
+        if self.meta_config.verbose_prompts:
+            self._save_verbose_prompt('C', seed_prompt, outer_iter, inner_iter=0)
         
         # Calculate iteration range
         start_iter = self.cumulative_iterations
@@ -710,4 +795,85 @@ Violating these requirements will cause the program to fail evaluation.
             json.dump(metrics_data, f, indent=2)
         
         logger.info(f"Saved results to {self.output_dir}")
+    
+    def _save_verbose_prompt(
+        self,
+        prompt_type: str,
+        content: str,
+        outer_iter: int,
+        inner_iter: Optional[int] = None,
+        attempt: Optional[int] = None,
+    ) -> None:
+        """
+        Save a prompt to the verbose prompts directory structure.
+        
+        Directory structure:
+            verbose_prompts/
+            ├── outer_loop/
+            │   ├── iter_0/
+            │   │   └── A_initial_seed_generation.txt
+            │   ├── iter_1/
+            │   │   └── B_seed_refinement.txt
+            │   └── ...
+            ├── inner_loop/
+            │   ├── outer_0_inner_0/
+            │   │   ├── C_system_message.txt
+            │   │   └── D_user_message_attempt_0.txt
+            │   └── ...
+            └── seed_prompts/
+                └── (already saved via _save_prompt)
+        
+        Args:
+            prompt_type: One of 'A', 'B', 'C', 'D'
+            content: The prompt content
+            outer_iter: Outer iteration number
+            inner_iter: Inner iteration number (for C, D)
+            attempt: Attempt number within inner iteration (for D)
+        """
+        if not self.meta_config.verbose_prompts:
+            return
+        
+        base_dir = os.path.join(self.output_dir, "verbose_prompts")
+        
+        if prompt_type in ('A', 'B'):
+            # Outer loop prompts
+            dir_path = os.path.join(base_dir, "outer_loop", f"iter_{outer_iter}")
+            os.makedirs(dir_path, exist_ok=True)
+            
+            if prompt_type == 'A':
+                filename = "A_initial_seed_generation_INPUT.txt"
+            else:
+                filename = "B_seed_refinement_INPUT.txt"
+            
+            filepath = os.path.join(dir_path, filename)
+            with open(filepath, 'w') as f:
+                f.write(f"# Prompt Type: {prompt_type}\n")
+                f.write(f"# Outer Iteration: {outer_iter}\n")
+                f.write(f"# This is the INPUT to the MetaLLM\n")
+                f.write("# " + "="*70 + "\n\n")
+                f.write(content)
+            
+        elif prompt_type in ('C', 'D'):
+            # Inner loop prompts
+            dir_path = os.path.join(
+                base_dir, "inner_loop", 
+                f"outer_{outer_iter}_inner_{inner_iter if inner_iter is not None else 'all'}"
+            )
+            os.makedirs(dir_path, exist_ok=True)
+            
+            if prompt_type == 'C':
+                filename = "C_system_message.txt"
+            else:
+                filename = f"D_user_message_attempt_{attempt if attempt is not None else 0}.txt"
+            
+            filepath = os.path.join(dir_path, filename)
+            with open(filepath, 'w') as f:
+                f.write(f"# Prompt Type: {prompt_type}\n")
+                f.write(f"# Outer Iteration: {outer_iter}\n")
+                if inner_iter is not None:
+                    f.write(f"# Inner Iteration: {inner_iter}\n")
+                if attempt is not None:
+                    f.write(f"# Attempt: {attempt}\n")
+                f.write("# " + "="*70 + "\n\n")
+                f.write(content)
 
