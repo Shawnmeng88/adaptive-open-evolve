@@ -14,6 +14,7 @@ from openevolve.utils.code_utils import (
     extract_code_language,
     extract_diffs,
     format_diff_summary,
+    merge_with_original,
     parse_evolve_blocks,
     parse_full_rewrite,
 )
@@ -36,6 +37,7 @@ __all__ = [
     "extract_code_language",
     "extract_diffs",
     "format_diff_summary",
+    "merge_with_original",
     "parse_evolve_blocks",
     "parse_full_rewrite",
     "format_metrics_safe",

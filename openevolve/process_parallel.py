@@ -212,7 +212,7 @@ def _run_iteration_worker(
             child_code = apply_diff(parent.code, llm_response)
             changes_summary = format_diff_summary(diff_blocks)
         else:
-            from openevolve.utils.code_utils import parse_full_rewrite
+            from openevolve.utils.code_utils import parse_full_rewrite, merge_with_original
 
             new_code = parse_full_rewrite(llm_response, _worker_config.language)
             if not new_code:
@@ -220,8 +220,9 @@ def _run_iteration_worker(
                     error=f"No valid code found in response", iteration=iteration
                 )
 
-            child_code = new_code
-            changes_summary = "Full rewrite"
+            # Merge with original to preserve code outside EVOLVE-BLOCK (e.g., run_packing)
+            child_code = merge_with_original(parent.code, new_code)
+            changes_summary = "Full rewrite (with protected sections preserved)"
 
         # Check code length
         if len(child_code) > _worker_config.max_code_length:

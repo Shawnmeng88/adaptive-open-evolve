@@ -345,60 +345,75 @@ class MetaEvolutionController:
     
     async def _generate_initial_seed_prompt(self) -> str:
         """Generate the initial seed prompt using meta-LLM"""
-        problem_description = self._extract_problem_description()
-        evaluation_criteria = self._extract_evaluation_criteria()
+        # Get the DEFAULT working system prompt - this is proven to work
+        default_prompt = self.base_config.prompt.system_message or """You are an expert software developer tasked with iteratively improving a codebase.
+Your job is to analyze the current program and suggest improvements based on feedback from previous attempts.
+Focus on making targeted changes that will increase the program's performance metrics."""
+        
         format_requirements = self._extract_format_requirements()
         
-        # Generate the creative part from MetaLLM
-        creative_prompt = await self.meta_llm.generate_initial_seed_prompt(
-            problem_description=problem_description,
-            initial_code=self.initial_code,
-            evaluation_criteria=evaluation_criteria,
-        )
-        
-        # Prepend critical format requirements that MUST NOT be ignored
-        format_preamble = f"""## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+        # APPEND optimization hints to the working default, don't replace it
+        optimization_hints = f"""
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
 {format_requirements}
 
 Violating these requirements will cause the program to fail evaluation.
 
----
-
+## Optimization Tips
+- Focus on the algorithm inside the EVOLVE-BLOCK markers
+- Maximize the 'combined_score' metric while keeping 'validity' = 1.0
+- Try different mathematical approaches (linear programming, geometric optimization)
+- Ensure all constraints are satisfied before returning
 """
-        return format_preamble + creative_prompt
+        return default_prompt + optimization_hints
     
     async def _refine_seed_prompt(self) -> str:
         """Refine the seed prompt based on convergence feedback"""
-        problem_description = self._extract_problem_description()
+        # Always start with the DEFAULT working system prompt
+        default_prompt = self.base_config.prompt.system_message or """You are an expert software developer tasked with iteratively improving a codebase.
+Your job is to analyze the current program and suggest improvements based on feedback from previous attempts.
+Focus on making targeted changes that will increase the program's performance metrics."""
+        
         format_requirements = self._extract_format_requirements()
         
-        current_best = self.best_seed_prompt or self.seed_prompt_history.entries[-1].seed_prompt
+        # Get convergence feedback to add as hints
+        stuck_patterns = self.seed_prompt_history.get_stuck_patterns() if self.seed_prompt_history.entries else []
+        successful_patterns = self.seed_prompt_history.get_successful_patterns() if self.seed_prompt_history.entries else []
         
-        # Get the best program code to summarize for the MetaLLM
-        best_program_code = ""
-        if self.best_program:
-            best_program_code = self.best_program.code
-        elif self.initial_code:
-            best_program_code = self.initial_code
+        # Build concise hints based on what worked and what didn't
+        hints = []
         
-        # Generate refined creative prompt
-        refined_prompt = await self.meta_llm.refine_seed_prompt(
-            seed_prompt_history=self.seed_prompt_history,
-            problem_description=problem_description,
-            current_best_prompt=current_best,
-            best_program_code=best_program_code,
-        )
+        if successful_patterns:
+            hints.append("## What's Working")
+            hints.extend([f"- {p[:100]}" for p in successful_patterns[:3]])
         
-        # Prepend critical format requirements
-        format_preamble = f"""## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+        if stuck_patterns:
+            hints.append("\n## Avoid These Approaches")
+            hints.extend([f"- DO NOT: {p[:100]}" for p in stuck_patterns[:3]])
+        
+        best_score = 0.0
+        if self.best_program and self.best_program.metrics:
+            best_score = self.best_program.metrics.get('combined_score', 0.0)
+        
+        # APPEND refinement hints to the working default
+        refinement_section = f"""
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
 {format_requirements}
 
 Violating these requirements will cause the program to fail evaluation.
 
----
+## Current Best Score: {best_score:.4f}
 
+{chr(10).join(hints) if hints else ""}
+
+## Tips
+- Try a different algorithmic approach to improve the score
+- Focus on the algorithm inside the EVOLVE-BLOCK markers
+- Ensure all constraints are satisfied
 """
-        return format_preamble + refined_prompt
+        return default_prompt + refinement_section
     
     async def _run_inner_evolution(
         self,

@@ -1,0 +1,81 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+- ONLY modify code within the EVOLVE-BLOCK markers
+- DO NOT modify or remove code outside the EVOLVE-BLOCK
+- The function `run_packing()` MUST exist and be callable
+- DO NOT rename or remove the `run_packing()` function
+- The function `construct_packing()` MUST be defined (called by run_packing)
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Circle‑Packing Code (EVOLVE‑BLOCK Only)**  
+
+---  
+
+### Core Objective  
+- **Maximize `combined_score`** – the sum of the radii returned by `construct_packing()`.  
+- **Maintain `validity = 1.0`** – the program must run without errors, return the exact expected data structures, and obey **all geometric constraints** (every circle must lie completely inside the unit square `[0,1]×[0,1]` and no two circles may overlap).  
+
+### Immutable Requirements (Do **NOT** modify)  
+1. The markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` must remain exactly as they are.  
+2. The function signatures and return types of:  
+   - `construct_packing()`  
+   - `compute_max_radii(centers)`  
+   - `run_packing()`  
+   must stay unchanged.  
+3. `run_packing()` must be callable and must invoke `construct_packing()`.  
+
+### **What **NOT** to Do (explicit prohibitions)**  
+- **Do not** write code that causes high invalidity rates (e.g., aggressive random sampling without constraint checks).  
+- **Do not** produce a series of programs that repeatedly raise exceptions or return malformed data.  
+- **Do not** rely on brute‑force exhaustive search; it leads to premature plateaus and invalid outputs.  
+- **Do not** embed infinite loops, excessive recursion, or heavyweight computations that exceed typical execution limits.  
+- **Do not** remove or rename any of the required functions.  
+- **Do not** ignore the geometric constraints; any overlap or out‑of‑bounds circle will invalidate the solution.  
+
+### Suggested Concrete Strategies (Domain‑Specific)  
+
+1. **Gradient‑Based Radius Optimization**  
+   - Start with a feasible set of circle centers (e.g., a uniform grid or a low‑discrepancy sequence).  
+   - Define a smooth objective: `F(r) = Σ r_i – λ·P(r)` where `P(r)` is a penalty term for violations (overlap or boundary breach) and `λ` is a large positive constant.  
+   - Use `scipy.optimize.minimize` with the **L‑BFGS‑B** method, bounding each radius `0 ≤ r_i ≤ 0.5`.  
+   - At each iteration, compute pairwise distances with NumPy broadcasting and update the penalty accordingly.  
+
+2. **Sequential Circle Inflation (Greedy + Local Adjustment)**  
+   - For each fixed center, compute the maximal admissible radius analytically:  
+     `r_i = min( min(x_i, 1‑x_i), min(y_i, 1‑y_i), min_{j≠i}(dist(i,j)‑r_j) )`.  
+   - Perform a **single pass** in a deterministic order (e.g., sort centers by x‑coordinate).  
+   - After the first pass, run a few **local refinement sweeps** where each circle’s radius is recomputed while holding the others fixed.  
+   - This respects constraints by construction and often yields a good baseline score.  
+
+3. **Simulated‑Annealing / Random‑Restart Perturbation**  
+   - Begin with the greedy solution above.  
+   - Define a temperature schedule `T_k = T0 * α^k`.  
+   - Propose a small random change to a single radius (or to a pair of radii), enforce feasibility by clipping to the maximal allowed radius, and accept the move with probability `exp((Δscore)/T_k)`.  
+   - Limit the total number of iterations (e.g., ≤ 5 000) to stay within runtime bounds.  
+
+4. **Linear‑Programming Relaxation for Upper Bound Guidance**  
+   - Formulate `max Σ r_i` subject to `r_i + r_j ≤ dist(i,j)` and `r_i ≤ min(x_i,1‑x_i,y_i,1‑y_i)`.  
+   - Solve with `scipy.optimize.linprog` to obtain an optimistic upper bound.  
+   - Use this bound to calibrate the penalty weight `λ` in the gradient method or to stop early when the current score approaches the bound (e.g., > 95 % of the LP optimum).  
+
+5. **Efficient Pairwise Distance Computation**  
+   - Leverage NumPy vectorization: `dists = np.linalg.norm(centers[:,None,:] - centers[None,:,:], axis=2)`.  
+   - Store the symmetric distance matrix once per iteration; reuse it for radius updates and penalty evaluation.  
+
+6. **Robust Validation Helper (must stay inside EVOLVE‑BLOCK)**  
+   - Implement a tiny function `is_valid(centers, radii)` that returns `True` only if all constraints hold (boundary and non‑overlap).  
+   - Call this helper **after every major update**; if it ever returns `False`, immediately revert the change and adjust the penalty.  
+
+### Practical Tips to Keep Validity High  
+
+- **Always clamp radii** after any arithmetic operation: `r = np.clip(r, 0.0, max_allowed)`.  
+- **Use deterministic seeds** (`np.random.seed(42)`) for any stochastic component; this makes debugging easier and reduces flaky invalid runs.  
+- **Limit recursion depth** – prefer loops over recursive calls.  
+- **Profile memory usage**; keep all arrays as `float64` and avoid unnecessary copies.  
+- **Return types**: `construct_packing()` must return a tuple `(centers, radii)` where `centers` is an `np.ndarray` of shape `(n,2)` and `radii` is a 1‑D `np.ndarray` of length `n`.  
+
+---  
+
+**Remember:** The goal is to iteratively improve the numeric score **while guaranteeing every generated packing is geometrically valid**. Use the strategies above to explore the search space intelligently, avoid the pitfalls that caused previous invalid programs, and keep the implementation tidy within the `# EVOLVE-BLOCK` region.
