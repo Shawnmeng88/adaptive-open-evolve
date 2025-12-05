@@ -1,0 +1,62 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)**  
+- **OUTPUT ONLY** the code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **DO NOT** include the markers themselves, nor any surrounding code such as `run_packing()` or `visualize()` – those are added automatically.  
+- The system will merge your output with the preserved sections, so the final file must be syntactically complete.
+
+**IMPORTS**  
+- You may add additional import statements if needed (e.g., `from scipy.optimize import linprog`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available.
+
+**FOCUS**  
+- Improve the packing construction logic and any helper utilities it uses.  
+- You may introduce new helper functions, but **every function that is called must be defined in the output**; otherwise a `NameError` will occur.
+
+**ALGORITHMIC GUIDANCE (WHAT TO DO)**  
+
+1. **Hexagonal (triangular) lattice foundation**  
+   - Generate candidate circle centers on a hexagonal lattice that respects the unit‑square boundaries.  
+   - Use the lattice spacing derived from a candidate radius `r`: horizontal step `2 r`, vertical step `√3 r`, with alternating row offsets to achieve the densest equal‑radius arrangement.  
+
+2. **Uniform‑radius binary search**  
+   - Perform a binary search on `r` to find the largest radius for which the lattice yields **at least 26** points that satisfy `r ≤ x ≤ 1‑r` and `r ≤ y ≤ 1‑r`.  
+   - Each iteration should:  
+     a. Build the lattice for the trial `r`.  
+     b. Count points that stay inside the square.  
+     c. Accept the radius if the count ≥ 26, otherwise shrink it.  
+   - Stop after a sufficient number of iterations (e.g., 50–60) or when the interval width is below `1e-6`.  
+
+3. **Finalize the packing**  
+   - After the binary search, recompute the lattice with the best radius and keep exactly the first 26 points (any ordering is fine).  
+   - Return the list/array of center coordinates and the uniform radius.
+
+4. **Optional enhancements (if you wish to exceed the current score)**  
+   - After obtaining the maximal uniform radius, try a **local perturbation**: randomly jitter each center by a small amount (≤ 0.01) and keep the change only if all constraints (non‑overlap and containment) remain satisfied; repeat for a limited number of iterations to possibly increase the total summed radius.  
+   - Consider a **two‑radius scheme**: keep the uniform lattice radius as a base, then attempt to insert a few larger circles in the larger gaps left by the lattice, solving a small mixed‑integer or greedy selection problem. This is more complex; ensure any extra functions are fully defined.
+
+**WHAT TO AVOID (FAILED APPROACHES)**  
+- Leaving code fragments unfinished (missing parentheses, incomplete statements).  
+- Referring to helper utilities that are not defined in the output.  
+- Relying on external state or global variables that are not initialized within the block.  
+- Over‑complicating the solution with large linear‑program models unless you also provide the full formulation and solving code; such approaches have previously led to syntax or runtime errors.
+
+**REMINDER**  
+All functions you call must be present in the submitted block. Provide clear docstrings/comments so future reviewers understand the logic, but keep the code concise and syntactically complete.

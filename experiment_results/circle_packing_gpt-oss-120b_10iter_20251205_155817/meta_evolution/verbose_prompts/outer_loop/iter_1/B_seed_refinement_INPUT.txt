@@ -1,0 +1,142 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 3500 chars
+- Current best prompt length: 3602 chars
+
+## Convergence History:
+### Successful Patterns:
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9256
+- Valid: 6, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **handcrafted_ring_pattern** (1 attempts, struggled)
+    Places a central circle and two concentric rings of circles with fixed offsets; radii are later computed by a helper function.
+  - **hex_grid_with_linear_program** (1 attempts, mixed)
+    Generates up to 26 points on a hexagonal lattice, then solves a linear program that maximizes the sum of individual radii while respecting border and non‑overlap constraints.
+  - **hex_lattice_equal_radius_binary_search** (1 attempts, worked)
+    Creates a hexagonal lattice for a given radius, then binary‑searches the largest radius that still yields at least 26 lattice points inside the unit square; all circles share this radius.
+
+### Best Result (score: 0.9256):
+  **Main Idea:** Generate a hexagonal (triangular) lattice of candidate centers and binary‑search the maximal uniform radius that still allows at least 26 circles to fit inside the unit square.
+  **Placement:** Points are placed on a hexagonal lattice whose spacing is a function of the candidate radius; rows are offset alternately to achieve the triangular packing.
+  **Radius:** A 60‑iteration binary search narrows the radius; for each trial radius the lattice is generated and the count of points that stay within the square is measured. The largest radius with count ≥ 26 is kept.
+  **Constraints:** Each generated point is required to satisfy r ≤ x ≤ 1‑r and r ≤ y ≤ 1‑r, guaranteeing containment. The lattice spacing (2 r horizontally, √3 r vertically) guarantees non‑overlap for equal radii.
+
+### Score Improvements:
+  - Iter 1: +0.4911 - Replaced the naive concentric‑ring layout with a systematic hexagonal grid and introduced a linear‑program to optimise individual radii.
+  - Iter 2: +0.0703 - Switched from variable‑radius LP to a binary‑search for a single maximal uniform radius on the same hexagonal lattice, yielding a tighter packing.
+
+### Stuck Patterns (AVOID THESE):
+  - Truncated code fragments: each sample ends mid‑statement (missing parentheses, incomplete assignments), causing syntax errors and preventing execution.
+  - Heavy reliance on undefined helper functions (e.g., compute_max_radii) or partially‑written fall‑back logic, leading to dead‑ends during evolution.
+
+### Novel Discoveries:
+  - Using a binary search over the radius within a lattice to guarantee a minimum number of circles – a simple yet powerful technique that outperformed the more complex LP approach in this setting.
+
+### Error Patterns:
+  - syntax_truncation: 3 occurrences
+    Likely cause: The evolutionary code generator hits a token/character limit and cuts off the function body before it is syntactically complete.
+  - undefined_helper: 1 occurrences
+    Likely cause: Reference to compute_max_radii that is never provided in the generated snippet.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.9256
+  - Approach Diversity: medium (three distinct strategies have been explored, but later iterations converge on the same lattice idea).
+
+### Recommendations:
+  - Complete the generated code: ensure all functions close properly, import statements are complete, and any helper (e.g., compute_max_radii) is either defined or removed.
+  - Extend the binary‑search approach to allow a small set of radius classes (e.g., two or three different radii) and use a mixed‑integer program to allocate them, potentially surpassing the uniform‑radius optimum.
+  - Introduce a local‑search or simulated‑annealing stage that perturbs the lattice points after the radius is fixed, allowing slight adjustments that can increase the total sum of radii without breaking constraints.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)**  
+- **OUTPUT ONLY** the code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **DO NOT** include the markers themselves, nor any surrounding code such as `run_packing()` or `visualize()` – those are added automatically.  
+- The system will merge your output with the preserved sections, so the final file must be syntactically complete.
+
+**IMPORTS**  
+- You may add additional import statements if needed (e.g., `from scipy.optimize import linprog`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available.
+
+**FOCUS**  
+- Improve the packing construction logic and any helper utilities it uses.  
+- You may introduce new helper functions, but **every function that is called must be defined in the output**; otherwise a `NameError` will occur.
+
+**ALGORITHMIC GUIDANCE (WHAT TO DO)**  
+
+1. **Hexagonal (triangular) lattice foundation**  
+   - Generate candidate circle centers on a hexagonal lattice that respects the unit‑square boundaries.  
+   - Use the lattice spacing derived from a candidate radius `r`: horizontal step `2 r`, vertical step `√3 r`, with alternating row offsets to achieve the densest equal‑radius arrangement.  
+
+2. **Uniform‑radius binary search**  
+   - Perform a binary search on `r` to find the largest radius for which the lattice yields **at least 26** points that satisfy `r ≤ x ≤ 1‑r` and `r ≤ y ≤ 1‑r`.  
+   - Each iteration should:  
+     a. Build the lattice for the trial `r`.  
+     b. Count points that stay inside the square.  
+     c. Accept the radius if the count ≥ 26, otherwise shrink it.  
+   - Stop after a sufficient number of iterations (e.g., 50–60) or when the interval width is below `1e-6`.  
+
+3. **Finalize the packing**  
+   - After the binary search, recompute the lattice with the best radius and keep exactly the first 26 points (any ordering is fine).  
+   - Return the list/array of center coordinates and the uniform radius.
+
+4. **Optional enhancements (if you wish to exceed the current score)**  
+   - After obtaining the maximal uniform radius, try a **local perturbation**: randomly jitter each center by a small amount (≤ 0.01) and keep the change only if all constraints (non‑overlap and containment) remain satisfied; repeat for a limited number of iterations to possibly increase the total summed radius.  
+   - Consider a **two‑radius scheme**: keep the uniform lattice radius as a base, then attempt to insert a few larger circles in the larger gaps left by the lattice, solving a small mixed‑integer or greedy selection problem. This is more complex; ensure any extra functions are fully defined.
+
+**WHAT TO AVOID (FAILED APPROACHES)**  
+- Leaving code fragments unfinished (missing parentheses, incomplete statements).  
+- Referring to helper utilities that are not defined in the output.  
+- Relying on external state or global variables that are not initialized within the block.  
+- Over‑complicating the solution with large linear‑program models unless you also provide the full formulation and solving code; such approaches have previously led to syntax or runtime errors.
+
+**REMINDER**  
+All functions you call must be present in the submitted block. Provide clear docstrings/comments so future reviewers understand the logic, but keep the code concise and syntactically complete.

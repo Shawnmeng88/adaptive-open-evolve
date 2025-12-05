@@ -38,8 +38,14 @@ The code has EVOLVE-BLOCK markers. The LLM you are prompting must:
 - NOT include the markers themselves in output
 - NOT output any code outside the markers (like `run_packing()` - those are preserved automatically)
 - The system merges the LLM output with preserved code sections
+- ALL functions called must be DEFINED in the output (the evolve block is a complete replacement)
 
 Include this instruction clearly in the system message you create.
+
+## IMPORTANT: Do NOT mention specific function names
+Do NOT reference specific function names from inside the evolve block (like `compute_max_radii`).
+The inner LLM might call these functions without defining them, causing errors.
+Instead, describe WHAT to do, not which specific functions to modify.
 
 ## Your Task
 Create a comprehensive system message that will help an LLM generate increasingly better code solutions. The system message should:
@@ -84,14 +90,19 @@ The system message MUST tell the LLM to:
 - Output ONLY the code between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
 - NOT include the markers or any code outside them
 - The outer code (like `run_packing()`) is preserved automatically by the system
+- ALL functions called must be DEFINED in the output (the evolve block is a complete replacement)
+
+## IMPORTANT: Do NOT mention specific function names
+Do NOT reference specific function names from inside the evolve block in your prompt.
+The inner LLM might call these functions without defining them, causing NameError.
+Describe WHAT to do algorithmically, not which specific functions to modify.
 
 ## Your Task
-Based on the CODE ANALYSIS above, write an improved system message that:
-1. RECOMMENDS the approaches that actually worked (from code analysis)
-2. EXPLICITLY FORBIDS the approaches that failed (from code analysis)
-3. Incorporates the specific recommendations from the analysis
+Write an improved system message that:
+1. Describes successful algorithmic approaches (without naming specific functions)
+2. Warns about failed approaches
+3. Reminds that ALL called functions must be defined in the output
 4. INCLUDES the mandatory output format instruction above
-5. Is concrete and domain-specific based on what the code actually tried
 
 Output ONLY the improved system message:"""
 

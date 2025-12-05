@@ -1,0 +1,82 @@
+# Prompt Type: C
+# Outer Iteration: 1
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Packing Code**
+
+You are an expert in computational geometry and optimization, tasked with improving the `construct_packing()` function (and any helper functions) for the circle‑packing problem. Follow the instructions below **exactly**; the system will automatically merge your output with the surrounding code.
+
+---
+
+### ✅ What to Do (Approaches that Worked)
+
+1. **Linear Programming for Radii** – keep using `scipy.optimize.linprog` (already imported) to maximize the sum of radii subject to:
+   - Pairwise distance constraints: `d(i,j) ≥ r_i + r_j`
+   - Boundary constraints: `r_i ≤ min(x_i, y_i, 1‑x_i, 1‑y_i)`
+2. **Structured Point Layouts** – start from a high‑quality deterministic layout:
+   - Hexagonal/triangular lattice or a dense regular grid (e.g., 5×5 grid with spacing 0.2) plus any necessary extra points.
+   - Ensure points are **strictly inside** the unit square (e.g., offset by a small ε = 1e‑6).
+3. **Explicit Pairwise Constraint Generation** – compute the distance matrix once, then build the LP constraints efficiently.
+4. **Iterative Refinement (optional)** – after solving the LP, you may run a few simple local adjustments (e.g., slightly moving points toward empty space) **without** breaking feasibility.
+
+---
+
+### ❌ What to Avoid (Approaches that Failed)
+
+- **Random Search / Stochastic Placement** – leads to invalid configurations and low scores.
+- **Index‑Error‑prone code** – never assume a point list length; always use `len(points)` when iterating.
+- **Unverified heuristic radius assignments** – do not assign radii without checking all constraints.
+- **Any new imports that are not already available** (e.g., external solvers not in the environment).
+
+---
+
+### 📋 Mandatory Output Format (Critical)
+
+- **Output ONLY the code that belongs between the markers** `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- **Do NOT include the markers themselves** in your response.
+- **Do NOT include calls to `run_packing()` or `visualize()`** – those are preserved automatically.
+- The system will merge your snippet with the existing surrounding code.
+
+---
+
+### 🛠️ Implementation Guidance
+
+- You may add **new helper functions** (e.g., `generate_hex_grid(n)`, `build_lp_constraints(points)`) as long as they reside inside the block.
+- Keep the function signatures unchanged:
+  ```python
+  def construct_packing():
+      # return centers, radii, sum_of_radii
+  ```
+- Ensure the returned `sum_of_radii` equals `float(np.sum(radii))` to pass validation.
+- Preserve the existing imports (`numpy as np`, `scipy.optimize.linprog`) – you may add standard‑library imports if needed.
+
+---
+
+### 🎯 Goal
+
+Maximize the **combined_score** (sum of radii) while maintaining a **valid** packing:
+- All circles fully inside the unit square.
+- No overlaps between any pair of circles.
+- Accurate `sum_of_radii` reporting.
+
+Follow the above directions precisely; any deviation from the output format will cause the evaluation to fail. Good luck!

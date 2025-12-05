@@ -1,0 +1,85 @@
+# Prompt Type: C
+# Outer Iteration: 2
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Packing Code**
+
+You are an expert in computational geometry and optimization. Your task is to improve **only** the `construct_packing()` function (and any helper functions you add) for the circle‑packing problem. Follow the instructions **exactly**; the surrounding code (including `run_packing()` and `visualize()`) will be merged automatically.
+
+---
+
+### ✅ What to Do (Approaches that Worked)
+
+1. **Linear Programming for Radii**  
+   - Keep using `scipy.optimize.linprog` (already imported) to **maximize the sum of radii**.  
+   - Enforce the constraints:  
+     * Pairwise distance: `dist(i, j) ≥ r_i + r_j` for every pair of circles.  
+     * Boundary: `r_i ≤ min(x_i, y_i, 1‑x_i, 1‑y_i)` for each circle centre `(x_i, y_i)`.  
+   - Use a small safety margin (e.g., `1e-8`) when forming the constraints to avoid numerical violations.
+
+2. **Structured Grid / Hexagonal Layout for Initial Centres**  
+   - Place the circle centres on a **hexagonal (triangular) lattice** scaled to fit inside the unit square.  
+   - Compute the lattice spacing so that the grid fits comfortably (e.g., `spacing = 1 / (⌈√n⌉ + 0.5)`).  
+   - Trim any points that fall outside the unit square and keep exactly `n` points (the required number of circles).  
+   - This deterministic layout provides a good starting geometry for the LP and eliminates randomness.
+
+3. **Numerical Stability Practices**  
+   - Clip radii after solving the LP to the feasible interval `[0, min(x_i, y_i, 1‑x_i, 1‑y_i)]`.  
+   - Add a tiny epsilon (`1e-9`) when comparing distances to avoid borderline equality issues.  
+   - Use `np.linalg.norm` for distance calculations; avoid manual loops that can cause off‑by‑one indexing errors.
+
+4. **Helper Functions (Optional but Encouraged)**  
+   - `hex_grid_points(n)` – returns `n` centre points arranged on a hexagonal lattice inside the unit square.  
+   - `build_lp_matrices(centers)` – constructs the `A_ub`, `b_ub`, `c` vectors for `linprog`.  
+   - `solve_radii_lp(A_ub, b_ub, c)` – calls `linprog` with appropriate method (`'highs'`) and returns the optimal radii.
+
+---
+
+### ❌ What NOT to Do (Approaches that Failed or Caused Errors)
+
+- **Do NOT** use random‑search, stochastic placement, or any approach that relies on nondeterministic sampling of centres. These have consistently produced invalid packings and lower scores.
+- **Do NOT** attempt force‑directed or nonlinear optimization methods that have not been proven for this problem; they introduce instability and are not required.
+- **Do NOT** write code that can raise `IndexError` (e.g., accessing arrays out of bounds). Ensure all loops iterate over valid indices.
+- **Do NOT** include the words “must” or other absolute language that restricts flexibility; instead use “should” or “recommended”.
+- **Do NOT** modify or duplicate the `run_packing()` or `visualize()` functions—they are preserved automatically.
+
+---
+
+### 📋 Mandatory Output Format (Critical)
+
+- **Output ONLY the Python code that belongs between the markers** `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do NOT** include the markers themselves in your response.  
+- **Do NOT** include any code outside this block (e.g., `run_packing()` or `visualize()`).  
+- You may add import statements **inside** the block if additional libraries are needed, but remember that `numpy as np` and `scipy.optimize.linprog` are already available.
+
+---
+
+### 🎯 Goal
+
+Produce a deterministic, numerically stable construction that:
+
+1. Generates `n` centre points using a hexagonal grid.  
+2. Optimizes radii with a linear program respecting pairwise and boundary constraints.  
+3. Returns the centres and radii in the format expected by the surrounding code.
+
+Follow the guidelines above precisely; any deviation from the output format will cause the evaluation to fail. Good luck!

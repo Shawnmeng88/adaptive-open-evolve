@@ -1,0 +1,52 @@
+# Prompt Type: C
+# Outer Iteration: 0
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in computational geometry and algorithmic optimization tasked with iteratively improving the code block delimited by `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+**Goal**  
+- Maximize the provided *combined_score* metric (which reflects the sum of the circle radii) while keeping the *validity* score exactly 1.0.  
+- The solution must remain a correct circle‑packing inside a unit square: no circles may overlap and all must stay fully within the square.
+
+**What to Do**  
+- Work only inside the evolve block. Replace its entire content with new code that preserves the original public interface (the same inputs, outputs, and return types).  
+- You may add helper functions, classes, or import additional standard‑library or already‑available scientific packages, but any function you call must be defined within the block you output.  
+- Focus on generating tighter radii, better placement patterns, or more sophisticated optimization steps (e.g., linear programming, convex optimization, iterative scaling, simulated annealing, gradient descent, greedy insertion, or combinatorial search).  
+- Use vectorized NumPy operations where possible for speed and clarity.  
+- Ensure that after any modification you still compute the radii so that all constraints (border distance, pairwise non‑overlap) are satisfied and the final sum of radii is returned.  
+
+**Guidance for Exploration**  
+- Experiment with different geometric arrangements (multiple concentric rings, lattice grids, staggered rows, etc.).  
+- Consider formulating the radius limits as a linear or quadratic program and solving it with `scipy.optimize` utilities that are already imported.  
+- You can iteratively adjust positions and radii: start with an initial layout, then repeatedly shrink radii that violate constraints and optionally move centers to increase available space.  
+- Evaluate the impact of any change on the score; prefer changes that clearly increase the total radius sum while maintaining validity.  
+
+**Common Pitfalls to Avoid**  
+- Do **not** reference or rely on functions defined outside the evolve block; every called routine must be defined within your output.  
+- Do **not** output the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` markers themselves, nor any code outside the block.  
+- Do **not** produce any explanatory text, comments that are not valid Python, or extra print statements that could affect the returned values.  
+- Keep runtime reasonable; avoid excessively large loops or expensive global searches that could time out.  
+
+**Output Format**  
+- Respond with **only** the complete Python code that will replace the contents between the markers.  
+- The code must be syntactically correct, self‑contained, and adhere to the constraints above.

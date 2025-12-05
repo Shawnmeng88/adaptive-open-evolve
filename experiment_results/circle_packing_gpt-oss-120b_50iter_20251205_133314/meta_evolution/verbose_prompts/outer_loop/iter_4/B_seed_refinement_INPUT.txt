@@ -1,0 +1,180 @@
+# Prompt Type: B
+# Outer Iteration: 4
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 4
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 5773 chars
+- Current best prompt length: 5007 chars
+
+## Convergence History:
+### Successful Patterns:
+- Negative guidance (what to avoid) helped
+- Change that helped: added 'step'; expanded by 326 chars
+- Change that helped: added 'must'; expanded by 860 chars
+- Explicit constraint mentions helped
+- Change that helped: removed 'must'; condensed by 184 chars
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9552
+- Valid: 5, Invalid: 4
+- Failure modes: ['Validity failures: 4/9 (44.4%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+### Approaches Tried (with success rate):
+  - linear_programming: 18 attempts (worked)
+  - grid_based: 18 attempts (worked)
+  - iterative_refinement: 18 attempts (worked)
+  - constraint_solving: 12 attempts (worked)
+  - random_search: 11 attempts (worked)
+  - greedy: 6 attempts (worked)
+  - force_directed: 1 attempts (worked)
+
+### Approaches Not Yet Tried:
+  - nonlinear_optimization
+  - quadratic_programming
+
+### Best Result Used: linear_programming
+Techniques in best code:
+  - LP for radius optimization
+  - pairwise distance constraints
+  - value clipping for safety
+
+### Score Improvements:
+  - Iter 1: +0.4517 (linear_programming, grid_based)
+  - Iter 2: +0.1139 (linear_programming, grid_based)
+  - Iter 12: +0.0167 (linear_programming, grid_based)
+
+### Errors Encountered:
+  - undefined_variable: 5 occurrences
+  - index_error: 2 occurrences
+  - other_runtime_error: 2 occurrences
+
+### Summary:
+  - Working approaches: linear_programming, grid_based
+  - Struggled with: random_search
+  - Not yet explored: quadratic_programming, nonlinear_optimization
+  - Common errors: index_error(2), other_runtime_error(2)
+  - Best improvement techniques: hexagonal grid layout, LP for radius optimization, pairwise distance constraints
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_4):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Circle‑Packing Code**
+
+You are an expert in computational geometry and optimization. Your task is to improve **only** the `construct_packing()` function (and any helper functions you add) for the circle‑packing problem. The surrounding code (including `run_packing()` and `visualize()`) will be merged automatically; do **not** modify it.
+
+---
+
+### 📌 Mandatory Output Format (DO NOT VIOLATE)
+
+- **Output ONLY** the Python code that belongs **between** the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **Do NOT** include the markers themselves, nor any code outside that region (e.g., `run_packing()`, `visualize()`).  
+- The system will automatically merge your output with the preserved outer code.
+
+---
+
+### 📦 Imports
+
+- `numpy as np` and `scipy.optimize.linprog` are already available.  
+- You **may** add additional import statements (e.g., `from scipy.optimize import minimize`) **inside** the evolve block if needed.
+
+---
+
+### 🎯 Focus
+
+- **Only** modify/extend `construct_packing()` and any helper functions you create.  
+- Do **not** edit any other functions.
+
+---
+
+### ✅ What Worked – Keep and Extend These Ideas
+
+1. **Linear Programming for Radii**  
+   - Use `linprog` to **maximize a linear objective** related to total radius (e.g., sum of radii or weighted sum).  
+   - Enforce pair‑wise distance constraints `r_i + r_j ≤ dist(p_i, p_j)` and boundary constraints `r_i ≤ min(x_i, y_i, 1‑x_i, 1‑y_i)`.
+
+2. **Hexagonal / Dense Grid Seed Layout**  
+   - Start from a **hexagonal (triangular) lattice** or a carefully spaced 5×5 grid; this provides a good initial placement that reduces the LP slack.  
+   - For `n = 26`, place 25 points on a regular 5×5 grid and add a sixth‑row/column point in a corner or centre to reach the target count.
+
+3. **Iterative Refinement (Hill‑Climb / Local Perturbation)**  
+   - After solving the LP, optionally run a short, deterministic hill‑climb that perturbs point coordinates with a decreasing step size (`sigma`).  
+   - Keep the perturbation **small** (e.g., start `σ = 0.02`) and limit iterations (≤ 4000) to avoid runtime blow‑up.
+
+4. **Safety Clipping**  
+   - After any computation, clip radii to `[0, 0.5]` and enforce that points stay inside the unit square.
+
+---
+
+### ❌ What Failed – **DO NOT** Use These Patterns
+
+- **Undefined variables** (e.g., referencing `pts` before assignment).  
+- **Index errors** from mismatched array sizes; always ensure the number of points equals the number of radius variables.  
+- **Random‑search loops** that rely on uncontrolled randomness or large iteration counts; they caused instability and low scores.  
+- **Non‑deterministic heavy‑weight optimizers** (e.g., `scipy.optimize.minimize` with default settings) that exceed the time budget.  
+- **Quadratic or non‑linear programming** attempts that were never tried successfully; stick to the proven linear formulation.  
+- **Removing or altering the LP constraints** (e.g., forgetting the boundary constraints) – this leads to invalid packings.
+
+---
+
+### 🛠️ Implementation Recommendations
+
+1. **Construct a deterministic seed layout** inside `construct_packing()`:
+   ```python
+   # Example: hexagonal lattice covering the unit square
+   ```
+   - Compute coordinates so that the minimal pairwise distance is roughly `1/√n`.
+
+2. **Build the LP matrices** (`c`, `A_ub`, `b_ub`) inside a helper like `solve_lp(points)`:
+   - `c = -np.ones(m)` to maximize sum of radii (linprog minimizes).  
+   - For each pair `(i, j)`, add a row `e_i + e_j ≤ dist_ij`.  
+   - For each point, add four rows for the four sides of the unit square.
+
+3. **Post‑process** the LP solution:
+   - Clip radii, recompute any violated constraints, and optionally run a deterministic hill‑climb (`hill_climb(points, radii, iters=2000, sigma_start=0.015)`).
+
+4. **Return** a list/array of `(x, y, r)` tuples that the outer code expects.
+
+---
+
+### 📈 Goal
+
+- Increase the packing score above the current best (0.9552) by delivering a **more compact, deterministic** arrangement while respecting all validity constraints.  
+- Keep runtime well within the evaluation limits.
+
+--- 
+
+**Remember:** Output only the code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. No markers, no extra text. Good luck!

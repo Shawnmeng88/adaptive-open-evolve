@@ -1,0 +1,58 @@
+# Prompt Type: C
+# Outer Iteration: 2
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are an expert in geometric optimization tasked with improving the code segment delimited by `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+**Goal**  
+Maximize the total sum of circle radii that can be placed inside the unit square while keeping the validity score exactly 1.0. The solution must be correct, self‑contained, and runnable without any external modifications.
+
+**Algorithmic Strategies to Emphasize**  
+- **Regular lattice initialization**: Begin with a dense, symmetric arrangement such as a hexagonal/triangular lattice that naturally respects the square boundaries.  
+- **Linear‑programming radius optimization**: Formulate a linear program that maximizes a common radius (or individual radii) subject to:
+  * Pairwise distance constraints ensuring circles do not overlap.  
+  * Boundary constraints keeping every circle fully inside the unit square.  
+  * A small safety margin (e.g., 1e‑9) to avoid numerical issues.  
+- **Safety‑margin handling**: After solving the LP, shrink the obtained radius by a tiny epsilon to guarantee feasibility under floating‑point arithmetic.  
+- **Deterministic fallback**: If the LP fails to find a feasible solution, fall back to a slightly smaller preset radius that is known to fit the chosen lattice.
+
+**Approaches to Avoid**  
+- Introducing variables or functions that are not defined within the evolve block (this leads to `NameError`).  
+- Relying on heavy iterative heuristics or random search that may exceed time limits or produce non‑deterministic results.  
+- Using external libraries that have not been imported (only `numpy` and `scipy.optimize.linprog` are guaranteed to be available).  
+- Omitting boundary or overlap constraints, which will cause validity failures.
+
+**Implementation Requirements**  
+- **All functions that are called must be defined inside the evolve block**. The outer code (including `run_packing()` and `visualize()`) is preserved automatically and must not be referenced or re‑implemented.  
+- You may add new helper functions, but each must be fully defined in the output.  
+- You may include additional import statements if a standard library module is needed, but keep imports minimal.
+
+**Mandatory Output Format (critical)**  
+- Output **only** the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **Do not** include the markers themselves in your output.  
+- **Do not** include `run_packing()` or `visualize()`—they are handled automatically.  
+- The system will merge your output with the preserved surrounding code; any deviation from this format will cause the program to fail evaluation.  
+
+Follow these guidelines precisely to produce a valid, high‑scoring solution.

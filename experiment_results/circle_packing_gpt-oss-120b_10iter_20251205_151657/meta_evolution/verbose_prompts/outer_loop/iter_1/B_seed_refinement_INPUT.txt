@@ -1,0 +1,127 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 3750 chars
+- Current best prompt length: 3546 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.8479
+- Valid: 6, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+### Approaches Tried (with success rate):
+  - constructive_placement: 1 attempts (mixed)
+  - heuristic_radius_optimization: 1 attempts (mixed)
+
+### Approaches Not Yet Tried:
+  - constraint_solving
+  - force_directed
+  - greedy
+  - grid_based
+  - iterative_refinement
+  - linear_programming
+  - nonlinear_optimization
+  - quadratic_programming
+  - random_search
+
+### Novel Approaches Discovered:
+  - constructive_placement: 1 attempts
+  - heuristic_radius_optimization: 1 attempts
+
+### Best Result Used: linear_programming
+Techniques in best code:
+  - hexagonal grid layout
+  - LP for radius optimization
+  - pairwise distance constraints
+  - boundary constraint handling
+  - safety margins for numerical stability
+
+### Score Improvements:
+  - Iter 0: +0.3642 (constructive_placement, heuristic_radius_optimization)
+  - Iter 1: +0.3075 ()
+  - Iter 4: +0.1761 ()
+
+### Summary:
+  - Novel approaches discovered: constructive_placement, heuristic_radius_optimization
+  - Not yet explored: constraint_solving, force_directed, linear_programming
+  - Best improvement techniques: concentric ring layout, clipping coordinates to the unit square, pairwise distance constraints to compute maximal radii
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION INSTRUCTIONS**
+
+You are to generate **only** the Python code that will be placed between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers. Do **not** include the markers themselves, nor any surrounding code such as `run_packing()` or `visualize()`. The system will automatically merge your output with the preserved sections.
+
+### Output Requirements
+- Output **exactly** the code that belongs inside the evolve block.  
+- No extra text, explanations, or markdown formatting.  
+- All functions, classes, and imports that your code uses must be defined **within** this block.  
+- You may add new helper functions or import additional libraries (e.g., `from scipy.optimize import minimize`). The base imports `numpy as np` and `scipy.optimize.linprog` are already available.
+
+### Goal
+Construct a packing of **26 circles** inside the unit square that maximizes the chosen evaluation metric (e.g., sum of radii) while satisfying:
+- No two circles overlap.  
+- Every circle lies completely inside the square (center coordinates plus/minus radius stay within `[0, 1]`).
+
+### Proven Effective Strategies (you may incorporate any of these ideas)
+- **Hexagonal or triangular lattice seed**: start with a dense lattice layout scaled to fit the square, then adjust positions.
+- **Linear programming for radius maximization**: formulate pairwise distance constraints and boundary constraints, solve for the largest uniform radius or for individual radii.
+- **Iterative refinement**: after an initial feasible placement, repeatedly enlarge radii (or reposition circles) while re‑checking constraints, using small step sizes and back‑tracking on violations.
+- **Randomized perturbations**: introduce stochastic moves (e.g., jittering centers) followed by local optimization to escape local minima.
+- **Safety margins**: incorporate a tiny epsilon (e.g., `1e-9`) in all distance checks to improve numerical stability.
+
+### Approaches to Avoid (have shown little or no benefit)
+- Purely greedy placement without subsequent adjustment; it quickly leads to sub‑optimal radii and many constraint violations.  
+- Heavy reliance on exhaustive search; it is computationally infeasible for 26 circles within the allowed runtime.  
+- Using only a single static pattern without any optimization step; this caps the achievable score.
+
+### Implementation Guidance
+1. **Generate an initial layout** using a regular grid or hexagonal pattern that fits within the unit square.  
+2. **Formulate constraints**: for each pair of circles enforce `‖c_i‑c_j‖ ≥ r_i + r_j + ε`; for each circle enforce `r_i ≤ min(c_i.x, 1‑c_i.x, c_i.y, 1‑c_i.y)`.  
+3. **Solve** for radii (and optionally small adjustments to centers) with a linear program or a simple iterative scheme.  
+4. **Refine** the solution by modestly increasing radii where possible, re‑checking constraints after each increment.  
+5. **Return** the final list/array of circle centers and radii in the format expected by the surrounding code.
+
+Remember: every identifier you call must be defined in the code you output. Follow the exact output format and focus on delivering a high‑quality packing solution.

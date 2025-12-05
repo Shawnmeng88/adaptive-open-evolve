@@ -1,0 +1,126 @@
+# Prompt Type: B
+# Outer Iteration: 2
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 2
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 4788 chars
+- Current best prompt length: 3893 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+- Change that helped: condensed by 707 chars
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9127
+- Valid: 4, Invalid: 3
+- Failure modes: ['Validity failures: 3/7 (42.9%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+### Approaches Tried (with success rate):
+  - unknown: 7 attempts (worked)
+
+### Approaches Not Yet Tried:
+  - constraint_solving
+  - force_directed
+  - greedy
+  - grid_based
+  - iterative_refinement
+  - linear_programming
+  - nonlinear_optimization
+  - quadratic_programming
+  - random_search
+
+### Best Result Used: linear_programming
+Techniques in best code:
+  - hexagonal grid layout
+  - LP for radius optimization
+  - pairwise distance constraints
+  - boundary constraint handling
+  - safety margins for numerical stability
+
+### Score Improvements:
+  - Iter 1: +0.3804 (linear_programming, grid_based)
+  - Iter 2: +0.1434 (linear_programming, grid_based)
+  - Iter 10: +0.0247 (linear_programming, grid_based)
+
+### Errors Encountered:
+  - undefined_variable: 2 occurrences
+
+### Summary:
+  - Working approaches: unknown
+  - Not yet explored: constraint_solving, random_search, nonlinear_optimization
+  - Common errors: undefined_variable(2)
+  - Best improvement techniques: LP for radius optimization, pairwise distance constraints, boundary constraint handling
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_2):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are an expert in geometric optimization tasked with improving the code segment delimited by `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+**Goal**  
+Maximize the total sum of circle radii that can be placed inside the unit square while keeping the validity score exactly 1.0. The solution must be correct, self‑contained, and runnable without any external modifications.
+
+**Algorithmic Strategies to Emphasize**  
+- **Regular lattice initialization**: Begin with a dense, symmetric arrangement such as a hexagonal/triangular lattice that naturally respects the square boundaries.  
+- **Linear‑programming radius optimization**: Formulate a linear program that maximizes a common radius (or individual radii) subject to:
+  * Pairwise distance constraints ensuring circles do not overlap.  
+  * Boundary constraints keeping every circle fully inside the unit square.  
+  * A small safety margin (e.g., 1e‑9) to avoid numerical issues.  
+- **Safety‑margin handling**: After solving the LP, shrink the obtained radius by a tiny epsilon to guarantee feasibility under floating‑point arithmetic.  
+- **Deterministic fallback**: If the LP fails to find a feasible solution, fall back to a slightly smaller preset radius that is known to fit the chosen lattice.
+
+**Approaches to Avoid**  
+- Introducing variables or functions that are not defined within the evolve block (this leads to `NameError`).  
+- Relying on heavy iterative heuristics or random search that may exceed time limits or produce non‑deterministic results.  
+- Using external libraries that have not been imported (only `numpy` and `scipy.optimize.linprog` are guaranteed to be available).  
+- Omitting boundary or overlap constraints, which will cause validity failures.
+
+**Implementation Requirements**  
+- **All functions that are called must be defined inside the evolve block**. The outer code (including `run_packing()` and `visualize()`) is preserved automatically and must not be referenced or re‑implemented.  
+- You may add new helper functions, but each must be fully defined in the output.  
+- You may include additional import statements if a standard library module is needed, but keep imports minimal.
+
+**Mandatory Output Format (critical)**  
+- Output **only** the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **Do not** include the markers themselves in your output.  
+- **Do not** include `run_packing()` or `visualize()`—they are handled automatically.  
+- The system will merge your output with the preserved surrounding code; any deviation from this format will cause the program to fail evaluation.  
+
+Follow these guidelines precisely to produce a valid, high‑scoring solution.

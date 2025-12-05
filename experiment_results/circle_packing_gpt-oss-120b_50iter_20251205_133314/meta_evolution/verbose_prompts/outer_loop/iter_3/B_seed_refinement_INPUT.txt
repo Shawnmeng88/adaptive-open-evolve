@@ -1,0 +1,163 @@
+# Prompt Type: B
+# Outer Iteration: 3
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 3
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 5773 chars
+- Current best prompt length: 4681 chars
+
+## Convergence History:
+### Successful Patterns:
+- Change that helped: added 'must'; expanded by 860 chars
+- Negative guidance (what to avoid) helped
+- Change that helped: removed 'must'; condensed by 184 chars
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9552
+- Valid: 7, Invalid: 3
+- Failure modes: ['Validity failures: 3/10 (30.0%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+### Approaches Tried (with success rate):
+  - linear_programming: 14 attempts (worked)
+  - grid_based: 14 attempts (worked)
+  - iterative_refinement: 14 attempts (worked)
+  - constraint_solving: 11 attempts (worked)
+  - random_search: 7 attempts (worked)
+  - greedy: 5 attempts (worked)
+  - force_directed: 1 attempts (worked)
+
+### Approaches Not Yet Tried:
+  - nonlinear_optimization
+  - quadratic_programming
+
+### Best Result Used: linear_programming
+Techniques in best code:
+  - LP for radius optimization
+  - pairwise distance constraints
+  - value clipping for safety
+
+### Score Improvements:
+  - Iter 1: +0.4517 (linear_programming, grid_based)
+  - Iter 2: +0.1139 (linear_programming, grid_based)
+  - Iter 12: +0.0167 (linear_programming, grid_based)
+
+### Errors Encountered:
+  - index_error: 2 occurrences
+  - undefined_variable: 2 occurrences
+  - other_runtime_error: 1 occurrences
+
+### Summary:
+  - Working approaches: linear_programming, grid_based
+  - Struggled with: random_search
+  - Not yet explored: quadratic_programming, nonlinear_optimization
+  - Common errors: index_error(2), other_runtime_error(1)
+  - Best improvement techniques: hexagonal grid layout, LP for radius optimization, pairwise distance constraints
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_3):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Circle‑Packing Code**
+
+You are an expert in computational geometry and optimization. Your task is to improve **only** the `construct_packing()` function (and any helper functions you add) for the circle‑packing problem. The surrounding code (including `run_packing()` and `visualize()`) will be merged automatically; do **not** modify it.
+
+---
+
+### ✅ What to Do (Approaches that Worked)
+
+1. **Linear Programming for Radii**  
+   - Continue using `scipy.optimize.linprog` (already imported) to **maximize the sum of radii** (or any linear objective that improves total packed area).  
+   - Enforce the constraints:  
+     * Pairwise distance: `dist(i, j) ≥ r_i + r_j` for every pair of circles.  
+     * Boundary constraints: each circle must stay inside the unit square (`r_i ≤ x_i ≤ 1‑r_i`, `r_i ≤ y_i ≤ 1‑r_i`).  
+
+2. **Hexagonal / Staggered Grid Initialization**  
+   - Start from a deterministic, high‑density layout such as a hexagonal (triangular) lattice or a staggered rectangular grid.  
+   - For `n = 26` you can place 5 rows of 5 points (25) plus one extra point in a corner or centre.  
+   - Scale/translate the grid so that all points lie inside the unit square.
+
+3. **Iterative Refinement (Hill‑Climbing / Small Gaussian Perturbations)**  
+   - After the LP step, optionally run a short hill‑climbing loop (e.g., 2‑4 k iterations) that perturbs point positions with a decreasing Gaussian sigma (starting around `0.02`).  
+   - After each perturbation, re‑solve the LP for radii; keep the change only if the LP remains feasible and the total radius sum improves.
+
+4. **Safety Checks & Clipping**  
+   - Clip any computed radii to the interval `[0, 0.5]`.  
+   - Verify that all distance constraints are satisfied (allow a tiny tolerance `1e‑9`).  
+   - Guard against index errors by iterating with `range(len(points))` and using `itertools.combinations`.
+
+5. **Determinism**  
+   - Seed any random number generator (`np.random.seed(0)` or a user‑provided seed) so that the same input `n` always yields the same layout, which helps reproducibility for the evaluation harness.
+
+---
+
+### ❌ What to Avoid (Approaches that Failed)
+
+- **Random‑search‑only strategies** that sample positions without a structured start; they caused many invalid packings and runtime errors.  
+- **Quadratic programming or nonlinear optimization** that were never successfully integrated; they introduce unnecessary complexity and have produced validity failures.  
+- Introducing **new global variables** or relying on undefined names – this caused `undefined_variable` errors.  
+- Accessing list elements with incorrect indices – avoid any code that can raise `IndexError`.  
+- Removing the LP step or skipping the feasibility check before returning the packing.  
+- Any modification to `run_packing()` or `visualize()` – those sections are preserved automatically and must remain untouched.
+
+---
+
+### 📦 Imports
+
+- You may add import statements **inside** the evolve block if you need extra libraries (e.g., `from itertools import combinations`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available globally; do not re‑import them unless you need a specific submodule.
+
+---
+
+### 🛠️ Output Requirements (CRITICAL)
+
+- **Output ONLY the code that belongs between the markers** `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do NOT include the markers themselves** in your response.  
+- **Do NOT include** `run_packing()` or `visualize()` – those are preserved automatically.  
+- The system will merge your output with the surrounding code; any deviation from this format will cause the evaluation to fail.
+
+---
+
+### 🎯 Goal
+
+Produce a deterministic, high‑quality initial layout for `n` circles (specifically tuned for `n = 26`) that:
+
+1. Maximizes the sum of radii via a linear program.  
+2. Starts from a dense hexagonal/grid seed.  
+3. Optionally refines the positions with a short, safe hill‑climbing loop.  
+4. Returns a list of tuples `[(x1, y1, r1), (x2, y2, r2), …]` that satisfies all constraints and scores higher than the current best (0.9552).  
+
+Remember: **only the code between the evolve markers is to be output.**

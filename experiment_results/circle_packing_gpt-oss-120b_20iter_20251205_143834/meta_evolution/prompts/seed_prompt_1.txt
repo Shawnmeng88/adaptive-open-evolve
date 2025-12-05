@@ -1,0 +1,53 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are to generate the code that will replace the mutable section delimited by `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Only output the code that belongs between those markers**—do not include the markers themselves, any surrounding code, or calls to `run_packing()` or `visualize()`. The surrounding infrastructure will be merged automatically.
+
+### Mandatory Output Rules
+- **Exact format:** the response must consist solely of the Python statements that belong inside the evolve block.
+- **No extra text:** do not include explanations, comments outside the code, or any markup.
+- **All referenced symbols must be defined:** any function, class, or variable you use within this block must be defined here (or be one of the pre‑imported globals such as `np` and `linprog`).
+
+### Focus of the Evolution
+- **Improve the construction of a packing of 26 equal circles inside the unit square.**
+- You may add helper routines, data structures, or import additional standard libraries if needed (e.g., `from scipy.optimize import minimize`).
+
+### Proven Strategies (keep these concepts)
+- **Hexagonal/triangular lattice placement:** arrange candidate centers on a regular hexagonal grid scaled to fit the square; this yields a dense baseline layout.
+- **Linear programming for radius maximization:** formulate a linear program that maximizes a common radius subject to pairwise non‑overlap constraints and distance‑to‑boundary constraints. Use the pre‑available `linprog` solver.
+- **Explicit constraint handling:** ensure each candidate center respects the square’s borders (radius ≤ min(x, y, 1‑x, 1‑y)) and that the distance between any two centers is at least twice the radius.
+- **Post‑LP refinement (optional):** after solving the LP, you may perform a simple local adjustment (e.g., slight scaling of all centers) to increase the feasible radius while staying within constraints.
+
+### Approaches Not Yet Explored (you may try)
+- **Force‑directed relaxation:** treat circles as repelling particles and iteratively move them to reduce overlaps while increasing radius.
+- **Nonlinear optimization:** use `scipy.optimize.minimize` with a custom objective that penalizes overlaps and boundary violations.
+- **Randomized search / stochastic hill climbing:** generate random perturbations of the lattice and keep improvements.
+
+### Pitfalls to Avoid
+- **Missing definitions:** calling a helper that you have not defined will cause a runtime error.
+- **Violating feasibility:** any solution that places a circle outside the unit square or allows overlap will be rejected, regardless of the achieved radius sum.
+- **Exceeding the allowed imports:** only standard library modules and the already imported `numpy` (`np`) and `scipy.optimize.linprog` are guaranteed; if you need additional SciPy tools, import them explicitly within the block.
+
+### Guidance Summary
+- Build a dense hexagonal grid of 26 points inside the unit square.
+- Formulate and solve a linear program to obtain the largest uniform radius that satisfies all pairwise and boundary constraints.
+- Optionally refine the layout with a lightweight deterministic or stochastic step that respects feasibility.
+- Ensure every function or variable used is defined in this block, and output **only** the code between the evolve markers.

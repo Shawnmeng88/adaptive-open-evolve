@@ -70,6 +70,9 @@ class MetaEvolutionConfig:
     save_all_prompts: bool = True
     save_convergence_traces: bool = True
     verbose_prompts: bool = False  # Save ALL prompts (A, B, C, D) in hierarchical structure
+    
+    # Code analysis settings
+    code_analysis_model: Optional[str] = None  # LLM model for code analysis (smaller/faster model recommended)
 
 
 @dataclass
@@ -179,7 +182,12 @@ class MetaEvolutionController:
         self.seed_prompt_history = SeedPromptHistory()
         
         # Code analyzer for understanding what approaches work
-        self.code_analyzer = CodeAnalyzer()
+        # Uses a (potentially smaller) LLM for analysis
+        self.code_analyzer = CodeAnalyzer(
+            analysis_model=meta_config.code_analysis_model or meta_config.meta_llm_model,
+            api_base=meta_config.meta_llm_api_base or base_config.llm.api_base,
+            api_key=None,  # Uses OPENAI_API_KEY env var
+        )
         
         # Tracking
         self.iteration_results: List[OuterIterationResult] = []
@@ -278,11 +286,15 @@ Focus on making targeted changes that will increase the program's performance me
             # Step 3b: Collect code samples for analysis
             self._collect_code_samples_from_trace(convergence_trace)
             
-            # Analyze code to understand what approaches work
-            code_analysis = self.code_analyzer.analyze()
+            # Analyze code to understand what approaches work (always uses LLM)
+            code_analysis = await self.code_analyzer.analyze_async()
             
-            if code_analysis.successful_approaches:
-                logger.info(f"  Successful approaches: {code_analysis.successful_approaches}")
+            if code_analysis.approaches_tried:
+                # Log approaches with their success rates
+                working = [k for k, v in code_analysis.approaches_tried.items() 
+                          if isinstance(v, dict) and v.get('success_rate') == 'worked']
+                if working:
+                    logger.info(f"  Working approaches: {working}")
             if code_analysis.recommendations:
                 logger.info(f"  Recommendations: {code_analysis.recommendations[:2]}")
             
@@ -442,8 +454,8 @@ Violating these requirements will cause the program to fail evaluation.
         # Get current best prompt
         current_best_prompt = self.best_seed_prompt or self._original_default_prompt
         
-        # Get code analysis results
-        code_analysis = self.code_analyzer.analyze()
+        # Get code analysis results (always uses LLM)
+        code_analysis = await self.code_analyzer.analyze_async()
         code_analysis_text = self.code_analyzer.format_for_prompt(code_analysis)
         
         # Use MetaLLM to refine the prompt based on convergence feedback

@@ -1,0 +1,57 @@
+# Prompt Type: C
+# Outer Iteration: 0
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in geometric optimization and algorithmic design, tasked with improving a self‑contained code segment that constructs a packing of 26 circles inside a unit square.  
+
+**Objective**  
+- Maximize the combined evaluation score (the sum of the radii, or any provided metric) while keeping the solution valid (no overlapping circles and all circles fully inside the square).  
+- The solution must remain a single, self‑contained block that can be inserted between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+
+**What to do**  
+- Design a method that determines circle positions and their radii from scratch or refines the existing pattern.  
+- Ensure every circle respects the boundary constraints of the unit square.  
+- Guarantee pairwise non‑overlap by enforcing that the distance between any two centers is at least the sum of their radii.  
+- Compute the radii analytically or via an optimization routine (e.g., linear programming, convex optimization, iterative scaling, greedy placement, or geometric heuristics).  
+- Strive for a balanced distribution that allows larger radii overall, possibly by:  
+  * Using symmetry or lattice arrangements (hexagonal, triangular, or multi‑ring patterns).  
+  * Adjusting radii after initial placement through iterative scaling or local search.  
+  * Employing a small‑scale optimizer that respects the constraints and improves the total radius sum.  
+- Keep the implementation concise, efficient, and free of external side effects. All functions or helpers you rely on must be defined inside the evolve block.  
+
+**Output format**  
+- Return **only** the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` comments.  
+- Do **not** include the marker lines themselves.  
+- Do **not** output any code outside this region.  
+
+**Exploration guidance**  
+- Feel free to try multiple strategies across iterations (e.g., start with a simple grid, then replace with a hexagonal packing, then add a local optimization step).  
+- You may experiment with different numerical tolerances, scaling factors, or ordering of circle insertion to discover better configurations.  
+
+**Common pitfalls to avoid**  
+- Referencing functions or variables that are defined outside the evolve block.  
+- Omitting the definition of any helper you call; every used routine must be declared within the block.  
+- Producing code that leaves circles partially outside the unit square or allows overlaps.  
+- Forgetting to return the required tuple (centers, radii, sum_of_radii) in the exact order expected by the surrounding code.  
+
+Follow these instructions carefully to generate a valid, high‑scoring solution for the circle‑packing task.

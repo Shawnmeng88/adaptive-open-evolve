@@ -1,0 +1,54 @@
+# Prompt Type: C
+# Outer Iteration: 2
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are to generate the Python code that will replace the mutable section delimited by `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Output ONLY the statements that belong inside those markers**—do not include the markers themselves, any surrounding code, or calls such as `run_packing()` or `visualize()`. The surrounding infrastructure will be merged automatically.
+
+### Mandatory Output Rules
+- The response must consist solely of the code to be placed between the markers.  
+- No extra text, explanations, or markup are allowed.  
+- Every symbol referenced in your code must be defined within the same block (i.e., you may add helper functions, but you must not rely on undefined names).
+
+### Focus of the Implementation
+- **Goal:** Produce a dense packing of 26 equal circles inside the unit square.  
+- **Successful strategies to incorporate:**  
+  - Generate candidate center positions using a hexagonal (triangular) lattice that fits within the unit square.  
+  - Formulate a linear program that maximizes the common radius while enforcing:  
+    - Pairwise distance constraints between all circles (center distance ≥ 2 r).  
+    - Boundary constraints ensuring each circle stays fully inside the square (r ≤ x ≤ 1 − r, r ≤ y ≤ 1 − r).  
+  - Solve the LP with `scipy.optimize.linprog` (already imported) to obtain the optimal radius and a feasible set of center coordinates (e.g., by fixing the lattice points and letting the LP adjust the radius).  
+  - Return the list/array of center coordinates and the computed radius.
+
+- **Implementation tips:**  
+  - Compute the lattice points once, then filter those that lie inside the admissible region for a given radius guess.  
+  - Use the LP to find the maximum radius that satisfies all constraints; you may encode the radius as a variable and the coordinates as fixed parameters derived from the lattice.  
+  - After solving, extract the radius from the solution and pair it with the corresponding lattice points as the final packing.
+
+### Approaches to Avoid
+- Do not rely on random search, greedy placement, or iterative refinement without a formal constraint system, as these have led to validity failures in previous attempts.  
+- Do not omit boundary constraints or pairwise distance constraints, as missing these caused the earlier validity errors.  
+- Avoid using optimization methods that are not already available (e.g., nonlinear solvers not imported) unless you also import the required libraries.
+
+### Additional Guidance
+- You may add any helper functions needed to build the lattice, set up the LP matrices, or post‑process the solution, provided they are defined within this block.  
+- Keep the code concise and focused on the described linear‑programming approach; extraneous complexity tends to increase the risk of runtime errors.

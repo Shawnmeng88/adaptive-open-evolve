@@ -64,13 +64,6 @@ PROBLEMS = {
         "baseline_score": None,
         "baseline_iterations": None,
     },
-    "signal_processing": {
-        "initial_program": "examples/signal_processing/initial_program.py",
-        "evaluator": "examples/signal_processing/evaluator.py",
-        "description": "Real-Time Signal Processing",
-        "baseline_score": 0.37,  # SoTA achieved after ~130 iterations with Kalman Filter
-        "baseline_iterations": 130,
-    },
 }
 
 
@@ -152,6 +145,12 @@ def parse_args():
         "--verbose-prompts",
         action="store_true",
         help="Save all prompts (A: MetaLLM input, B: refinement input, C: system message, D: user message)"
+    )
+    parser.add_argument(
+        "--analysis-model",
+        type=str,
+        default=None,
+        help="LLM model for code analysis (defaults to same as main model). Use smaller/faster models."
     )
     
     return parser.parse_args()
@@ -291,6 +290,7 @@ async def run_meta_evolution_experiment(
     inner_iterations_per_outer: int,
     output_dir: str,
     verbose_prompts: bool = False,
+    analysis_model: Optional[str] = None,
 ) -> Tuple[List[int], List[float], float]:
     """
     Run meta-evolution experiment (adaptive prompting with persistent islands/MAP-Elites)
@@ -331,6 +331,7 @@ async def run_meta_evolution_experiment(
         save_convergence_traces=True,
         save_all_prompts=True,
         verbose_prompts=verbose_prompts,  # Save all prompts (A, B, C, D)
+        code_analysis_model=analysis_model,  # LLM for code analysis
     )
     
     meta_controller = MetaEvolutionController(
@@ -444,9 +445,14 @@ def plot_comparison(
     # Save
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
     plt.savefig(output_path.replace('.png', '.pdf'), bbox_inches='tight')
-    plt.close()  # Close figure to free memory and allow subprocess to exit
     
     print(f"\nPlot saved to: {output_path}")
+    
+    # Also show if in interactive mode
+    try:
+        plt.show()
+    except:
+        pass
 
 
 def create_summary_report(
@@ -616,6 +622,7 @@ async def main():
                 inner_iterations_per_outer=inner_per_outer,
                 output_dir=output_dir,
                 verbose_prompts=args.verbose_prompts,
+                analysis_model=args.analysis_model,
             )
         except Exception as e:
             logger.exception(f"Meta-evolution experiment failed: {e}")
