@@ -1,0 +1,103 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+- ONLY modify code within the EVOLVE-BLOCK markers
+- DO NOT modify or remove code outside the EVOLVE-BLOCK
+- The function `run_packing()` MUST exist and be callable
+- DO NOT rename or remove the `run_packing()` function
+- The function `construct_packing()` MUST be defined (called by run_packing)
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Circle‑Packing Evolution Guidance**
+
+---
+
+### Core Constraints (DO NOT MODIFY)
+- **Only** edit code inside the `# EVOLVE‑BLOCK-START` / `# EVOLVE‑BLOCK-END` markers.  
+- **Never** change, rename, or remove the `run_packing()` function.  
+- `run_packing()` **must** be callable and must invoke `construct_packing()`.  
+- `construct_packing()` **must** be defined (it may be replaced or extended, but its name and signature must stay the same).  
+
+Violating any of these constraints will cause the evaluation to fail.
+
+---
+
+### Goal
+Maximize the **combined_score** while keeping **validity == 1.0**.  
+Validity requires every circle to lie completely inside the unit square and no two circles to overlap.
+
+---
+
+### What Worked in the Best Submission
+1. **NumPy‑centric calculations** – vectorized distance checks and radius updates run fast and avoid Python loops.  
+2. **Explicit constraint handling** – clipping radii to the square borders and using `np.minimum` to enforce non‑overlap kept the packing valid.  
+3. **Negative guidance** – clearly stating “don’t do X” prevented the model from repeating past mistakes.
+
+---
+
+### What Must **NOT** Be Repeated  
+- **Aggressive, unclear prompts** that lead to high invalidity (e.g., “push radii as large as possible without checking constraints”).  
+- **Repeated failures**: five consecutive invalid programs or >80 % invalidity.  
+- **Premature plateau**: stopping exploration after a single heuristic; the prompt must encourage trying distinct strategies.  
+- **Over‑reliance on a single heuristic** (e.g., only gradient descent) without fallback or diversification.  
+
+If any of the above patterns reappear, the evaluator will penalize the run.
+
+---
+
+### Recommended Strategies (Pick One or Combine)
+
+1. **Iterative Greedy Expansion**  
+   - Start with a modest uniform radius (e.g., `0.02`).  
+   - Repeatedly increase each radius by a small factor (`*1.02`) while enforcing the two constraints:  
+     - `r_i ≤ min(x_i, 1‑x_i, y_i, 1‑y_i)` (square borders).  
+     - `r_i ≤ dist(i, j) – r_j` for all `j ≠ i` (non‑overlap).  
+   - Stop when no radius can be increased without violating a constraint.  
+   - This deterministic loop is easy to vectorize with NumPy and guarantees validity.
+
+2. **Force‑Directed Relaxation**  
+   - Treat circles as repelling particles with a “desired” radius proportional to the distance to the nearest neighbor.  
+   - Perform a few iterations of:  
+     - Compute pairwise distances.  
+     - Update each radius to `min(current, 0.5 * min_dist)` (ensuring a safety margin).  
+   - After relaxation, run a final greedy expansion (Strategy 1) to squeeze remaining space.
+
+3. **Stochastic Seeding + Local Optimization**  
+   - Randomly generate several candidate center sets (e.g., 50 × `n` points).  
+   - For each set, run a quick greedy expansion (Strategy 1) and record the total radius sum.  
+   - Keep the best‑scoring seed and apply a few Newton‑style updates: adjust each radius by the gradient of the feasibility margin (computed analytically) while projecting back onto the feasible region.  
+   - This introduces exploration without sacrificing validity.
+
+4. **Grid‑Based Initialization**  
+   - Place centers on a uniform grid (e.g., `sqrt(n)×sqrt(n)` lattice) with a small offset to avoid exact alignment with the square edges.  
+   - Use the grid spacing as an upper bound for the initial radius (`spacing/2`).  
+   - Follow with greedy expansion.  
+   - Grid layouts often give a solid baseline and reduce the chance of overlapping clusters.
+
+5. **Hybrid Multi‑Stage Pipeline**  
+   - **Stage 1**: Grid‑based or stochastic seeding.  
+   - **Stage 2**: Force‑directed relaxation to equalize spacing.  
+   - **Stage 3**: Iterative greedy expansion to the limit.  
+   - **Stage 4** (optional): Small random perturbations to centers followed by another expansion pass – keep only if the combined score improves.
+
+---
+
+### Implementation Tips
+
+- **Vectorize everything**: use `np.newaxis`, broadcasting, and `np.triu_indices` to compute upper‑triangular distance matrices without Python loops.  
+- **Safety margins**: when applying a growth factor, multiply by `0.99` or subtract a tiny epsilon (`1e‑6`) to stay strictly inside the feasible region.  
+- **Early exit**: break the expansion loop when `np.all(growth < 1e‑5)` to avoid unnecessary iterations.  
+- **Determinism for debugging**: set `np.random.seed(0)` at the top of `construct_packing()` when using stochastic components; you can later remove or vary the seed for final runs.  
+- **Return format**: `construct_packing()` must return two NumPy arrays: `centers` shape `(n,2)` and `radii` shape `(n,)`. Ensure `dtype=float` for both.  
+
+---
+
+### Prompt Construction Checklist
+- [ ] Mention **only** the allowed modifications (inside EVOLVE‑BLOCK).  
+- [ ] Explicitly forbid the failed patterns listed above.  
+- [ ] Encourage **one** of the concrete strategies (or a hybrid) with clear, actionable steps.  
+- [ ] Emphasize **vectorized NumPy** and **strict feasibility checks**.  
+- [ ] Remind the model to keep `run_packing()` unchanged and to call `construct_packing()` inside it.  
+
+Follow these guidelines to evolve the packing code toward a higher combined_score while preserving full validity. Good luck!

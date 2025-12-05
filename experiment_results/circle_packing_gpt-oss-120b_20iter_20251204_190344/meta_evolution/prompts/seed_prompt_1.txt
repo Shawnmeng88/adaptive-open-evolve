@@ -1,0 +1,103 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+- ONLY modify code within the EVOLVE-BLOCK markers
+- DO NOT modify or remove code outside the EVOLVE-BLOCK
+- The function `run_packing()` MUST exist and be callable
+- DO NOT rename or remove the `run_packing()` function
+- The function `construct_packing()` MUST be defined (called by run_packing)
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Circle‑Packing Evolution Guidance**
+
+---
+
+### Core Constraints (DO NOT VIOLATE)
+
+1. **Scope of Modification** – *Only* edit the code that appears between the markers  
+   `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+   Anything outside those markers must remain **exactly** as provided.
+
+2. **Required Functions**  
+   - `run_packing()` **must exist** and be callable by the evaluation harness.  
+   - `run_packing()` **must call** `construct_packing()`.  
+   - `construct_packing()` **must be defined** (its signature cannot be changed).
+
+3. **Naming** – Do **not** rename, remove, or rename‑mangle `run_packing`, `construct_packing`, or any helper that the outer wrapper relies on.
+
+4. **Validity** – The produced packing must satisfy **validity == 1.0**:
+   - Every circle lies completely inside the unit square \([0,1]\times[0,1]\).  
+   - No two circles overlap (distance between centers ≥ sum of radii).  
+   - All radii are non‑negative.
+
+---
+
+### What **must NOT** be done (explicitly forbid)
+
+- **Aggressive, vague constraints** that cause the optimizer to produce illegal configurations (e.g., “make radii as large as possible without checking boundaries”).  
+- **Repeated invalid attempts** – avoid loops that generate many invalid candidates before a single valid one.  
+- **Premature convergence** – do not stop after a single heuristic pass; the algorithm should explore multiple configurations.  
+- **Hard‑coded single‑solution patterns** that cannot adapt to the evaluation’s hidden scoring components.  
+- **Excessive randomness without fallback** – if a random trial fails the validity test, the program must recover gracefully and try an alternative strategy.  
+- **Heavy, non‑vectorized loops** that dramatically increase runtime and trigger time‑outs.
+
+---
+
+### Suggested Concrete Strategies (you may mix and match)
+
+1. **Hybrid Lattice + Local Optimization**  
+   - Start from a dense hexagonal (or staggered square) lattice scaled to fit the unit square.  
+   - Compute the maximal uniform radius that keeps all circles inside the boundary.  
+   - Apply a few iterations of **gradient‑ascent** on each radius (or a global scaling factor) while re‑projecting any violating circles back inside.
+
+2. **Iterative Greedy Insertion with Back‑tracking**  
+   - Place circles one‑by‑one at the point that maximizes the *minimum* distance to existing circles (use a coarse grid, then refine).  
+   - After each insertion, run a quick **local adjustment** (e.g., tiny random perturbation + acceptance if validity improves).  
+   - Keep a small buffer of the last k placements; if a new insertion makes the packing invalid, revert to the best buffer state.
+
+3. **Simulated‑Annealing / Basin‑Hopping on Center Coordinates**  
+   - Encode all centers as a flat NumPy array.  
+   - Define an energy = –(sum of radii) + large penalty terms for boundary breaches or overlaps.  
+   - Perform temperature‑controlled random moves (Gaussian perturbations) and accept moves that lower energy or satisfy the Metropolis criterion.  
+   - Periodically “cool” by reducing step size and re‑computing maximal feasible radii for the current layout.
+
+4. **Constrained Optimization via SciPy (`trust-constr` or `SLSQP`)**  
+   - Formulate the problem: maximize \(\sum r_i\) subject to:
+     - \(0 + r_i \le x_i \le 1 - r_i\) (and similarly for y).  
+     - \(\|c_i - c_j\| \ge r_i + r_j\) for all \(i < j\).  
+   - Supply Jacobians analytically (they are simple linear/absolute‑value forms) to help the solver converge quickly.  
+   - Provide a feasible initial guess from the lattice method to guarantee the optimizer starts from a valid region.
+
+5. **Vectorized Validity Checks & Radius Computation**  
+   - Use `numpy.linalg.norm` on the pairwise difference matrix to obtain all inter‑center distances in one call.  
+   - Compute maximal radii as `np.minimum.reduce([x, 1-x, y, 1-y, (distances - other_radii)/2], axis=0)`.  
+   - This ensures fast feedback inside any iterative loop, keeping runtime low.
+
+6. **Multi‑Start Ensemble**  
+   - Run **N** independent strategies (e.g., lattice, random greedy, annealing) in parallel (or sequentially if resources limited).  
+   - Keep the packing with the highest combined score that passes the validity test.  
+   - This guards against any single heuristic getting stuck in a poor local optimum.
+
+---
+
+### Implementation Tips for the EVOLVE BLOCK
+
+- **Modularize**: Define small helper functions inside the block (e.g., `_initial_lattice(n)`, `_anneal_step(state, temp)`). They stay within the allowed region.
+- **Return Format**: `construct_packing()` should return two NumPy arrays: `centers` shape `(n,2)` and `radii` shape `(n,)`. `run_packing()` will forward these to the evaluator.
+- **Safety Nets**: After any stochastic step, immediately call a **validation routine** that:
+  1. Clips radii to stay inside the square.  
+  2. Detects overlaps; if any exist, either shrink the offending radii or reject the move.
+- **Determinism for Scoring**: Seed NumPy’s RNG (`np.random.seed(0)`) at the start of the block to make results reproducible for debugging, but you may later vary the seed inside a loop to explore diversity.
+- **Performance**: Keep the total number of distance‑matrix constructions ≤ ~10 · n² per run for n = 26; this is trivial for modern CPUs.
+
+---
+
+### Final Reminder
+
+- **Do not touch any code outside the EVOLVE markers.**  
+- **Preserve function names and signatures.**  
+- **Guarantee validity before returning.**  
+- **Explore, but always fall back to a safe, validated packing** if a heuristic fails.
+
+Good luck – iterate wisely, combine geometry insight with numeric optimization, and push the combined score as high as possible while staying strictly valid.

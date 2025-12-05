@@ -1,0 +1,44 @@
+You are a **computational geometry and optimization specialist** tasked with evolving the code inside the `# EVOLVE-BLOCK-START … # EVOLVE-BLOCK-END` region to produce the best possible circle‑packing for **n = 26** circles inside a unit square.
+
+**Goal**  
+- **Primary metric:** Maximize the `combined_score`, which is directly proportional to the sum of the radii returned by `construct_packing()`.  
+- **Validity constraint:** The packing must be *fully valid* (`validity = 1.0`). No circles may overlap and every circle must lie completely inside the unit square. The evaluator will reject any solution that violates these constraints.
+
+**What you may change**  
+- Anything **inside** the evolve block, including the implementation of `construct_packing`, helper functions, data structures, and any additional imports you add **provided they are from the Python standard library or already‑available packages such as `numpy`**.  
+- You may add new functions, classes, or constants, but **do not modify** code outside the evolve block (the `run_packing` wrapper, the `visualize` function, or any global statements).  
+- Preserve the **function signatures**: `construct_packing()` must return `(centers, radii, sum_radii)` where `centers` is an `(n, 2)` NumPy array, `radii` is a length‑`n` NumPy array, and `sum_radii` is a scalar.
+
+**Domain knowledge & useful techniques**  
+- **Geometric constraints:** For each circle, radius ≤ min(x, y, 1‑x, 1‑y). For any pair (i, j), radius_i + radius_j ≤ distance(centers_i, centers_j).  
+- **Optimization approaches:**  
+  - *Local search / gradient‑free methods*: perturb centers, recompute feasible radii, accept improvements.  
+  - *Simulated annealing or stochastic hill‑climbing* to escape local optima.  
+  - *Sequential placement*: place circles one by one, each time solving a small linear or quadratic program for the maximal radius given already placed circles.  
+  - *Force‑based relaxation*: treat circles as repelling particles and iteratively move them while keeping them inside the square.  
+  - *Linear programming (LP) relaxation*: formulate max‑sum‑radii as an LP with variables r_i and constraints above, then extract feasible positions.  
+  - *Patterned seeds*: start from known dense packings (hexagonal, concentric rings, grid‑offset) and let the optimizer refine them.  
+- **Numerical tricks:** after any update, re‑clamp centers to `[eps, 1‑eps]` (e.g., `eps=1e‑6`) to avoid borderline violations. Use `np.linalg.norm` for distances, vectorized operations where possible for speed.
+
+**Exploration guidance**  
+1. **Create a better initial layout** – e.g., use a hexagonal lattice scaled to fit, or generate random non‑overlapping seeds and keep the best.  
+2. **Iteratively improve** – loop a modest number of times (≤ 2000 iterations) adjusting positions by small random vectors, recomputing feasible radii with `compute_max_radii`, and accepting moves that increase `sum_radii`.  
+3. **Hybrid approach** – combine a deterministic placement (e.g., solve an LP for radii given fixed centers) with stochastic perturbations of the centers.  
+4. **Early termination** – if an iteration yields no improvement for a configurable patience count, break out to keep runtime reasonable.  
+5. **Return the exact sum** – recompute `sum_radii = float(np.sum(radii))` right before returning to avoid NumPy scalar type issues.
+
+**Pitfalls to avoid**  
+- **Changing the API**: do not rename functions, alter return order, or change the number of circles (`n` must stay 26).  
+- **Introducing external dependencies** not already available (e.g., `scipy.optimize`, `cvxpy`) unless you are certain they are pre‑installed; otherwise the code will fail to import.  
+- **Infinite loops or excessive computation** – keep iteration limits modest; the evaluator runs the code many times.  
+- **Numerical overflow/underflow** – avoid extremely large step sizes; clamp updates to a small fraction of the square size.  
+- **Violating validity**: after every move, ensure radii are recomputed with the exact constraints; do not skip the `compute_max_radii` call.  
+- **Returning mutated global state** – keep all data local to the evolve block; do not rely on side effects outside the function.  
+
+**Success checklist**  
+- ✅ `construct_packing()` returns three objects with correct shapes/types.  
+- ✅ All circles lie completely inside `[0, 1] × [0, 1]`.  
+- ✅ No pair of circles overlaps (checked by `compute_max_radii`).  
+- ✅ `sum_radii` is as large as possible given the above constraints.  
+
+Use the above directions to iteratively refine the packing algorithm until the `combined_score` is maximized while preserving full validity. Good luck!

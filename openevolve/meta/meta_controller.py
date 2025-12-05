@@ -183,15 +183,26 @@ class MetaEvolutionController:
         self.best_seed_prompt: Optional[str] = None
         self.best_program: Optional[Program] = None
         self.patience_counter = 0
+        self.cumulative_iterations = 0  # Track total inner iterations across outer iters
         
         # Load initial program for analysis
         with open(initial_program_path, 'r') as f:
             self.initial_code = f.read()
         
+        # Create SINGLE OpenEvolve instance that persists across all outer iterations
+        # This preserves islands, MAP-Elites grid, and all accumulated programs
+        self.controller = OpenEvolve(
+            initial_program_path=initial_program_path,
+            evaluation_file=evaluation_file,
+            config=base_config,
+            output_dir=os.path.join(output_dir, "evolution"),
+        )
+        
         logger.info(f"Initialized MetaEvolutionController")
         logger.info(f"  Output directory: {output_dir}")
         logger.info(f"  Max outer iterations: {meta_config.max_outer_iterations}")
         logger.info(f"  Inner iterations per outer: {meta_config.inner_iterations_per_outer}")
+        logger.info(f"  ✓ Single OpenEvolve instance - islands & MAP-Elites persist across prompt changes")
     
     async def run(self) -> MetaEvolutionResult:
         """
@@ -336,16 +347,30 @@ class MetaEvolutionController:
         """Generate the initial seed prompt using meta-LLM"""
         problem_description = self._extract_problem_description()
         evaluation_criteria = self._extract_evaluation_criteria()
+        format_requirements = self._extract_format_requirements()
         
-        return await self.meta_llm.generate_initial_seed_prompt(
+        # Generate the creative part from MetaLLM
+        creative_prompt = await self.meta_llm.generate_initial_seed_prompt(
             problem_description=problem_description,
             initial_code=self.initial_code,
             evaluation_criteria=evaluation_criteria,
         )
+        
+        # Prepend critical format requirements that MUST NOT be ignored
+        format_preamble = f"""## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+{format_requirements}
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+"""
+        return format_preamble + creative_prompt
     
     async def _refine_seed_prompt(self) -> str:
         """Refine the seed prompt based on convergence feedback"""
         problem_description = self._extract_problem_description()
+        format_requirements = self._extract_format_requirements()
         
         current_best = self.best_seed_prompt or self.seed_prompt_history.entries[-1].seed_prompt
         
@@ -356,12 +381,24 @@ class MetaEvolutionController:
         elif self.initial_code:
             best_program_code = self.initial_code
         
-        return await self.meta_llm.refine_seed_prompt(
+        # Generate refined creative prompt
+        refined_prompt = await self.meta_llm.refine_seed_prompt(
             seed_prompt_history=self.seed_prompt_history,
             problem_description=problem_description,
             current_best_prompt=current_best,
             best_program_code=best_program_code,
         )
+        
+        # Prepend critical format requirements
+        format_preamble = f"""## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+{format_requirements}
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+"""
+        return format_preamble + refined_prompt
     
     async def _run_inner_evolution(
         self,
@@ -369,7 +406,14 @@ class MetaEvolutionController:
         outer_iter: int,
     ) -> tuple:
         """
-        Run the inner OpenEvolve loop with the given seed prompt
+        Run the inner OpenEvolve loop with the given seed prompt.
+        
+        IMPORTANT: Reuses the SAME OpenEvolve controller, preserving:
+        - All islands and their populations
+        - The MAP-Elites grid and all programs in it
+        - The best program found so far
+        
+        Only the system prompt is changed between outer iterations.
         
         Args:
             seed_prompt: The seed prompt to use as system message
@@ -378,40 +422,86 @@ class MetaEvolutionController:
         Returns:
             Tuple of (best_program, convergence_trace)
         """
-        # Create modified config with new seed prompt
-        inner_config = copy.deepcopy(self.base_config)
-        inner_config.prompt.system_message = seed_prompt
+        # Update the system prompt in the existing controller's prompt sampler
+        self.controller.prompt_sampler.set_system_message(seed_prompt)
+        self.controller.config.prompt.system_message = seed_prompt
         
-        # Create inner output directory
-        inner_output_dir = os.path.join(self.output_dir, f"inner_run_{outer_iter}")
+        # Calculate iteration range
+        start_iter = self.cumulative_iterations
+        end_iter = start_iter + self.meta_config.inner_iterations_per_outer
+        
+        # Get current stats
+        num_programs = len(self.controller.database.programs)
+        best_prog = self.controller.database.get_best_program()
+        best_score = best_prog.metrics.get('combined_score', 0) if best_prog and best_prog.metrics else 0
         
         logger.info(f"Starting inner evolution run {outer_iter}...")
-        logger.info(f"  Output: {inner_output_dir}")
-        logger.info(f"  Iterations: {self.meta_config.inner_iterations_per_outer}")
+        logger.info(f"  Iterations: {start_iter + 1} to {end_iter}")
+        logger.info(f"  Current programs in database: {num_programs}")
+        logger.info(f"  Current best score: {best_score:.4f}")
         
-        # Initialize and run OpenEvolve
-        controller = OpenEvolve(
-            initial_program_path=self.initial_program_path,
-            evaluation_file=self.evaluation_file,
-            config=inner_config,
-            output_dir=inner_output_dir,
-        )
+        # Record programs before this batch (to extract trace for just this outer iter)
+        programs_before = set(self.controller.database.programs.keys())
         
-        # Run evolution
-        best_program = await controller.run(
+        # Run evolution (controller continues from where it left off)
+        best_program = await self.controller.run(
             iterations=self.meta_config.inner_iterations_per_outer
         )
         
-        # Extract convergence trace from database
-        convergence_trace = self._extract_convergence_trace(controller.database)
+        # Update cumulative count
+        self.cumulative_iterations = end_iter
+        
+        # Extract trace for ONLY new programs from this outer iteration
+        convergence_trace = self._extract_convergence_trace_incremental(
+            self.controller.database, programs_before, start_iter
+        )
         
         # Save trace if configured
         if self.meta_config.save_convergence_traces:
+            inner_output_dir = os.path.join(self.output_dir, f"outer_iter_{outer_iter}")
+            os.makedirs(inner_output_dir, exist_ok=True)
             trace_path = os.path.join(inner_output_dir, "convergence_trace.json")
             with open(trace_path, 'w') as f:
                 json.dump(convergence_trace, f, indent=2)
         
         return best_program, convergence_trace
+    
+    def _extract_convergence_trace_incremental(
+        self, database, programs_before: set, start_iter: int
+    ) -> List[Dict[str, Any]]:
+        """Extract convergence trace for only new programs added in this outer iteration"""
+        trace = []
+        
+        # Get only NEW programs
+        new_programs = [
+            p for pid, p in database.programs.items() 
+            if pid not in programs_before
+        ]
+        new_programs.sort(key=lambda p: p.iteration_found)
+        
+        # Get best score at start of this batch
+        best_score_so_far = 0.0
+        for pid in programs_before:
+            prog = database.programs.get(pid)
+            if prog and prog.metrics:
+                score = prog.metrics.get('combined_score', 0.0)
+                best_score_so_far = max(best_score_so_far, score)
+        
+        for prog in new_programs:
+            score = prog.metrics.get('combined_score', 0.0)
+            is_improvement = score > best_score_so_far
+            if is_improvement:
+                best_score_so_far = score
+            
+            trace.append({
+                'iteration': prog.iteration_found,
+                'score': score,
+                'best_so_far': best_score_so_far,
+                'validity': prog.metrics.get('validity', 0.0),
+                'is_improvement': is_improvement,
+            })
+        
+        return trace
     
     def _extract_convergence_trace(self, database) -> List[Dict[str, Any]]:
         """Extract iteration-by-iteration convergence data from database"""
@@ -509,6 +599,60 @@ class MetaEvolutionController:
     def _extract_evaluation_criteria(self) -> str:
         """Extract evaluation criteria description"""
         return "Maximize 'combined_score' metric while ensuring 'validity' equals 1.0"
+    
+    def _extract_format_requirements(self) -> str:
+        """
+        Extract critical format requirements from the initial code.
+        These requirements MUST be preserved by the generated prompts.
+        """
+        # Analyze initial code to find required function names
+        required_functions = []
+        for line in self.initial_code.split('\n'):
+            stripped = line.strip()
+            if stripped.startswith('def ') and 'EVOLVE-BLOCK' not in line:
+                # Function defined outside EVOLVE-BLOCK - must be preserved
+                func_name = stripped[4:].split('(')[0]
+                if func_name not in ['__init__', '__str__', '__repr__']:
+                    required_functions.append(func_name)
+        
+        # Check for EVOLVE-BLOCK pattern
+        has_evolve_block = 'EVOLVE-BLOCK-START' in self.initial_code
+        
+        # Find the main function that's called by external code
+        # Usually it's the one that calls the evolved function
+        main_function = None
+        for line in self.initial_code.split('\n'):
+            if 'def run_' in line:
+                main_function = line.strip()[4:].split('(')[0]
+                break
+        
+        # Build format requirements string
+        requirements = []
+        
+        if has_evolve_block:
+            requirements.append("- ONLY modify code within the EVOLVE-BLOCK markers")
+            requirements.append("- DO NOT modify or remove code outside the EVOLVE-BLOCK")
+        
+        if main_function:
+            requirements.append(f"- The function `{main_function}()` MUST exist and be callable")
+            requirements.append(f"- DO NOT rename or remove the `{main_function}()` function")
+        
+        # Detect function calls in the main function to identify required evolved functions
+        in_main = False
+        for line in self.initial_code.split('\n'):
+            if main_function and f'def {main_function}' in line:
+                in_main = True
+            elif in_main and line.strip().startswith('def '):
+                in_main = False
+            elif in_main and '(' in line:
+                # Look for function calls
+                for word in line.replace('(', ' ').replace(')', ' ').split():
+                    if word.isidentifier() and word not in ['return', 'if', 'for', 'while', 'def']:
+                        if any(f'def {word}' in self.initial_code for _ in [1]):
+                            requirements.append(f"- The function `{word}()` MUST be defined (called by {main_function})")
+                            break
+        
+        return "\n".join(requirements) if requirements else "Follow the existing code structure"
     
     def _save_prompt(self, prompt: str, outer_iter: int) -> None:
         """Save a seed prompt to file"""

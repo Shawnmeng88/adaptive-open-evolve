@@ -1,0 +1,107 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+- ONLY modify code within the EVOLVE-BLOCK markers
+- DO NOT modify or remove code outside the EVOLVE-BLOCK
+- The function `run_packing()` MUST exist and be callable
+- DO NOT rename or remove the `run_packing()` function
+- The function `construct_packing()` MUST be defined (called by run_packing)
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Circle‑Packing Evolution Guidance**
+
+---
+
+### Core Constraints (DO NOT MODIFY)
+
+- **Only** edit code inside the `# EVOLVE‑BLOCK‑START` / `# EVOLVE‑BLOCK‑END` markers.  
+- **Never** change, rename, or remove the `run_packing()` function.  
+- `run_packing()` **must** be callable and must invoke `construct_packing()`.  
+- `construct_packing()` **must** be defined (its name and signature must stay exactly as `def construct_packing():`).  
+
+Violating any of these constraints will cause the evaluation to fail.
+
+---
+
+### Goal  
+Maximize the **combined_score** while keeping **validity == 1.0**.  
+Validity means **every circle lies completely inside the unit square** and **no two circles overlap**.
+
+---
+
+### What Worked in the Best Submission  
+
+1. **NumPy‑centric calculations** – vectorized distance checks and radius updates run fast and avoid Python loops.  
+2. **Explicit constraint handling** – clipping radii to the square borders and using `np.minimum` to enforce non‑overlap kept the packing valid.  
+3. **Compact, self‑contained logic** – a single `construct_packing()` that builds the layout without external optimizers produced a stable baseline.
+
+---
+
+### What Must **NOT** Be Done (Failed Approaches)  
+
+- **Do not** write an aggressive search that ignores constraints (e.g., random large steps, unchecked radius growth).  
+- **Do not** introduce iterative “optimise‑then‑clip” loops that leave the program in an invalid state for any iteration.  
+- **Do not** add heavy external libraries or custom optimizers that increase runtime dramatically.  
+- **Do not** create code that produces intermittent invalid outputs (e.g., conditional branches that skip constraint checks).  
+- **Do not** rely on manual tuning of magic numbers without a clear, reproducible justification.  
+
+These patterns caused high invalidity rates, premature plateaus, and repeated failures in earlier iterations.
+
+---
+
+### Suggested Concrete Strategies  
+
+1. **Greedy Radial Expansion with Global Minimum**  
+   - Start with a dense grid of candidate centers (e.g., a 7×7 lattice).  
+   - Compute the *maximum allowable radius* for each center as the minimum of:  
+     - Distance to the four square edges, and  
+     - Distance to every already‑placed circle minus its radius.  
+   - Place circles **in descending order of that maximum radius**; after each placement, update the radii of the remaining candidates using the same global‑minimum rule.  
+   - This deterministic greedy scheme respects all constraints at every step.
+
+2. **Uniform Perturbation of a Known Good Layout**  
+   - Take the current best arrangement (the 26‑circle layout from the baseline).  
+   - Apply a **tiny random offset** (≤ 0.01) to each center, then recompute radii using the global‑minimum rule.  
+   - Keep the perturbed layout **only if** the new combined_score improves **and** validity remains 1.0.  
+   - This encourages local exploration without breaking constraints.
+
+3. **Layered Packing (Rows/Columns)**  
+   - Build circles row‑by‑row: for each row, place circles left‑to‑right, each time setting the radius to the minimum of:  
+     - Horizontal distance to the previous circle in the same row,  
+     - Vertical distance to circles in the previous row,  
+     - Distance to the square borders.  
+   - Alternate row spacing (e.g., staggered hexagonal pattern) to gain extra room for larger radii.  
+   - Encode this as a deterministic function inside `construct_packing()`; no loops beyond the row/column iteration are needed.
+
+4. **Vectorized “Radius Envelope” Computation**  
+   - Represent all centers as an `(N,2)` NumPy array.  
+   - Compute the pairwise distance matrix once with `np.linalg.norm`.  
+   - Derive the feasible radius vector as `np.minimum(dist_to_edges, pairwise_distances/2).min(axis=1)`.  
+   - Use this vector directly as the radii output.  
+   - This eliminates any per‑circle Python loops and guarantees that every radius respects both border and non‑overlap constraints.
+
+5. **Score‑Driven Early Stopping**  
+   - If a candidate layout yields a combined_score lower than the current best **by more than 0.001**, abort further calculations for that branch.  
+   - Implement this check **inside** `construct_packing()` after the radii vector is computed; return the current best layout unchanged.
+
+---
+
+### Implementation Checklist for `construct_packing()`
+
+- ☐ Accept **no arguments** and return two NumPy arrays: `centers` shape `(n,2)` and `radii` shape `(n,)`.  
+- ☐ Use **only** NumPy (and the Python standard library) – no external solvers.  
+- ☐ Compute **all** radii with a single, fully vectorized expression or a deterministic greedy loop that updates a global minimum each iteration.  
+- ☐ Clip radii to the unit‑square borders with `np.minimum`/`np.maximum`.  
+- ☐ Ensure **no** radius is negative; if any become negative, set them to zero and discard the corresponding circle (or adjust the layout to keep `n` fixed).  
+- ☐ Return the final `centers` and `radii` such that `run_packing()` can directly call `visualize()` (if present) without further processing.
+
+---
+
+### Final Reminder  
+
+- **Never** modify code outside the `# EVOLVE‑BLOCK‑START` / `# EVOLVE‑BLOCK‑END` region.  
+- Keep `run_packing()` intact and calling `construct_packing()`.  
+- Focus on **deterministic, vectorized, constraint‑aware** constructions; avoid any approach that can produce an invalid packing even temporarily.  
+
+Good luck – iterate within these safe bounds and push the combined_score higher!

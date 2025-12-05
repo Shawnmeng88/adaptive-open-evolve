@@ -48,6 +48,17 @@ class PromptSampler:
         self.user_template_override = user_template
         logger.info(f"Set custom templates: system={system_template}, user={user_template}")
 
+    def set_system_message(self, system_message: str) -> None:
+        """
+        Set a custom system message directly (used by meta-evolution).
+        
+        Args:
+            system_message: The full system message content
+        """
+        self.config.system_message = system_message
+        self.system_template_override = None  # Clear template override
+        logger.info(f"Updated system message ({len(system_message)} chars)")
+
     def build_prompt(
         self,
         current_program: str = "",

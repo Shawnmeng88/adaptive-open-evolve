@@ -54,7 +54,7 @@ PROBLEMS = {
         "initial_program": "examples/circle_packing/initial_program.py",
         "evaluator": "examples/circle_packing/evaluator.py",
         "description": "Circle Packing (n=26)",
-        "baseline_score": 2.635,
+        "baseline_score": 1.0,  # OpenEvolve outputs normalized scores (0-1 scale)
         "baseline_iterations": 1000,
     },
     "function_minimization": {
@@ -88,7 +88,7 @@ def parse_args():
     # Model and config
     parser.add_argument(
         "--model", "-m",
-        default="meta-llama/Meta-Llama-3.1-405B-Instruct",
+        default="openai/gpt-oss-120b",
         help="LLM model to use"
     )
     parser.add_argument(
@@ -217,23 +217,28 @@ async def run_inner_loop_experiment(
     output_dir: str,
 ) -> Tuple[List[int], List[float], float]:
     """
-    Run inner-loop-only experiment (standard OpenEvolve)
+    Run inner-loop-only experiment (standard OpenEvolve with fixed prompt)
     
     Returns:
         (iterations, best_scores, final_score)
     """
+    import copy
+    
     logger = logging.getLogger(__name__)
     logger.info("=" * 80)
-    logger.info("RUNNING INNER LOOP ONLY (Standard OpenEvolve)")
+    logger.info("RUNNING INNER LOOP ONLY (Fixed Prompt)")
     logger.info(f"Total iterations: {total_iterations}")
     logger.info("=" * 80)
     
     inner_output = os.path.join(output_dir, "inner_loop_only")
     
+    # Use a deep copy to avoid interference with meta-evolution
+    inner_config = copy.deepcopy(config)
+    
     controller = OpenEvolve(
         initial_program_path=initial_program,
         evaluation_file=evaluator,
-        config=config,
+        config=inner_config,
         output_dir=inner_output,
     )
     
@@ -243,7 +248,11 @@ async def run_inner_loop_experiment(
     trace = extract_convergence_trace(controller.database)
     iterations, best_scores = trace_to_best_curve(trace, total_iterations)
     
-    final_score = best_program.metrics.get('combined_score', 0.0)
+    final_score = 0.0
+    if best_program and best_program.metrics:
+        final_score = best_program.metrics.get('combined_score', 0.0)
+    
+    num_programs = len(controller.database.programs)
     
     # Save trace
     trace_path = os.path.join(inner_output, "convergence_trace.json")
@@ -252,10 +261,12 @@ async def run_inner_loop_experiment(
             'iterations': iterations,
             'best_scores': best_scores,
             'final_score': final_score,
+            'total_programs': num_programs,
             'trace': trace,
         }, f, indent=2)
     
     logger.info(f"Inner loop complete. Final score: {final_score:.4f}")
+    logger.info(f"Total programs in database: {num_programs}")
     
     return iterations, best_scores, final_score
 
@@ -269,7 +280,11 @@ async def run_meta_evolution_experiment(
     output_dir: str,
 ) -> Tuple[List[int], List[float], float]:
     """
-    Run meta-evolution experiment (outer loop + inner loops)
+    Run meta-evolution experiment (adaptive prompting with persistent islands/MAP-Elites)
+    
+    The meta-evolution uses a SINGLE OpenEvolve instance:
+    - Islands and MAP-Elites grid persist across all outer iterations
+    - Only the system prompt changes between outer iterations
     
     Returns:
         (iterations, best_scores, final_score)
@@ -278,83 +293,66 @@ async def run_meta_evolution_experiment(
         raise ImportError("Meta-evolution module not available")
     
     logger = logging.getLogger(__name__)
+    total_iterations = outer_iterations * inner_iterations_per_outer
+    
     logger.info("=" * 80)
-    logger.info("RUNNING META-EVOLUTION (Outer Loop + Inner Loops)")
-    logger.info(f"Outer iterations: {outer_iterations}")
+    logger.info("RUNNING META-EVOLUTION (Adaptive Prompting)")
+    logger.info(f"Outer iterations (prompt updates): {outer_iterations}")
     logger.info(f"Inner iterations per outer: {inner_iterations_per_outer}")
-    logger.info(f"Total iterations: {outer_iterations * inner_iterations_per_outer}")
+    logger.info(f"Total iterations: {total_iterations}")
+    logger.info("NOTE: Single OpenEvolve instance - islands & MAP-Elites persist!")
     logger.info("=" * 80)
     
     meta_output = os.path.join(output_dir, "meta_evolution")
+    
+    # Use a deep copy of config to avoid interference with inner-loop experiment
+    import copy
+    meta_base_config = copy.deepcopy(config)
     
     meta_config = MetaEvolutionConfig(
         max_outer_iterations=outer_iterations,
         inner_iterations_per_outer=inner_iterations_per_outer,
         disable_early_stopping=True,  # Run all outer iterations
-        meta_llm_model=config.llm.primary_model or config.llm.models[0].name,
-        meta_llm_api_base=config.llm.api_base,
+        meta_llm_model=meta_base_config.llm.primary_model or meta_base_config.llm.models[0].name,
+        meta_llm_api_base=meta_base_config.llm.api_base,
+        save_convergence_traces=True,
+        save_all_prompts=True,
     )
     
-    controller = MetaEvolutionController(
-        base_config=config,
+    meta_controller = MetaEvolutionController(
+        base_config=meta_base_config,
         initial_program_path=initial_program,
         evaluation_file=evaluator,
         meta_config=meta_config,
         output_dir=meta_output,
     )
     
-    result = await controller.run()
+    result = await meta_controller.run()
     
-    # Aggregate convergence across all inner runs
-    all_iterations = []
-    all_best_scores = []
-    cumulative_iteration = 0
-    running_best = 0.0
-    
-    for outer_result in result.iteration_history:
-        # Load inner run trace
-        inner_trace_path = os.path.join(
-            meta_output, 
-            f"inner_run_{outer_result.outer_iteration}",
-            "convergence_trace.json"
-        )
-        
-        if os.path.exists(inner_trace_path):
-            with open(inner_trace_path, 'r') as f:
-                inner_data = json.load(f)
-            
-            # Handle both dict format and list format
-            best_scores = []
-            if isinstance(inner_data, dict):
-                best_scores = inner_data.get('best_scores', [])
-            elif isinstance(inner_data, list):
-                # List of trace entries - extract best_so_far values
-                best_scores = [entry.get('best_so_far', 0.0) if isinstance(entry, dict) else 0.0 
-                              for entry in inner_data]
-            
-            for i, score in enumerate(best_scores):
-                running_best = max(running_best, score)
-                all_iterations.append(cumulative_iteration + i)
-                all_best_scores.append(running_best)
-        
-        cumulative_iteration += inner_iterations_per_outer
+    # Extract FULL convergence trace from the single persistent OpenEvolve instance
+    # This gives us the complete picture across all outer iterations
+    full_trace = extract_convergence_trace(meta_controller.controller.database)
+    iterations, best_scores = trace_to_best_curve(full_trace, total_iterations)
     
     final_score = result.best_score
+    num_programs = len(meta_controller.controller.database.programs)
     
-    # Save aggregated trace
-    trace_path = os.path.join(meta_output, "aggregated_convergence.json")
+    # Save full trace
+    trace_path = os.path.join(meta_output, "full_convergence.json")
     with open(trace_path, 'w') as f:
         json.dump({
-            'iterations': all_iterations,
-            'best_scores': all_best_scores,
+            'iterations': iterations,
+            'best_scores': best_scores,
             'final_score': final_score,
             'outer_iterations': outer_iterations,
             'inner_per_outer': inner_iterations_per_outer,
+            'total_programs': num_programs,
         }, f, indent=2)
     
     logger.info(f"Meta-evolution complete. Final score: {final_score:.4f}")
+    logger.info(f"Total programs in persistent database: {num_programs}")
     
-    return all_iterations, all_best_scores, final_score
+    return iterations, best_scores, final_score
 
 
 def plot_comparison(
@@ -364,6 +362,8 @@ def plot_comparison(
     model_name: str,
     output_path: str,
     baseline_score: Optional[float] = None,
+    outer_iterations: int = 0,
+    inner_per_outer: int = 0,
 ):
     """Create comparison plot with overlaid curves"""
     
@@ -375,6 +375,7 @@ def plot_comparison(
         'inner': '#2E86AB',  # Blue
         'meta': '#A23B72',   # Magenta
         'baseline': '#F18F01',  # Orange
+        'prompt_change': '#666666',  # Gray for prompt change markers
     }
     
     # Plot inner loop
@@ -396,6 +397,24 @@ def plot_comparison(
         plt.axhline(y=baseline_score, color=colors['baseline'], 
                    linestyle=':', linewidth=1.5,
                    label=f'Literature Baseline ({baseline_score:.3f})')
+    
+    # Add vertical ticks at prompt change points (where outer iterations start)
+    if outer_iterations > 0 and inner_per_outer > 0:
+        prompt_change_iters = [i * inner_per_outer for i in range(1, outer_iterations)]
+        for i, iter_num in enumerate(prompt_change_iters):
+            # Draw a small vertical tick at the top of the plot
+            ax = plt.gca()
+            ymin, ymax = ax.get_ylim()
+            tick_height = (ymax - ymin) * 0.03  # 3% of plot height
+            
+            # Draw tick at top
+            plt.plot([iter_num, iter_num], [ymax - tick_height, ymax], 
+                    color=colors['prompt_change'], linewidth=1.5, 
+                    label='Prompt Change' if i == 0 else None)
+            
+            # Also draw a subtle vertical line through the plot
+            plt.axvline(x=iter_num, color=colors['prompt_change'], 
+                       linestyle='--', linewidth=0.5, alpha=0.5)
     
     # Labels and title
     plt.xlabel('Iteration', fontsize=12)
@@ -594,6 +613,9 @@ async def main():
     # Create comparison plot
     if inner_data or meta_data:
         plot_path = os.path.join(output_dir, "convergence_comparison.png")
+        # Calculate inner iterations per outer for the plot markers
+        inner_per_outer = args.total_iterations // args.outer_iterations if args.outer_iterations > 0 else 0
+        
         plot_comparison(
             inner_data=inner_data,
             meta_data=meta_data,
@@ -601,6 +623,8 @@ async def main():
             model_name=args.model,
             output_path=plot_path,
             baseline_score=problem_info.get('baseline_score'),
+            outer_iterations=args.outer_iterations,
+            inner_per_outer=inner_per_outer,
         )
         
         # Create summary report

@@ -204,7 +204,14 @@ class OpenEvolve:
         root_logger = logging.getLogger()
         root_logger.setLevel(getattr(logging, self.config.log_level))
 
-        # Add file handler
+        # Check if console handler already exists to avoid duplicates
+        # This can happen in meta-evolution where multiple OpenEvolve instances are created
+        has_console_handler = any(
+            isinstance(h, logging.StreamHandler) and not isinstance(h, logging.FileHandler)
+            for h in root_logger.handlers
+        )
+
+        # Always add a new file handler (unique per run)
         log_file = os.path.join(log_dir, f"openevolve_{time.strftime('%Y%m%d_%H%M%S')}.log")
         file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(
@@ -212,10 +219,11 @@ class OpenEvolve:
         )
         root_logger.addHandler(file_handler)
 
-        # Add console handler
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-        root_logger.addHandler(console_handler)
+        # Only add console handler if one doesn't exist
+        if not has_console_handler:
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+            root_logger.addHandler(console_handler)
 
         logger.info(f"Logging to {log_file}")
 

@@ -1,0 +1,74 @@
+[
+  {
+    "iteration": 0,
+    "score": 0.36423689449571406,
+    "combined_score": 0.36423689449571406,
+    "validity": 1.0,
+    "is_valid": true,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": true,
+    "parent_id": null,
+    "island": 0,
+    "changes": ""
+  },
+  {
+    "iteration": 1,
+    "score": 0.0,
+    "combined_score": 0.0,
+    "validity": 0.0,
+    "is_valid": false,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": false,
+    "parent_id": "84c3478f-c535-4b16-9db6-efb9afe634ab",
+    "island": 0,
+    "changes": "Full rewrite"
+  },
+  {
+    "iteration": 2,
+    "score": 0.0,
+    "combined_score": 0.0,
+    "validity": 1.0,
+    "is_valid": true,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": false,
+    "parent_id": "84c3478f-c535-4b16-9db6-efb9afe634ab",
+    "island": 0,
+    "changes": "Full rewrite"
+  },
+  {
+    "iteration": 3,
+    "score": 0.8880454237571204,
+    "combined_score": 0.8880454237571204,
+    "validity": 1.0,
+    "is_valid": true,
+    "best_so_far": 0.8880454237571204,
+    "is_improvement": true,
+    "parent_id": "84c3478f-c535-4b16-9db6-efb9afe634ab",
+    "island": 0,
+    "changes": "Full rewrite"
+  },
+  {
+    "iteration": 4,
+    "score": 0.7400378842504743,
+    "combined_score": 0.7400378842504743,
+    "validity": 1.0,
+    "is_valid": true,
+    "best_so_far": 0.8880454237571204,
+    "is_improvement": false,
+    "parent_id": "84c3478f-c535-4b16-9db6-efb9afe634ab",
+    "island": 0,
+    "changes": "Full rewrite"
+  },
+  {
+    "iteration": 5,
+    "score": 0.5543832314990513,
+    "combined_score": 0.5543832314990513,
+    "validity": 1.0,
+    "is_valid": true,
+    "best_so_far": 0.8880454237571204,
+    "is_improvement": false,
+    "parent_id": "84c3478f-c535-4b16-9db6-efb9afe634ab",
+    "island": 0,
+    "changes": "Full rewrite"
+  }
+]

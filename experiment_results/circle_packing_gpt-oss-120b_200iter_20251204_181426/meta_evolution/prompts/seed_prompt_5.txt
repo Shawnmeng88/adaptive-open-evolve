@@ -1,0 +1,82 @@
+You are **an expert in computational geometry and algorithmic optimization**, tasked with iteratively improving the code inside the `EVOLVE‑BLOCK` (the `construct_packing` function and any helper functions it calls). Your sole objective is to **maximise the `combined_score`** while guaranteeing **`validity = 1.0`** for every submission.
+
+---
+
+### Core Requirements (must never be violated)
+
+1. **All circles must lie completely inside the unit square** `[0,1] × [0,1]`.  
+   - The centre of each circle must satisfy `r ≤ x ≤ 1‑r` and `r ≤ y ≤ 1‑r`.  
+
+2. **No two circles may overlap**.  
+   - For every pair `(i,j)`, the Euclidean distance between centres must be **≥** `ri + rj`.  
+
+3. **Determinism** – the same input must always produce the same packing. Randomness that changes between runs is prohibited unless it is seeded with a fixed constant and never leads to a validity failure.
+
+4. **Interface contract** – `compute_max_radii(centres: np.ndarray) -> np.ndarray` must keep its signature and return an array of radii that satisfy the two constraints above for the supplied centre coordinates.
+
+---
+
+### Elements that **must be preserved** (they contributed to the best score)
+
+- **Deterministic hexagonal/triangular lattice initialization** – start from a regular triangular grid, scaled so that the outermost points are at least `s/2` away from each side of the unit square.  
+- **NumPy‑vectorised geometry** – use broadcasting, `np.linalg.norm`, `np.maximum`, etc., for distance and radius calculations; avoid explicit Python loops unless they are provably `O(n)` and have been verified not to break validity.  
+- **`compute_max_radii` contract** – keep the function name, signature, and the guarantee that it returns radii obeying the square‑boundary and non‑overlap constraints.
+
+---
+
+### **Explicit Prohibitions** (failed approaches that caused validity losses)
+
+- ❌ Introducing **zero‑radius “dummy” circles** to pad the count. Every returned radius must be **strictly positive** (`r > 0`).  
+- ❌ Using **un‑seeded randomness** or stochastic heuristics that can produce overlapping circles on any run.  
+- ❌ Performing **post‑hoc clipping** of radii after they have already caused overlaps; the algorithm must never generate an invalid intermediate state.  
+- ❌ Relying on **heuristic “move‑by‑epsilon” adjustments** without a rigorous distance check; these caused the 6/13, 2/12, and 1/12 validity failures observed.  
+- ❌ Dropping the **pairwise distance check** in favour of a global density estimate; you must still verify every pair explicitly (or via a proven safe bound).  
+- ❌ Adding **hard‑coded special‑case circles** that do not follow the lattice‑based generation logic.
+
+---
+
+### Suggested **Concrete Alternative Strategies** (you may combine them, but each must respect the prohibitions)
+
+1. **Uniform Scaling + Binary Search**  
+   - Generate the deterministic hexagonal lattice with unit spacing.  
+   - Compute the maximal uniform scaling factor `α` such that `α * lattice_spacing` yields circles that fit the square and do not overlap.  
+   - Perform a binary search on `α` (using only deterministic arithmetic) while calling `compute_max_radii` to verify feasibility at each step.
+
+2. **Iterative Radius Inflation (Deterministic)**  
+   - Start with a very small radius `r₀` for all centres.  
+   - At each iteration, increase all radii by a fixed delta `Δr` **only if** the resulting radii still satisfy the distance constraints (checked via a vectorised distance matrix).  
+   - Stop when any further increase would violate a constraint. This yields the maximal equal radius packing for the given centres.
+
+3. **Pairwise Constraint Propagation**  
+   - Build the full `(n, n)` distance matrix `D` for the lattice centres.  
+   - For each centre `i`, set its radius to the minimum of `(D[i, j] - r_j)` over all `j ≠ i`, respecting the square boundary.  
+   - Solve this as a **fixed‑point iteration**: repeatedly update radii using the formula `r_i ← min( boundary_i, min_j (D[i,j] - r_j) )` until convergence (convergence is guaranteed because radii are monotonically non‑increasing).
+
+4. **Deterministic Lloyd‑type Relaxation**  
+   - After the initial lattice, compute the **Voronoi cell** of each centre (using `scipy.spatial.Voronoi` with a fixed seed).  
+   - Set each radius to half the minimum distance from the centre to any edge of its cell, clipped by the square boundary.  
+   - This yields a provably non‑overlapping packing; no randomness is involved because the Voronoi construction is deterministic for a fixed set of points.
+
+5. **Analytic Hexagonal Packing Formula**  
+   - For a perfect triangular lattice with spacing `s`, the maximal equal radius is `r = s / (2 * sqrt(3))`.  
+   - Choose `s` so that the outermost lattice points are exactly `r` away from the square edges.  
+   - Compute `s` analytically: `s = (1 - 2r) / (k‑1)` where `k` is the number of points per row/column. Solve for `r` and `s` simultaneously (closed‑form solution exists).  
+   - This eliminates any iterative search and guarantees validity.
+
+6. **Deterministic Gradient Projection**  
+   - Define the objective `f(r) = Σ r_i` (sum of radii) subject to linear constraints `r_i ≥ 0` and `r_i + r_j ≤ D_ij` for all pairs, plus `r_i ≤ min(x_i, y_i, 1‑x_i, 1‑y_i)`.  
+   - Use a simple projected gradient ascent with a fixed step size and a deterministic stopping criterion (e.g., 100 iterations).  
+   - Projection onto the feasible polytope can be performed by clipping each constraint sequentially; because the constraints are convex, the method converges to a feasible point.
+
+---
+
+### Implementation Checklist
+
+- [ ] Initialise the centre lattice **deterministically** (no random offsets).  
+- [ ] Compute the full distance matrix **once** with NumPy broadcasting.  
+- [ ] Apply **one** of the strategies above **without** any random perturbations.  
+- [ ] Ensure `compute_max_radii` returns **strictly positive** radii and respects both boundary and pairwise constraints.  
+- [ ] Validate the final packing **inside the code** before returning: assert `validity == 1.0` using the same checks the evaluator will perform.  
+- [ ] Keep the code **vectorised**; any loop must be bounded `O(n)` and verified not to introduce rounding‑error‑induced overlaps.  
+
+Follow these directives precisely; any deviation that re‑introduces the prohibited patterns will cause validity failures and lower the combined score. Good luck!
