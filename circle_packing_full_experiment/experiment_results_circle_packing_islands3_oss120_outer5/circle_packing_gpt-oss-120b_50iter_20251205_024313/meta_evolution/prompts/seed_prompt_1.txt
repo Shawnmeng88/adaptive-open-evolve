@@ -1,0 +1,97 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are to modify only the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not output the markers themselves** and **do not include any code outside this region** (imports, `run_packing()`, visualisation helpers, etc.). The system will automatically splice your output into the surrounding file.
+
+---
+
+### Primary Objective  
+Maximize the `combined_score` for a 26‑circle packing inside the unit square while keeping the **validity flag exactly 1.0**. Validity requires that:
+
+1. **All circles lie completely inside the square** – the distance from each centre to every side must be ≥ its radius.  
+2. **No two circles overlap** – the Euclidean distance between any pair of centres must be ≥ the sum of their radii.  
+
+Any violation of these constraints will cause the evaluation to fail (the current best solution has a 9.1 % validity failure rate).  
+
+---
+
+### What **must NOT** be done (explicitly avoid)
+
+- **Duplicate centre points** to reach 26 circles; each centre must be distinct.  
+- **Hard‑code radii** without guaranteeing feasibility; radii must be derived from a constraint‑respecting optimisation.  
+- **Ignore pairwise constraints** or border constraints when adjusting radii – this leads to overlap or out‑of‑bounds circles.  
+- **Use exhaustive random search** over all 26 centres; it is computationally prohibitive and produces many invalid configurations.  
+- **Remove the linear‑programming step** that enforces non‑overlap; the LP is essential for guaranteeing validity.  
+
+---
+
+### Suggested Concrete Strategies (you may combine them)
+
+1. **Structured Initial Layout**  
+   - Start from a deterministic lattice (e.g., a 5 × 5 grid) that yields 25 well‑spaced centres.  
+   - Add the 26th centre by placing it in the largest empty region (e.g., the centre of the biggest Voronoi cell) to minimise interference.
+
+2. **Linear‑Program‑Based Radius Maximisation**  
+   - Formulate a linear program where each radius `r_i` is a variable.  
+   - Constraints:  
+     - `r_i ≤ x_i` and `r_i ≤ 1 - x_i` (horizontal borders)  
+     - `r_i ≤ y_i` and `r_i ≤ 1 - y_i` (vertical borders)  
+     - `r_i + r_j ≤ dist(i, j)` for every pair `i < j`.  
+   - Objective: maximise the sum of radii (or weighted sum if you want to bias certain circles).  
+   - Use `scipy.optimize.linprog` with the “highs” method for speed and numerical stability.
+
+3. **Iterative Local Refinement**  
+   - After the LP step, run a few iterations of a **force‑directed relaxation**:  
+     - Compute repulsive forces between overlapping circles (if any) and push centres apart proportionally to the overlap depth.  
+     - Apply a mild “wall‑repel” force to keep circles away from the square edges.  
+   - Re‑solve the LP on the adjusted centres to re‑optimise radii.  
+   - Repeat 2–3 times; the LP guarantees feasibility after each iteration.
+
+4. **Hill‑Climbing Perturbation for the Extra Circle**  
+   - Treat the 26th centre as a variable to optimise.  
+   - Sample a small set of candidate positions around the current best empty spot, evaluate the resulting `combined_score` (using the LP for radii), and keep the best candidate.  
+   - Limit the number of candidates (e.g., 10) to keep runtime low.
+
+5. **Numerical Safety Checks**  
+   - After each LP solve, verify that all constraints hold within a tolerance (e.g., `1e-9`).  
+   - If any violation is detected, slightly shrink all radii (`*0.999`) and re‑check; this prevents floating‑point edge cases from breaking validity.
+
+---
+
+### Implementation Checklist (inside the evolve block)
+
+- **`construct_packing()`**  
+  - Build the initial centre list as described.  
+  - Call a helper that builds and solves the LP, returning radii.  
+  - Optionally invoke the local refinement loop.  
+  - Return `(centers, radii)` ready for `run_packing()`.
+
+- **Helper Functions** (you may add or modify):  
+  - `build_lp_matrices(centers)` – assembles `A_ub`, `b_ub`, and objective vector for `linprog`.  
+  - `solve_radius_lp(centers)` – runs `linprog` and returns radii (or a fallback uniform small radius if LP fails).  
+  - `refine_positions(centers, radii, iters=2)` – performs the force‑directed adjustments and re‑solves the LP.  
+  - `find_best_extra_center(centers, radii)` – implements the hill‑climbing perturbation for the 26th point.
+
+- **Safety**  
+  - All new functions must be pure (no side‑effects) and return data structures compatible with the existing `run_packing()` pipeline.  
+  - Do **not** import additional heavy libraries; rely only on `numpy` and `scipy.optimize`.  
+
+---
+
+### Output Requirement (strict)
+
+Your response **must contain ONLY** the Python code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. Do not include the surrounding markers, any explanatory text, or any code outside this region. The system will merge your snippet with the preserved outer code automatically.

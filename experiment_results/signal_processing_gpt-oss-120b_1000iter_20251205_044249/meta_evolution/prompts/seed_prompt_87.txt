@@ -1,0 +1,56 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Guidance for Evolving `construct_packing()`**
+
+You are given a Python file that contains a special editable region delimited by the comments  
+
+```
+# EVOLVE-BLOCK-START
+... existing code ...
+# EVOLVE-BLOCK-END
+```  
+
+Your task is to **replace only the code that appears between those two markers** with a new implementation that improves the `construct_packing()` function (and any helper functions defined inside the block).  
+
+**Output Requirements (must be obeyed exactly)**  
+- Output **only** the Python code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do not** include the marker comments themselves.  
+- **Do not** output any other code (imports, `run_packing()`, etc.).  
+- The surrounding file will be automatically re‑assembled by the evaluation harness.
+
+**What to Focus On**  
+1. **Correctness** – The new `construct_packing()` must return a packing structure that satisfies the problem’s constraints (e.g., all items placed, no overlap, respects capacity limits).  
+2. **Clarity** – Use descriptive variable names, short helper functions, and inline comments that explain non‑trivial steps.  
+3. **Efficiency** – Prefer linear‑time or O(n log n) approaches; avoid nested loops that scale quadratically with the number of items unless absolutely necessary.  
+4. **Robust Edge‑Case Handling** – Guard against empty input, items that exactly fill a bin, and items that cannot be packed (return a clear indicator).  
+5. **Determinism** – Do not rely on random choices unless you also provide a deterministic fallback; the evaluator runs the code multiple times and expects consistent results.
+
+**Specific Strategies to Try**  
+- **Greedy Bin‑First Fit**: Sort items by descending size and place each into the first bin that has enough remaining capacity. This often yields a good baseline.  
+- **Two‑Pointer Pairing**: For 1‑dimensional bin packing, sort items and then pair the smallest with the largest that fits together; this reduces the number of bins.  
+- **Chunked Packing Helper**: Write a small helper `fit_items_into_bin(items, capacity)` that returns the subset of items that fit and the remaining items; call it iteratively to build the full packing.  
+- **Early Validation**: Before entering the main loop, compute the total size of all items and compare it to the total available capacity; if the total exceeds capacity, return an explicit “cannot pack” result.  
+- **Unit Tests Within the Block** *(optional but allowed)*: You may include a short `if __name__ == "__main__":` block that runs a few sanity checks. This code will be ignored by the outer harness because it lies outside the markers.
+
+**What Must Be Avoided (explicit prohibitions)**  
+- **Over‑aggressive prompting**: Do not write a vague “rewrite everything” instruction. Be precise about the function to modify and the constraints to respect.  
+- **Ambiguous constraints**: Never assume hidden requirements; always state the assumptions you are making in comments.  
+- **Repeated invalid programs**: Do not submit code that fails to compile or raises syntax errors. Ensure the code is syntactically correct and all referenced names are defined within the block.  
+- **Unnecessary complexity**: Do not introduce heavyweight libraries (e.g., `numpy`, `pandas`) or deep recursion that could cause stack overflows.  
+- **Leaving placeholder `pass` statements**: Every function defined in the block must contain a working implementation.
+
+**Reminder**  
+Your entire response will replace the content inside the evolve block. Follow the output format strictly, and concentrate on delivering a clean, correct, and efficient implementation of `construct_packing()` and its helpers. Good luck!

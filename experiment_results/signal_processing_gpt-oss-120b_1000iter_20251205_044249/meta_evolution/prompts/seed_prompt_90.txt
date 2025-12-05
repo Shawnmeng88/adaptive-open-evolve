@@ -1,0 +1,72 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are to modify **only** the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not output the markers themselves** and **do not include any code outside that region** (e.g., imports, the surrounding `run_packing()` wrapper). The system will automatically splice your output into the preserved surrounding code.
+
+### Output Requirements (must be obeyed exactly)
+- **Only** the Python statements that belong inside the evolve block.
+- No surrounding text, explanations, or markdown.
+- No `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines.
+- No extra blank lines before the first statement or after the last statement (a single trailing newline is acceptable).
+
+### Goal
+Improve the `construct_packing()` function **and any helper functions defined inside the evolve block** so that they reliably produce a valid packing plan for a given list of items and container constraints.
+
+### Concrete Strategies (choose *one* or combine, but keep the implementation concise and correct)
+
+1. **Deterministic Greedy + Backtrack**  
+   - Sort items by decreasing volume (or a heuristic like `weight/volume`).  
+   - Attempt to place each item in the first container that fits (respecting weight, volume, and dimension limits).  
+   - If an item cannot be placed, backtrack: remove the last placed item, try the next container, and continue recursively.  
+   - Stop when all items are placed or all backtracking paths are exhausted.  
+   - Return a list of `(item_id, container_id, position)` tuples or an empty list on failure.
+
+2. **Constraint‑Driven Filtering**  
+   - Before packing, filter out containers that cannot possibly hold any item (e.g., max weight < smallest item weight).  
+   - Pre‑compute each container’s remaining capacity as a mutable `dict` (e.g., `remaining = {"weight": max_w, "volume": max_v}`) that is **only** mutated inside `construct_packing`.  
+   - Use these structures to quickly test feasibility without recomputing totals each time.
+
+3. **Pure Helper Functions**  
+   - Write small, pure helpers such as `fits(item, container, remaining)` returning a boolean, and `update_remaining(remaining, item, add=True)` returning a new dict (no side‑effects).  
+   - Keep all state changes confined to the local scope of `construct_packing` to avoid hidden bugs.
+
+4. **Robust Edge‑Case Handling**  
+   - If `items` is empty, return an empty packing list immediately.  
+   - Validate that every item has the required fields (`id`, `weight`, `volume`, `dimensions`). If a field is missing, raise a `ValueError` with a clear message.  
+   - Guard against infinite recursion by limiting depth to `len(items)` and returning failure when the limit is reached.
+
+5. **Clear Type Hints & Docstrings**  
+   - Add `def construct_packing(items: List[Dict], containers: List[Dict]) -> List[Tuple]:` with appropriate imports (`from typing import List, Dict, Tuple`).  
+   - Provide a concise docstring describing the algorithm, parameters, and return value.  
+   - This improves readability for the evaluator and reduces the chance of syntax errors.
+
+### Forbidden Approaches (must NOT appear in your output)
+- Leaving the function unchanged or only adding comments.
+- Introducing new global variables or mutating objects defined outside the evolve block.
+- Using undefined names, missing imports, or relying on modules not already imported in the outer code.
+- Writing code that can enter an infinite loop or recursion without a clear termination condition.
+- Producing syntax errors, indentation errors, or mismatched parentheses/brackets.
+- Adding any explanatory text, markdown, or code outside the evolve block.
+
+### Evaluation Criteria
+Your revised `construct_packing` will be judged on:
+- **Correctness** – produces a packing list that satisfies all weight, volume, and dimension constraints.
+- **Completeness** – handles empty inputs and invalid item specifications gracefully.
+- **Robustness** – no runtime exceptions, no infinite loops, and deterministic output for the same input.
+- **Clarity** – concise, well‑structured code with type hints and a short docstring.
+
+Implement the chosen strategy (or a hybrid) within the evolve block, respecting all the constraints above. Good luck!

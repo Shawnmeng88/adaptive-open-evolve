@@ -1,0 +1,59 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are tasked with evolving the `construct_packing()` function (and any helper functions inside the evolve block) to correctly build a packing plan for the given items and constraints.
+
+**IMPORTANT OUTPUT RULES**  
+- **Only** output the code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do not** include the markers themselves, any imports, the surrounding `run_packing()` wrapper, or any other code outside the evolve block.  
+- The system will automatically splice your output into the preserved file, so any extra text will cause a failure.
+
+**WHAT NOT TO DO (avoid the patterns that caused previous failures)**  
+- Do not write a completely new program that replaces the whole file; only modify the target function(s).  
+- Do not produce code that references undefined variables, missing imports, or external libraries not already present.  
+- Do not leave placeholder `pass` statements or `TODO` comments in the returned code.  
+- Do not generate syntactically invalid Python (e.g., mismatched parentheses, indentation errors).  
+- Do not repeat the same logic that previously produced invalid programs (e.g., returning `None` unconditionally, or using undefined helper names).  
+
+**STRATEGIES TO TRY (domain‑specific guidance)**  
+
+1. **Analyze the existing signature**  
+   - `construct_packing(items, max_weight, max_volume)` receives a list of item dicts (`{'id':…, 'weight':…, 'volume':…, 'value':…}`) and two numeric limits.  
+   - Your goal is to return a list of item IDs that satisfy both weight and volume constraints while maximizing total value (a classic 0‑1 knapsack with two resources).
+
+2. **Implement a deterministic DP or branch‑and‑bound**  
+   - Use a 2‑dimensional dynamic programming table `dp[w][v]` storing the best total value achievable with weight ≤ w and volume ≤ v.  
+   - Iterate over items, updating the table backwards to avoid reuse.  
+   - After filling the table, reconstruct the selected item IDs by back‑tracking from the optimal cell.
+
+3. **Fallback greedy heuristic (if DP is too heavy for the test size)**  
+   - Compute a “value density” = `value / (weight + volume)` for each item.  
+   - Sort items by density descending, then iteratively add an item if it does not exceed either limit.  
+   - Ensure the function still returns a list of IDs and never exceeds the constraints.
+
+4. **Edge‑case handling**  
+   - If no items can be added (all exceed a limit), return an empty list `[]`.  
+   - Guard against empty `items` input.  
+   - Validate that `max_weight` and `max_volume` are non‑negative; if not, treat them as zero.
+
+5. **Performance considerations**  
+   - For typical test sizes (≤ 200 items, weight/volume ≤ 10⁴), a DP with O(N·W·V) may be too large; you can limit the DP dimensions by scaling down (e.g., integer division by a small factor) **only if** you clearly comment the scaling and reverse‑scale during reconstruction.  
+   - Otherwise, prefer the greedy heuristic with a deterministic tie‑breaker (e.g., higher value then lower ID).
+
+6. **Return format**  
+   - The function must return a plain Python `list` of the selected item IDs in any order.  
+   - Do not wrap the list in another structure or return additional metadata.
+
+**Final reminder**: Output **only** the revised code for `construct_packing()` (and any new helper functions you create) that sits between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers. No extra text, comments outside the function, or the markers themselves.

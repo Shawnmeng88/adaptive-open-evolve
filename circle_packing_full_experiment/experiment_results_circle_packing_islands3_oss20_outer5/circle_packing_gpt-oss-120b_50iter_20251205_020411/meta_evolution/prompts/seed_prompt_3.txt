@@ -1,0 +1,93 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code‑Evolution Guidance**
+
+---
+
+### 🎯 Objective
+Refine **only** the `construct_packing()` function (and any helper functions that already reside inside the evolve block) so that the algorithm produces a *perfect* circle packing inside the unit square (score = 1.0). All other parts of the program (imports, `run_packing()`, visualisation, etc.) are fixed and must remain untouched.
+
+---
+
+### 📋 Mandatory Output Rules (do **not** violate)
+
+1. **Scope of Output**  
+   - **Output ONLY** the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+   - **Do NOT** include the marker lines themselves.  
+   - **Do NOT** add any imports, global variables, or code outside this block (e.g., `run_packing`, top‑level imports, or utility functions that are already defined elsewhere).  
+
+2. **Function Signatures**  
+   - Preserve the exact signatures of `construct_packing()` and any helper functions already present in the evolve block.  
+   - Do not rename, remove, or add new top‑level functions; you may only modify the bodies or add *inner* helper functions inside the block.
+
+3. **No Extraneous Text**  
+   - The response must contain *only* valid Python code (no explanations, comments outside the code, or markdown formatting).
+
+---
+
+### 🚀 Guidance for Improving `construct_packing()`
+
+| What **worked** previously | How to extend / solidify it |
+|----------------------------|-----------------------------|
+| Uses a linear program (SciPy `linprog`) to maximise the sum of radii under wall and non‑overlap constraints. | Keep this LP core, but add a **post‑processing inflation step**: after solving for radii, compute the minimal slack to any constraint and increase each radius by a fraction (e.g., 0.9 × slack) to fill remaining space while staying feasible. |
+| Generates an initial lattice of candidate centre points (hexagonal spacing). | Enhance the lattice generation: create a dense hexagonal grid covering the unit square, then **filter** points that are too close to the boundary (distance < `initial_spacing/2`). This yields more candidate positions for the optimizer. |
+| Computes pairwise distances with NumPy broadcasting for efficiency. | Preserve vectorised distance computation, but cache the distance matrix once and reuse it for both wall and inter‑circle constraints to avoid recomputation. |
+| Returns `centers, radii` as NumPy arrays. | Ensure the returned arrays are **float64** and clipped to the feasible interval `[0, 0.5]` (the maximal radius that fits in a unit square). |
+
+#### Specific Strategies to Try
+
+1. **Tighten the LP formulation**  
+   - For each circle *i*, enforce `r_i <= min(x_i, y_i, 1‑x_i, 1‑y_i)` as separate linear constraints rather than a single “max‑radius” bound.  
+   - For each pair *(i, j)*, enforce `r_i + r_j <= dist_ij` where `dist_ij` is the Euclidean distance between centres. Use the pre‑computed distance matrix.
+
+2. **Iterative radius inflation**  
+   - After the LP solution, compute the slack for each constraint:  
+     - Wall slack: `min(x_i, y_i, 1‑x_i, 1‑y_i) - r_i`  
+     - Pairwise slack: `dist_ij - (r_i + r_j)` (take the minimum over *j*).  
+   - Increase each radius by `inflation_factor * min(wall_slack, pairwise_slack)` where `inflation_factor` ∈ (0, 1) (e.g., 0.9).  
+   - Repeat the inflation step a few times (2‑3 iterations) until the minimum slack falls below a tiny epsilon.
+
+3. **Adaptive lattice density**  
+   - Start with a relatively coarse hexagonal spacing (e.g., `0.1`).  
+   - If the LP solution yields many radii at the wall bound, **refine** the lattice locally: add extra points in regions where circles are small, then re‑run the LP on the enlarged set. This can be done in a single pass by generating a dense grid and letting the LP automatically set radii to zero for unused points.
+
+4. **Numerical stability**  
+   - Scale all distances and constraints by a factor (e.g., 1000) before feeding them to `linprog`, then scale the solution back. This reduces floating‑point rounding errors that sometimes prevent reaching the exact optimum.
+
+5. **Objective weighting**  
+   - Instead of maximizing the simple sum of radii, maximize a **weighted sum** that prefers larger circles: `objective = -np.ones(n)` (negative because `linprog` minimizes) works, but you can experiment with `objective = -np.linspace(1, 0.5, n)` to bias early circles to be larger, which often yields a tighter packing.
+
+---
+
+### 📌 What **NOT** to do (explicitly forbidden)
+
+- **Add new top‑level imports** inside the evolve block (e.g., `import math`). All required libraries are already imported elsewhere.  
+- **Change the function signatures** of `construct_packing()` or any existing helper functions.  
+- **Remove or comment out** the existing LP setup; the linear program is essential for achieving a perfect packing.  
+- **Introduce unrelated algorithms** (e.g., simulated annealing, genetic algorithms) that would require additional dependencies or external state.  
+- **Write explanatory text, markdown, or comments** outside the code block; only raw Python code is allowed.  
+
+---
+
+### ✅ Deliverable
+
+Return **only** the revised Python code that sits between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. The code should:
+
+- Implement the improved LP formulation and the iterative inflation step.  
+- Use the enhanced hexagonal lattice generator.  
+- Preserve the original function signatures.  
+
+The rest of the program will be merged automatically. Good luck!

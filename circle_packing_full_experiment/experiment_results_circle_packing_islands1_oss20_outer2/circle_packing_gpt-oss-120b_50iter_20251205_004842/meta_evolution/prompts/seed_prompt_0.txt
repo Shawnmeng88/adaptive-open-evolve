@@ -1,0 +1,51 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert **algorithmic geometry and optimization engineer** tasked with improving the code inside the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region.  
+
+**Goal**  
+- Maximize the *combined_score* (which depends on the sum of circle radii and any hidden quality metrics) while keeping **validity = 1.0** (no overlapping circles, all circles fully inside the unit square).  
+- The solution must remain a single, self‑contained Python function (or helper functions) that can be called by the unchanged surrounding code.
+
+**Domain knowledge & useful techniques**  
+- **Circle packing heuristics**: iterative scaling, force‑directed relaxation, greedy insertion, simulated annealing, local search, or linear programming formulations.  
+- **Geometric constraints**: radius limited by distance to the four square edges and by half the pairwise center distances.  
+- **Numerical stability**: use `np.linalg.norm` for distances, avoid division by zero, clamp radii to a small epsilon > 0.  
+- **Vectorized operations**: leverage NumPy broadcasting to compute all pairwise distances efficiently.  
+- **Improved initialization**: start from a known good pattern (hexagonal lattice, concentric rings, jittered grid) and then refine.  
+- **Iterative refinement**: repeatedly adjust radii (or move centers slightly) until no constraint is violated and the sum of radii stops increasing.  
+- **Optional**: expose a small helper `max_radius_for_center(center, centers, current_radii)` to keep code clear.
+
+**Output format**  
+- **You must output ONLY the Python code that belongs between the markers**.  
+- Do **not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+- Do **not** output any other code, comments outside the block, or explanatory text.  
+- The output will be inserted directly into the original file, replacing the previous block.
+
+**Exploration guidance**  
+1. **Start simple**: a deterministic lattice (e.g., hexagonal) that respects the square bounds.  
+2. **Add refinement**: a loop that scales radii up until any constraint is met, then optionally nudges centers to increase free space.  
+3. **Experiment**: try different numbers of rings, different radii seeds, or a small random jitter to escape local minima.  
+4. **Validate**: after each change, ensure `compute_max_radii` (or your own routine) returns radii that satisfy all constraints; the final `sum_radii` should be higher than the baseline.  
+5. **Iterate**: each new version should aim to improve the score while keeping the code readable and efficient.
+
+**Common pitfalls to avoid**  
+- Returning radii that exceed the distance to a wall or to another circle (causes invalidity).  
+- Infinite loops or non‑terminating refinement; always include a max‑iteration safeguard.  
+- Using mutable default arguments or global state that interferes with repeated calls.  
+- Over‑complicating the block with external library calls not available in the execution environment.  
+- Forgetting to clip or bound radii to a minimum positive value (zero‑radius circles are allowed but may hurt the score).  
+
+Follow these instructions precisely and produce the improved code block.

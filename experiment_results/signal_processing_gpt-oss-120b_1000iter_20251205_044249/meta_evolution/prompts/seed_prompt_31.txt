@@ -1,0 +1,80 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution (Construct Packing)**  
+
+You are to rewrite only the code that appears between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** output the markers themselves, any imports, or surrounding scaffolding (e.g., `run_packing`). The surrounding file will be merged automatically.
+
+### Core Task  
+Improve the implementation of `construct_packing()` and any helper functions defined inside the evolve block so that they correctly:
+
+1. **Validate input** – raise clear `ValueError` messages for missing keys, wrong types, or impossible dimensions.  
+2. **Compute container layout** – determine the number of rows, columns, and layers needed to fit all items given the container’s length, width, height, and the maximum allowed weight per container.  
+3. **Assign items to containers** – pack items using a deterministic, repeatable strategy (e.g., first‑fit decreasing by volume, then by weight) that respects both spatial and weight constraints.  
+4. **Return a structured result** – a dictionary with keys `containers` (list of container dicts, each containing its `items` and cumulative `weight`/`volume`) and `summary` (total containers used, total weight, total volume).  
+
+### Strict Prohibitions (must NOT be done)  
+- **Do not** make the prompt overly aggressive or vague; every requirement must be explicit and bounded.  
+- **Do not** produce code that ignores the required output format or adds extra top‑level statements.  
+- **Do not** leave any “TODO” placeholders; the function must be fully operational.  
+- **Do not** rely on external libraries that are not already imported in the surrounding file.  
+- **Do not** generate code that will cause syntax errors, undefined variables, or infinite loops.  
+
+### Mandatory Output‑Format Instruction (must be included verbatim)  
+> Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+> Do NOT include the markers themselves in your output.  
+> Do NOT include any code outside the markers (imports, `run_packing`, etc.).  
+
+### Suggested Concrete Strategies  
+
+1. **Pre‑process items**  
+   - Compute each item’s volume (`l * w * h`).  
+   - Sort items descending by volume, then by weight.  
+
+2. **Container capacity helpers**  
+   - Write a helper `fits_spatially(container, item)` that checks whether the remaining length/width/height can accommodate the item using a simple grid‑cell model (e.g., track used rows × columns).  
+   - Write a helper `fits_weight(container, item)` that checks the remaining weight allowance.  
+
+3. **First‑Fit Decreasing (FFD) packing loop**  
+   - Iterate over the sorted items.  
+   - For each item, try to place it into the first existing container where both `fits_spatially` and `fits_weight` return `True`.  
+   - If none fit, create a new container with fresh capacity counters and place the item there.  
+
+4. **Update container state**  
+   - After placing an item, update the container’s used volume, used weight, and a simple occupancy map (e.g., increment a `filled_cells` counter).  
+   - Ensure that the occupancy map never exceeds the total cells derived from container dimensions (`(length // min_item_len) * (width // min_item_wid) * (height // min_item_hei)`).  
+
+5. **Return structure**  
+   - Build the `containers` list where each container dict contains:  
+     ```python
+     {
+         "id": <int>,
+         "items": [<item dicts>],
+         "total_weight": <float>,
+         "total_volume": <float>,
+         "used_cells": <int>
+     }
+     ```  
+   - Build the `summary` dict with totals and include it in the top‑level return dict.  
+
+6. **Edge‑case handling**  
+   - If any single item exceeds the container’s max weight or dimensions, raise a `ValueError` with a descriptive message.  
+   - If the input payload is empty or missing required keys (`items`, `container_spec`), raise a `ValueError`.  
+
+7. **Determinism**  
+   - Use only deterministic operations (no random shuffling).  
+   - Keep the container IDs sequential (starting at 1) to aid testing.  
+
+Follow these guidelines precisely and produce only the required code block.

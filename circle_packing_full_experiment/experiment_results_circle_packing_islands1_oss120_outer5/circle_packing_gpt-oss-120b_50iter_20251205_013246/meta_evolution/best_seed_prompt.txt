@@ -1,0 +1,66 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code‑Evolution Block**
+
+You are to generate **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do not** output the markers themselves.  
+- **Do not** include any imports, helper definitions, or code that lies outside the evolve block (e.g., `run_packing`, global constants, etc.).  
+- The surrounding harness will automatically merge your output with the preserved sections.
+
+### Goal
+Rewrite and improve the functions inside the evolve block, **especially** `construct_packing()` and any private helpers it uses, so that when `run_packing()` is executed:
+
+1. The **validity** metric is exactly 1.0 (all circles fully inside the unit square and pairwise non‑overlapping).  
+2. The **combined_score** (sum of radii or any other scoring component used by the evaluator) is maximized.
+
+### Constraints & Pitfalls to Avoid
+- **Never** produce circles that extend beyond the unit square (center ± radius must lie in `[0,1]`).  
+- **Never** allow two circles to intersect (distance between centers must be ≥ sum of radii).  
+- Do **not** rely on random sampling without a deterministic fallback; the evaluator expects reproducible results.  
+- Do **not** hard‑code a single static layout unless you can prove it is optimal for 26 circles.  
+- Avoid using external libraries that are not already imported in the surrounding code (e.g., `cvxpy`). Only `numpy` and `scipy.optimize.linprog` are guaranteed to be available.
+
+### Recommended Strategies
+1. **Structured Grid + LP Optimization**  
+   - Start with a deterministic lattice (e.g., a 5 × 5 square grid plus an extra point at the centre or a vertex).  
+   - Formulate a linear program that maximizes the sum of radii subject to:
+     - `r_i ≤ min(x_i, 1‑x_i, y_i, 1‑y_i)` (boundary constraints).  
+     - `r_i + r_j ≤ dist(i, j)` for every pair `(i, j)` (non‑overlap constraints).  
+   - Solve with `scipy.optimize.linprog` (objective: `-np.ones(n)` to maximize sum of radii).  
+   - Return the resulting radii and the original centers.
+
+2. **Hexagonal / Triangular Packing Seed**  
+   - Generate a hexagonal lattice that fits inside the unit square (spacing `s = sqrt(3)/2 * d`, where `d` is the desired inter‑center distance).  
+   - Trim excess points to exactly 26 circles.  
+   - Use the same LP refinement as above to enlarge radii as much as possible while respecting constraints.
+
+3. **Iterative Radius Inflation**  
+   - After obtaining an initial feasible radii set (e.g., from the LP), perform a few deterministic “inflation” passes:
+     - For each circle, compute the minimum of its boundary margin and half the distance to each neighbor minus the neighbor’s current radius.  
+     - Increase the radius by a small fraction (e.g., 5 %) of that minimum, clamping to the feasible limit.  
+   - This can squeeze a few extra percent of total radius without breaking validity.
+
+4. **Symmetry Exploitation**  
+   - Keep the layout symmetric (mirror across both axes). Symmetry reduces the number of unique constraints and often yields higher total radii.
+
+### Implementation Tips
+- Keep helper functions **private** (prefix with `_`) to avoid name clashes.  
+- Use `np.linalg.norm` for Euclidean distances; vectorize pairwise distance computation for clarity.  
+- Cache the pairwise distance matrix once; reuse it when building LP constraints.  
+- Return a tuple `(centers, radii)` where `centers` is an `np.ndarray` of shape `(n,2)` and `radii` is a 1‑D `np.ndarray`.  
+
+### Output Requirement Recap
+Your response must consist **solely** of the revised code that belongs inside the evolve block, nothing else. The system will insert it between the existing `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.

@@ -1,0 +1,64 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an autonomous code‑generation assistant tasked with evolving the **`construct_packing()`** function (and any helper functions) inside the designated evolve block. Follow **exactly** the rules below; any deviation will cause the program to be rejected.
+
+---
+
+### ❗️ Mandatory Output Format
+- **Only** output the Python code that belongs **between** the lines `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- **Do not** include the marker comments themselves.
+- **Do not** output any imports, the surrounding `run_packing()` wrapper, or any other code outside the evolve block.
+- The system will automatically splice your output into the preserved skeleton.
+
+### ✅ What You Must Do
+1. **Read the existing skeleton** (the system will provide it) and understand the current contract of `construct_packing()`:
+   - It receives a list of items (each with `weight`, `volume`, `value`, and optional `category`).
+   - It must return a packing plan that respects **capacity constraints** (max weight, max volume) and **category limits** (e.g., at most N items of a given category).
+   - The goal is to **maximize total value** while satisfying all constraints.
+
+2. **Improve the algorithm** inside the evolve block only. You may add or modify helper functions, but they must remain inside the block.
+
+3. **Suggested concrete strategies** (pick **one** or combine sensibly):
+   - **Dynamic programming with weight‑volume state**: build a 2‑D DP table `dp[w][v]` storing the best value and a back‑pointer list of selected items.
+   - **Branch‑and‑bound depth‑first search**: sort items by value‑to‑resource ratio, prune branches that exceed weight/volume or cannot beat the current best.
+   - **Greedy‑plus‑local‑search**: start with a greedy fill (highest value‑density), then iteratively swap out low‑value items for higher‑value combos that fit.
+   - **Mixed‑integer linear programming (MILP) fallback**: if the problem size ≤ 30 items, formulate a small MILP and solve with `scipy.optimize.linprog` (or a pure‑Python simplex) inside the block.
+   - **Category‑aware heuristic**: enforce per‑category caps first, then apply any of the above methods on the remaining feasible set.
+
+4. **Maintain clear, self‑contained code**:
+   - Use type hints and docstrings for every public helper.
+   - Return a dictionary `{ "selected_items": [...], "total_weight": ..., "total_volume": ..., "total_value": ... }`.
+   - Validate inputs and raise `ValueError` with an informative message if constraints are malformed.
+
+5. **Performance considerations**:
+   - Aim for O(N · W · V) time for DP where `W` and `V` are the integer capacity limits; if those limits are large, switch to the branch‑and‑bound heuristic.
+   - Keep memory usage under 256 MB; if DP table would exceed that, fall back to the greedy‑plus‑local‑search approach.
+
+### 🚫 What You Must NOT Do
+- **Do not** write an overly aggressive or vague prompt that leaves constraints unspecified; every constraint (weight, volume, category caps) must be explicitly referenced in your code.
+- **Do not** generate code that ignores the capacity limits or category restrictions.
+- **Do not** produce repeated invalid programs (e.g., missing return statements, syntax errors, or referencing undefined variables). Validate your code mentally before output.
+- **Do not** include any code outside the evolve block (imports, `run_packing()`, test harnesses, etc.).
+- **Do not** use external libraries that are not guaranteed to be available in the execution environment (e.g., `pulp`, `ortools`). Stick to the Python standard library.
+
+### 📋 Final Checklist Before Submitting
+- [ ] Code is **only** the body of `construct_packing()` and any helper functions, no markers.
+- [ ] All functions are fully defined, syntactically correct, and return the required packing plan.
+- [ ] All constraints (weight, volume, category limits) are enforced.
+- [ ] No external dependencies beyond the standard library.
+- [ ] The solution follows one of the concrete strategies above and includes clear comments explaining the approach.
+
+When you are ready, output the updated code block **exactly** as described. Good luck!

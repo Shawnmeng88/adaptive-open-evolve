@@ -1,0 +1,68 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for Evolving the Packing Algorithm**
+
+You are to modify **only** the functions that appear between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` comments in the supplied script. All other code (imports, `run_packing()`, visualisation, etc.) is frozen and will be merged automatically.
+
+### Mandatory Output Rules  
+1. **Output ONLY the Python code that belongs between the markers.**  
+2. **Do NOT include the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines themselves.**  
+3. **Do NOT output any code outside that region** (no imports, no top‑level statements, no explanatory text).  
+4. The system will splice your answer into the original file; any extra text, markers, or whitespace outside the code block will cause a runtime error.
+
+### Goal  
+For `n = 26` circles inside the unit square, construct a packing with maximal total area (or equivalently maximal minimal radius) while respecting all constraints:
+- Each circle must lie completely inside the unit square.
+- No two circles may overlap (distance between centers ≥ sum of radii).
+
+### What Worked Previously (keep these ideas)  
+- Use **NumPy** for vectorised distance calculations.  
+- Compute a safe maximal radius for each circle as the minimum of:
+  * Distance to the nearest square edge.
+  * Half the distance to the nearest other centre.  
+- After an initial placement, iteratively **shrink** radii that violate constraints and **re‑expand** where possible.
+
+### What Must NOT Be Done (avoid these failures)  
+- Do **not** write code that performs aggressive random jumps without re‑checking constraints; this caused high invalidity rates.  
+- Do **not** omit any constraint checks (border or pairwise) – missing a single check leads to invalid programs.  
+- Do **not** introduce new global variables or import statements inside the evolve block; imports belong in the frozen section.  
+- Do **not** use recursion or deep loops that can exceed the execution time limit.  
+- Do **not** return partially‑filled structures or `None` when a full packing is expected – this caused validity failures in earlier iterations.
+
+### Suggested Strategies (you may combine them)  
+1. **Vectorised Distance Matrix**  
+   - Compute the full `n×n` distance matrix with `np.linalg.norm` on the centre array.  
+   - Mask the diagonal to ignore self‑distances.  
+2. **Initial Uniform Grid or Low‑Discrepancy Sequence**  
+   - Start with a deterministic layout (e.g., Sobol or Halton sequence) to give a good baseline before refinement.  
+3. **Iterative Radius Adjustment Loop**  
+   - For a fixed number of passes (e.g., 20‑30):  
+     a. Compute `max_radius_i = min(edge_dist_i, 0.5 * min_j≠i pair_dist_ij)`.  
+     b. Optionally apply a small relaxation factor (e.g., `*0.99`) to stay safely inside constraints.  
+     c. Update radii array in place.  
+4. **Local Perturbation for Stuck Configurations**  
+   - If after several passes the total area improvement falls below a threshold, apply a tiny random jitter to a subset of centres and continue the adjustment loop.  
+5. **Return Structure**  
+   - The function must return a tuple `(centers, radii)` where `centers` is an `n×2` NumPy array and `radii` is a length‑`n` NumPy array.  
+
+### Implementation Checklist  
+- [ ] Use only NumPy operations; no external libraries.  
+- [ ] Keep all helper functions defined **inside** the evolve block.  
+- [ ] Ensure every centre is inside `[0,1]` after any jitter.  
+- [ ] Guarantee `radii >= 0` and that no radius exceeds its border distance.  
+- [ ] The final radii must satisfy `pairwise distance >= 2 * radius` for all pairs.  
+
+Follow these instructions precisely. Your output should be **only** the Python code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. No additional text, comments outside the code, or markers are allowed. Good luck!

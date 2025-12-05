@@ -1,0 +1,63 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for Evolving the Packing Algorithm**
+
+You are allowed to edit **only** the functions that appear between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` comments in the supplied script. All other parts of the file (imports, `run_packing()`, visualisation, etc.) are frozen and will be merged automatically.
+
+### Mandatory Output Rules  
+1. **Output ONLY the Python code that belongs between the markers.**  
+2. **Do NOT include the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines themselves.**  
+3. **Do NOT output any code, comments, or whitespace outside that region** (no imports, no top‑level statements, no explanatory text).  
+4. The system will splice your answer into the original file; any extra text, markers, or stray characters will cause a runtime error.
+
+### Goal  
+For `n = 26` circles inside the unit square, construct a packing that maximises the minimal circle radius while respecting:
+
+* **Boundary constraint:** each circle must stay entirely inside the unit square.  
+* **Non‑overlap constraint:** distance between any two circle centers ≥ sum of their radii.  
+
+The evaluation metric is the average radius across all circles; higher is better.
+
+### Focus Area  
+Improve **only** the `construct_packing()` function and any helper functions defined within the evolve block. Do **not** modify `run_packing()` or any code outside the block.
+
+### What to Keep (successful ideas)  
+* Use NumPy for vectorised distance calculations.  
+* Compute a safe maximal radius for each circle as the minimum of:  
+  * distance to the nearest square edge, and  
+  * half the distance to the nearest other center.  
+* Return two arrays: `centers` (shape `(n, 2)`) and `radii` (shape `(n,)`).
+
+### What to Avoid (previous failures)  
+* **Aggressive heuristic loops** that frequently violate constraints – they caused high invalidity rates.  
+* **Repeated attempts without early exit** – led to many consecutive invalid programs.  
+* **Returning incomplete or mismatched array shapes** – caused validity failures.  
+* **Adding new imports or external dependencies** – the frozen part of the file already imports everything needed.  
+
+### Suggested Strategies (try one or combine)  
+1. **Greedy radius capping:** after generating a candidate set of centers (e.g., via low‑discrepancy Sobol sequence or jittered grid), compute the radius for each circle as described above and then **clip** any radius that would cause overlap by re‑evaluating distances iteratively a fixed small number of times (e.g., 2 passes).  
+2. **Iterative repulsion with radius scaling:** start with tiny radii, apply a few steps of a simple repulsive force (`delta = centers[i] - centers[j]`), move centers a fraction of the normalized delta, then recompute radii using the safe‑radius formula. Limit the number of repulsion steps to keep runtime low and avoid divergence.  
+3. **Boundary‑first placement:** place circles that are closest to the square edges first, fixing their radii, then place remaining circles in the interior using the same safe‑radius rule. This reduces the chance of later circles spilling over the border.  
+4. **Deterministic lattice with jitter:** generate a regular grid that roughly fits 26 points, add a small random jitter (≤ 0.02) to each point to break symmetry, then compute safe radii. This often yields a valid packing with decent average radius.  
+
+### Implementation Checklist  
+- Keep function signatures unchanged.  
+- Use only NumPy (already imported).  
+- Return `centers, radii` as NumPy arrays of correct shapes.  
+- Ensure every radius is **non‑negative** and respects both constraints.  
+- Do not introduce new global variables; keep everything local to the evolve block.  
+
+Follow the mandatory output rules exactly. Good luck!

@@ -1,0 +1,68 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are to modify only the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** add, remove, or edit any code outside this region (including imports, the `run_packing()` driver, or the marker comments themselves).
+
+### CRITICAL OUTPUT REQUIREMENTS
+- **Output ONLY** the Python statements that belong **between** the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` lines.  
+- **Do NOT** include the marker comments themselves.  
+- **Do NOT** output any additional text, explanations, or markdown.  
+
+### FOCUS OF CHANGES
+Improve the implementation of `construct_packing()` and any helper functions defined inside the evolve block (e.g., `generate_centers`, `compute_max_radii`, or similar). Preserve the exact function signatures; the surrounding program will call them unchanged.
+
+### WHAT TO KEEP (PROVEN SUCCESS)
+- Use `numpy` for vectorized distance calculations.
+- Build an initial hexagonal lattice of candidate circle centers.
+- Select a subset of centers that maximizes the sum of feasible radii (e.g., greedy selection based on nearest‑neighbor distances).
+- Perform a lightweight stochastic refinement (small random perturbations with acceptance only if constraints remain satisfied).
+
+### WHAT TO AVOID (FAILED APPROACHES)
+- Introducing heavyweight external optimizers or constraint‑solvers that caused validity failures.
+- Removing or weakening the non‑overlap constraint; circles must never intersect and must stay inside the prescribed container.
+- Using fixed‑step deterministic updates that get stuck in local minima; incorporate randomness but keep acceptance criteria strict.
+
+### SUGGESTED STRATEGIES (CONCRETE, DOMAIN‑SPECIFIC)
+1. **Vectorized Radius Computation**  
+   - For each candidate center compute the distance to the nearest neighbor and to the container boundary (e.g., hexagon side distance).  
+   - Set the feasible radius as `min(neighbor_dist/2, boundary_dist)`.  
+   - Use `np.linalg.norm` on a stacked array of center coordinates for efficiency.
+
+2. **Greedy Subset Selection**  
+   - Sort candidates by their feasible radius in descending order.  
+   - Iterate, adding a center to the packing only if its feasible radius remains positive after accounting for already‑selected circles (re‑compute distances only against the selected set).  
+   - This yields a high‑quality initial set with a strong total radius.
+
+3. **Stochastic Refinement Loop**  
+   - Run a fixed number of iterations (e.g., 2000).  
+   - Randomly pick a selected circle and propose a small displacement (`Δx, Δy` drawn from a normal distribution with σ≈0.02 of the container size).  
+   - Re‑compute its radius given the new position; accept the move only if the new radius is ≥ the old radius **and** no overlap is introduced.  
+   - Optionally allow a small probability of accepting a slight decrease to escape shallow minima (simulated‑annealing style).
+
+4. **Boundary Handling for Hexagonal Container**  
+   - Implement a helper `distance_to_hexagon(point, side_length)` that returns the minimal distance from `point` to any of the six sides.  
+   - Use this value as part of the feasible radius calculation.
+
+5. **Numerical Stability Checks**  
+   - Clamp radii to a small epsilon (e.g., `1e-6`) to avoid zero‑radius circles.  
+   - Ensure all returned radii are non‑negative floats.
+
+### IMPLEMENTATION GUIDELINES
+- Keep all helper functions self‑contained within the evolve block; do not import new modules beyond `numpy` (already available).  
+- Preserve the function signatures exactly as they appear in the original code.  
+- Do not add global variables; any constants (e.g., container side length, iteration counts) should be defined locally or as default arguments.  
+- Ensure the final `construct_packing()` returns two arrays: `centers` (shape `(N,2)`) and `radii` (shape `(N,)`) matching the rest of the program’s expectations.  
+
+Follow the CRITICAL OUTPUT REQUIREMENTS strictly; any deviation will cause the evaluation to fail.

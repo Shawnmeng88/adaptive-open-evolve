@@ -1,0 +1,145 @@
+# EVOLVE-BLOCK-START
+import numpy as np
+
+def simple_ma(x,w):
+    if len(x)<w: raise ValueError("Signal shorter than window")
+    return np.convolve(x,np.ones(w)/w,"valid")
+
+def weighted_ma(x,w):
+    if len(x)<w: raise ValueError("Signal shorter than window")
+    wts=np.exp(np.linspace(-2,0,w))
+    wts/=wts.sum()
+    return np.convolve(x,wts[::-1],"valid")
+
+def median_ma(x,w):
+    if len(x)<w: raise ValueError("Signal shorter than window")
+    out=np.empty(len(x)-w+1)
+    for i in range(len(out)): out[i]=np.median(x[i:i+w])
+    return out
+
+def exp_smooth(x,alpha=0.2):
+    s=np.empty_like(x,float)
+    s[0]=x[0]
+    for i in range(1,len(x)): s[i]=alpha*x[i]+(1-alpha)*s[i-1]
+    return s
+
+def holt(x,w,a=0.3,b=0.1):
+    if len(x)<w: raise ValueError("Signal shorter than window")
+    lvl=x[:w].mean()
+    trd=(x[w-1]-x[0])/(w-1)
+    out=[]
+    for v in x[w-1:]:
+        lvl=a*v+(1-a)*(lvl+trd)
+        trd=b*((lvl-out[-1]) if out else lvl)+(1-b)*trd
+        out.append(lvl)
+    return np.array(out)
+
+def process_signal(sig,w=20,typ="weighted"):
+    typ=typ.lower()
+    if typ=="simple": return simple_ma(sig,w)
+    if typ=="weighted": return weighted_ma(sig,w)
+    if typ=="median": return median_ma(sig,w)
+    if typ in ("ses","exp"): return exp_smooth(sig)
+    if typ in ("holt","enhanced"): return holt(sig,w)
+    return weighted_ma(sig,w)
+# EVOLVE-BLOCK-END
+
+
+def generate_test_signal(length=1000, noise_level=0.3, seed=42):
+    """
+    Generate synthetic test signal with known characteristics.
+
+    Args:
+        length: Length of the signal
+        noise_level: Standard deviation of noise to add
+        seed: Random seed for reproducibility
+
+    Returns:
+        Tuple of (noisy_signal, clean_signal)
+    """
+    np.random.seed(seed)
+    t = np.linspace(0, 10, length)
+
+    # Create a complex signal with multiple components
+    clean_signal = (
+        2 * np.sin(2 * np.pi * 0.5 * t)  # Low frequency component
+        + 1.5 * np.sin(2 * np.pi * 2 * t)  # Medium frequency component
+        + 0.5 * np.sin(2 * np.pi * 5 * t)  # Higher frequency component
+        + 0.8 * np.exp(-t / 5) * np.sin(2 * np.pi * 1.5 * t)  # Decaying oscillation
+    )
+
+    # Add non-stationary behavior
+    trend = 0.1 * t * np.sin(0.2 * t)  # Slowly varying trend
+    clean_signal += trend
+
+    # Add random walk component for non-stationarity
+    random_walk = np.cumsum(np.random.randn(length) * 0.05)
+    clean_signal += random_walk
+
+    # Add noise
+    noise = np.random.normal(0, noise_level, length)
+    noisy_signal = clean_signal + noise
+
+    return noisy_signal, clean_signal
+
+
+def run_signal_processing(signal_length=1000, noise_level=0.3, window_size=20):
+    """
+    Run the signal processing algorithm on a test signal.
+
+    Returns:
+        Dictionary containing results and metrics
+    """
+    # Generate test signal
+    noisy_signal, clean_signal = generate_test_signal(signal_length, noise_level)
+
+    # Process the signal
+    filtered_signal = process_signal(noisy_signal, window_size, "enhanced")
+
+    # Calculate basic metrics
+    if len(filtered_signal) > 0:
+        # Align signals for comparison (account for processing delay)
+        delay = window_size - 1
+        aligned_clean = clean_signal[delay:]
+        aligned_noisy = noisy_signal[delay:]
+
+        # Ensure same length
+        min_length = min(len(filtered_signal), len(aligned_clean))
+        filtered_signal = filtered_signal[:min_length]
+        aligned_clean = aligned_clean[:min_length]
+        aligned_noisy = aligned_noisy[:min_length]
+
+        # Calculate correlation with clean signal
+        correlation = np.corrcoef(filtered_signal, aligned_clean)[0, 1] if min_length > 1 else 0
+
+        # Calculate noise reduction
+        noise_before = np.var(aligned_noisy - aligned_clean)
+        noise_after = np.var(filtered_signal - aligned_clean)
+        noise_reduction = (noise_before - noise_after) / noise_before if noise_before > 0 else 0
+
+        return {
+            "filtered_signal": filtered_signal,
+            "clean_signal": aligned_clean,
+            "noisy_signal": aligned_noisy,
+            "correlation": correlation,
+            "noise_reduction": noise_reduction,
+            "signal_length": min_length,
+        }
+    else:
+        return {
+            "filtered_signal": [],
+            "clean_signal": [],
+            "noisy_signal": [],
+            "correlation": 0,
+            "noise_reduction": 0,
+            "signal_length": 0,
+        }
+
+
+if __name__ == "__main__":
+    # Test the algorithm
+    results = run_signal_processing()
+    print(f"Signal processing completed!")
+    print(f"Correlation with clean signal: {results['correlation']:.3f}")
+    print(f"Noise reduction: {results['noise_reduction']:.3f}")
+    print(f"Processed signal length: {results['signal_length']}")

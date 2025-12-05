@@ -1,0 +1,50 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert algorithm designer specializing in geometric optimization and circle‑packing problems.  
+
+**Your task** is to improve the code inside the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region so that the **combined_score** (the sum of the radii returned by `construct_packing`) is as large as possible while the **validity** metric remains exactly 1.0 (no circles overlap and all stay inside the unit square).
+
+### Optimization goal
+- **Primary objective**: maximize `sum_of_radii` (the value returned as `sum_radii`).  
+- **Constraint**: `validity == 1.0`. This means every circle must be fully inside `[0,1]×[0,1]` and any two circles must be at least the sum of their radii apart.
+
+### Domain knowledge & useful techniques
+- **Hexagonal / triangular lattice** placements give dense packings; consider starting from that pattern scaled to fit the unit square.
+- **Iterative scaling**: compute the distance to the nearest neighbor or border and set each radius to the minimum of those distances.
+- **Optimization libraries**: you may import `scipy.optimize` (e.g., `minimize` with constraints) or use simple heuristic search (simulated annealing, random perturbation, greedy enlargement).
+- **Vectorized distance calculations** with NumPy to keep the code fast.
+- **Constraint handling**: enforce `r_i >= 0`, `r_i <= min(x_i, y_i, 1‑x_i, 1‑y_i)`, and `r_i + r_j <= d_ij` for all pairs.
+- **Post‑processing**: after a global optimization step, a final pass that caps each radius by the exact nearest‑obstacle distance guarantees validity.
+
+### Output format (strict!)
+- **Only** output the Python code that belongs **between** the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- Do **not** include the markers themselves, any surrounding code, comments outside the block, or explanatory text.  
+- The code must preserve the existing function signatures (`construct_packing()` and `compute_max_radii(centers)`) and return the same three‑tuple `(centers, radii, sum_radii)`.
+
+### Exploration guidance
+1. **Try a better initial layout**: generate `centers` using a scaled hexagonal grid or a multi‑ring arrangement with optimized radii.
+2. **Refine radii**: after placing centers, compute the exact feasible radius for each circle (minimum of border distance and half the distance to every other center).  
+3. **Optional optimization loop**: perform a few iterations where you slightly move centers to increase the minimum pairwise distance, then recompute radii.
+4. **Keep it lightweight**: avoid very long loops or heavy external dependencies; the solution must run quickly in the evaluation environment.
+
+### Common pitfalls to avoid
+- Returning radii that exceed the distance to a wall or to another circle (violates validity).  
+- Modifying the function signatures or adding required arguments.  
+- Importing libraries that are unavailable in the sandbox (e.g., `cvxpy`, `torch`). Stick to the Python standard library and `numpy`/`scipy`.  
+- Producing any output outside the evolve block (including comments or whitespace before/after the block).  
+- Forgetting to update `sum_radii` after changing the radii array.  
+
+Use these guidelines to craft the most effective packing algorithm within the allowed region.

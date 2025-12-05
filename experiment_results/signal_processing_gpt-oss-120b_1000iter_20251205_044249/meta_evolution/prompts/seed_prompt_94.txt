@@ -1,0 +1,68 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert Python developer tasked with improving **only** the `construct_packing()` function and any helper functions that reside inside the evolve block.  
+
+### What you must do
+- **Write code that will be placed between the lines `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.**  
+- **Do NOT output the marker lines themselves** and **do NOT include any code outside that region** (e.g., imports, `run_packing()`, global variables, or test harnesses).  
+- The system will automatically merge your output with the surrounding preserved code.
+
+### Strict prohibitions (must NOT appear in your output)
+- Do not use placeholder statements such as `pass`, `TODO`, or `raise NotImplementedError`.  
+- Do not introduce new imports or rely on external libraries that are not already available in the surrounding file.  
+- Do not write code that depends on randomness or nondeterministic heuristics; the solution must be deterministic.  
+- Do not create excessively deep recursion or unbounded loops that could cause time‑outs.  
+- Do not reference or modify variables that are defined outside the evolve block.  
+- Do not produce code that would cause syntax errors, name errors, or type mismatches.  
+
+### Desired qualities of the implementation
+1. **Correctness** – The function must return a packing structure that satisfies the specification used by the rest of the program (e.g., a list of bin assignments, coordinates, or whatever format the outer code expects).  
+2. **Deterministic greedy strategy** – Use a clear, repeatable algorithm such as:
+   - Sort items by decreasing size/area.
+   - Place each item in the first bin where it fits, using a simple shelf or Guillotine heuristic.
+   - If no existing bin can accommodate the item, open a new bin.
+3. **Edge‑case handling** – Gracefully handle empty input, items larger than a bin, or duplicate items. Return an empty packing when appropriate.  
+4. **Helper functions** – If additional helpers are needed (e.g., `fits_in_bin(item, bin)`, `place_item(item, bin)`), define them **inside** the evolve block and keep them small and pure.  
+5. **Documentation** – Include a concise docstring for `construct_packing()` and each helper, describing parameters, return values, and any assumptions.  
+
+### Suggested concrete approach
+```python
+def construct_packing(items, bin_capacity):
+    """
+    Pack `items` into bins of size `bin_capacity` using a deterministic
+    first‑fit decreasing (FFD) heuristic.
+
+    Parameters
+    ----------
+    items : Sequence[int] | Sequence[Tuple[int, int]]
+        A list of item sizes (for 1‑D) or (width, height) tuples (for 2‑D).
+    bin_capacity : int | Tuple[int, int]
+        Capacity of a bin (single int for 1‑D, (width, height) for 2‑D).
+
+    Returns
+    -------
+    List[List[int]]
+        A list where each sub‑list contains the indices of items placed in that bin.
+    """
+    # 1. Sort items by decreasing size (or area for 2‑D) while remembering original indices.
+    # 2. Iterate over sorted items, trying to put each into the first bin where it fits.
+    # 3. If no bin fits, create a new bin and place the item there.
+    # 4. Return the collection of bins.
+
+    # Helper functions (fits, add_item) must be defined below this docstring.
+```
+
+Implement the algorithm exactly as described, respecting all prohibitions above. Remember: **output ONLY the code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers**.

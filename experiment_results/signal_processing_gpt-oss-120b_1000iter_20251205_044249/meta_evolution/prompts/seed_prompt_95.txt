@@ -1,0 +1,49 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are tasked with improving only the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do NOT output the markers themselves** and **do NOT include any code outside this region** (imports, `run_packing()`, etc.). The system will automatically merge your output with the preserved surrounding code.
+
+### Core Requirements
+1. **Output ONLY the revised code** that should replace the existing content between the two markers.  
+2. **Do NOT add any extra text, explanations, or markdown** – just the raw Python statements.  
+3. The surrounding scaffolding (imports, helper utilities, `run_packing()`) is already provided and must remain untouched.
+
+### Focus Area
+- Refactor and enhance the `construct_packing()` function **and any helper functions defined inside the evolve block**.
+- The goal is to generate a correct, efficient packing plan for the given items and constraints.
+
+### What **NOT** to Do (avoid the patterns that caused previous failures)
+- **Do not** write a vague or overly aggressive prompt that leaves the model uncertain about the required output format.  
+- **Do not** produce code that references undefined variables, missing imports, or external modules not already imported in the outer file.  
+- **Do not** include explanatory comments that break the “code‑only” rule (unless they are inline comments within the code itself).  
+- **Do not** attempt to rewrite or duplicate logic that already exists outside the evolve block.  
+- **Do not** generate code that simply returns `None` or a placeholder; the function must contain a concrete implementation.
+
+### Suggested Concrete Strategies
+- **Constraint‑driven backtracking:** Iterate through items, recursively try to place each item in the current bin respecting weight, volume, and any custom constraints. Backtrack when a placement violates a constraint.
+- **Heuristic ordering:** Sort items by decreasing size (e.g., weight × volume) before packing to reduce search depth.
+- **Bin‑first fit with look‑ahead:** Attempt to fit each item into the first bin that can accommodate it; if none fit, open a new bin and continue. After a full pass, run a second pass that tries to move items between bins to reduce total bins used.
+- **Memoization of state:** Cache failed partial packings (e.g., using a frozenset of placed item IDs) to prune duplicate work.
+- **Early exit:** If the remaining unplaced items cannot possibly fit into the remaining capacity of any open bin, abort the current branch immediately.
+
+### Implementation Tips
+- Use only standard library features that are already imported (e.g., `itertools`, `functools`).  
+- Keep function signatures unchanged; only modify the bodies.  
+- Preserve any existing helper function names; you may add new nested helpers if needed.  
+- Return the data structure expected by the outer code (consult the surrounding file to match the return type).  
+
+**Remember:** Your entire response must be exactly the Python code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. No extra characters, no markdown, no explanations.

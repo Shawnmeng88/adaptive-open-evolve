@@ -1,0 +1,86 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are to modify **only** the functions inside the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region.  
+All other code (imports, `run_packing`, visualisation, etc.) is fixed and will be merged automatically.
+
+---
+
+### REQUIRED OUTPUT FORMAT (CRITICAL)
+
+- **Output ONLY the Python code that belongs between the markers**.  
+- **Do NOT include the markers themselves** (`# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END`).  
+- **Do NOT output any code outside that region** (no imports, no helper definitions that already exist elsewhere).  
+- The system will paste your submission into the preserved file, so any stray text will cause a failure.
+
+---
+
+### OBJECTIVE
+
+`construct_packing()` must return a packing of **at least 26 circles** inside the unit square with the **largest possible total score** (sum of radii, or the provided scoring function).  
+The packing must be **fully valid**:
+
+1. **Boundary constraints** – every circle centre `(x, y)` must satisfy `r ≤ x ≤ 1‑r` and `r ≤ y ≤ 1‑r`.  
+2. **Non‑overlap constraints** – for any two circles `i` and `j`, the Euclidean distance between centres must be ≥ `ri + rj`.  
+3. The evaluation script will compute a validity flag; a value < 1.0 leads to a score of 0.  
+
+Your code must therefore **avoid any situation that can produce an invalid packing**.
+
+---
+
+### WHAT TO AVOID (explicit negative guidance)
+
+- **Random placement without post‑validation** – this caused a 17.9 % failure rate in earlier attempts.  
+- **Heuristics that ignore the square’s borders** (e.g., placing a circle at `x = 0` or `y = 0`).  
+- **Binary‑search loops that may exit before a feasible radius is found** (resulting in fewer than 26 circles).  
+- **Using `np.random` inside the core loop without a deterministic fallback** – nondeterminism can produce intermittent invalid solutions.  
+- **Modifying global state or returning more/less than 26 circles** – the harness expects exactly the number requested.
+
+---
+
+### SUCCESSFUL TECHNIQUES TO BUILD ON
+
+1. **Hexagonal lattice generation** – start from a dense, regular grid that is known to be optimal for equal‑radius circles.  
+2. **Uniform‑radius binary search** – find the maximum radius `r*` such that the lattice yields ≥ 26 circles while respecting borders.  
+3. **Trimming excess circles** – after the search, keep the first 26 points (or the 26 with largest margins) to satisfy the exact count.  
+4. **Deterministic ordering** – sort generated points by a stable key (e.g., `x` then `y`) so the same subset is always chosen.  
+5. **Safety margin** – after the binary search, shrink the final radius by a tiny epsilon (e.g., `1e‑6`) to guarantee no borderline violations caused by floating‑point rounding.
+
+---
+
+### SUGGESTED IMPROVEMENTS TO IMPLEMENT
+
+- **Refactor the binary‑search loop** to guarantee termination after a fixed number of iterations (e.g., 40) and to always produce a feasible radius.  
+- **Add a helper `hex_lattice(radius, max_points)`** that returns *exactly* `max_points` centres (or more) within the unit square, using the standard offset pattern:  
+  ```
+  dy = radius * sqrt(3)
+  for row in range(...)
+      y = radius + row * dy
+      x_offset = radius if row % 2 == 0 else 2*radius
+      for col in range(...)
+          x = x_offset + col * 2*radius
+  ```  
+- **Validate the candidate set** inside the search: compute the count of points that satisfy the border constraints; if the count drops below 26, reduce `radius`.  
+- **Return a tuple** `(centers, radii)` where `centers` is a list of `(x, y)` tuples and `radii` is a list of the same length, all equal to the final radius.  
+- **Include a deterministic fallback**: if the binary search somehow yields fewer than 26 points, decrement the radius by a small step until the count is sufficient, then proceed.
+
+---
+
+### FINAL NOTE
+
+Your submission must be **pure Python code** that can be inserted directly into the evolve block.  
+Follow the output format exactly, respect all validity constraints, and aim for the highest possible total radius sum while guaranteeing a validity flag of 1.0.

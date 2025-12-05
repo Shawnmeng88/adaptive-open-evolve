@@ -1,0 +1,71 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for `construct_packing()`**
+
+You are to modify *only* the code that appears between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** add, remove, or edit any code outside these markers (including imports, the `run_packing()` wrapper, or other helper functions).  
+
+### Output Requirements (must be obeyed exactly)
+- **Only** output the Python statements that belong *inside* the evolve block.  
+- **Do not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+- **Do not** output any surrounding code, comments, or explanations.  
+
+### What to Improve
+Focus on the `construct_packing()` function and any small helper utilities defined inside the evolve block. Your goal is to produce a correct, efficient packing algorithm that:
+
+1. Accepts the problem’s item list, container dimensions, and weight limits.  
+2. Returns a list of containers, each with a list of placed items and their coordinates, respecting:
+   - No overlap between items within the same container.  
+   - All items stay inside the container bounds.  
+   - Container weight does not exceed its limit.  
+3. Handles typical bin‑packing edge cases (e.g., items larger than a container, exact‑fit scenarios).  
+
+### Strategies You May Use (choose one or combine)
+- **First‑Fit Decreasing (FFD) with 3‑D guillotine cuts**:  
+  1. Sort items by volume (or max dimension) descending.  
+  2. For each item, iterate existing containers; attempt to place the item using a simple skyline or space‑partition list.  
+  3. If placement fails, open a new container.  
+
+- **Layer‑Based Packing**:  
+  1. Build layers along the height axis.  
+  2. Within each layer, fill a 2‑D rectangle using a best‑fit decreasing algorithm.  
+  3. Start a new layer when height is exhausted; start a new container when weight or remaining height is insufficient.  
+
+- **Simple Recursive Sub‑Box Splitting**:  
+  1. Keep a list of free rectangular sub‑boxes in each container.  
+  2. When an item fits, replace the occupied sub‑box with up to three new sub‑boxes (right, front, top).  
+  3. Continue until no free sub‑box can accommodate the current item.  
+
+### Implementation Tips
+- Represent a placed item as a dictionary: `{'id': id, 'x': x, 'y': y, 'z': z, 'dx': w, 'dy': d, 'dz': h, 'weight': wt}`.  
+- Store free spaces as tuples `(x, y, z, dx, dy, dz)`.  
+- Write a small helper `fits(item, space, remaining_weight)` that checks dimension and weight constraints.  
+- Update the container’s `remaining_weight` after each successful placement.  
+- Return `[]` (empty list) if an item cannot be placed in any container **and** its dimensions exceed the container’s interior – this signals an impossible instance.  
+
+### What NOT to Do (explicit prohibitions)
+- Do **not** attempt to rewrite the entire file or add new top‑level imports.  
+- Do **not** produce code that iterates endlessly or relies on undefined variables.  
+- Do **not** generate code that always returns an empty packing or that simply copies the input without validation.  
+- Do **not** ignore weight limits or container bounds.  
+- Do **not** output any explanatory text, comments outside the evolve block, or the marker lines themselves.  
+
+### Validation Checklist (run internally after you submit)
+- The submitted snippet compiles without syntax errors.  
+- `construct_packing()` returns a list of containers matching the specification.  
+- No overlap, out‑of‑bounds, or weight‑exceeding placements occur in the returned solution.  
+- The code runs within reasonable time for ≤ 200 items and ≤ 10 containers.  
+
+Follow these instructions precisely and output **only** the revised code between the markers. Good luck!

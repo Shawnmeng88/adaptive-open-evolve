@@ -1,0 +1,61 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are tasked with improving only the code that resides between the markers `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`. **Your entire response must consist solely of the revised code for that block – do not include the markers themselves, any surrounding imports, the `run_packing()` driver, or any other text.**  
+
+### Core Requirements
+1. **Output Format** – Exactly the code that belongs inside the evolve block, nothing else.  
+2. **Scope** – Modify only the `construct_packing()` function and any helper functions defined inside the block. Do not add, remove, or rename variables that are referenced outside the block.  
+3. **Correctness** – The updated functions must:
+   - Return a list of packing instructions that satisfies all constraints of the problem (e.g., no overlap, respects container dimensions, respects item orientations).  
+   - Handle edge‑cases gracefully (empty input, items larger than the container, duplicate items).  
+   - Be deterministic: given the same input, always produce the same output.  
+4. **Performance** – Aim for a simple, linear‑or‑near‑linear algorithm (e.g., first‑fit decreasing, shelf‑packing) rather than exponential backtracking or deep recursion.  
+5. **Readability** – Use clear variable names, short helper functions, and inline comments that explain *why* a step is taken, not just *what* is done.  
+
+### Forbidden Approaches (must be avoided)
+- **Aggressive heuristics that cause frequent invalid programs** – e.g., random placement, uncontrolled recursion depth, or unchecked use of `eval/exec`.  
+- **Over‑complicated logic** that leads to syntax or runtime errors (missing parentheses, mismatched indentation, undefined variables).  
+- **Repeated failures** – do not submit code that is likely to be syntactically invalid or that violates the output format.  
+- **Changing the public interface** of `construct_packing()` (its name, parameters, or return type).  
+
+### Suggested Strategies (choose one or combine)
+- **First‑Fit Decreasing (FFD)**:  
+  1. Sort items by descending volume or longest side.  
+  2. Iterate through sorted items, placing each at the lowest‑possible Y coordinate, then the lowest X, then the lowest Z that fits without overlap.  
+  3. Keep a simple list of already‑placed boxes and check for intersection using axis‑aligned bounding‑box overlap tests.  
+
+- **Shelf/Layer Packing**:  
+  1. Create horizontal “shelves” on the floor of the container; each shelf height equals the tallest item placed on it.  
+  2. Fill a shelf left‑to‑right until width is exhausted, then start a new shelf above.  
+  3. When vertical space runs out, start a new “layer” (increase Z).  
+
+- **Greedy Space Subdivision**:  
+  1. Maintain a list of free rectangular spaces.  
+  2. For each item, pick the smallest free space that fits (first‑fit).  
+  3. Split the chosen space into up to three new free spaces (right, front, above).  
+
+- **Safety Checks**:  
+  * After each placement, verify that the new box does not intersect any previously placed box.  
+  * Verify that the box stays inside container bounds.  
+  * If a box cannot be placed, skip it and continue; the function should still return a valid packing for the subset.  
+
+### Implementation Tips
+- Write a small helper `fits(box, space)` that returns `True` if `box` fits entirely within `space`.  
+- Write a helper `overlaps(box1, box2)` that checks axis‑aligned overlap.  
+- Keep the main loop simple: `for item in sorted_items:` → attempt placement → if successful, `placements.append(placement)`.  
+- Return `placements` (a list of dictionaries or tuples) exactly as the original function expects.  
+
+Remember: **Only the revised code inside the evolve block will be merged with the surrounding scaffold**. Ensure the code is syntactically correct, respects the required function signatures, and follows the constraints above.

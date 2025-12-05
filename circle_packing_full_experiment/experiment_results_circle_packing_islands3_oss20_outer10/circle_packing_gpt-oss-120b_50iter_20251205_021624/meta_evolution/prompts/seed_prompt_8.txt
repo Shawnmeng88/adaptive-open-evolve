@@ -1,0 +1,98 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM PROMPT – Guidance for Evolving the Packing Code**
+
+You may edit **only** the code that appears between the markers  
+
+```
+# EVOLVE-BLOCK-START
+# EVOLVE-BLOCK-END
+```  
+
+All other parts of the file (imports, `run_packing()`, etc.) are fixed and will be merged automatically.
+
+---
+
+### **OUTPUT REQUIREMENTS (CRITICAL – DO NOT VIOLATE)**
+1. **Output ONLY the Python code that belongs inside the markers.**  
+2. **Do NOT include** the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+3. **Do NOT output any imports, `run_packing()`, or other code outside the evolve block.**  
+4. The surrounding file will automatically merge your output with the preserved sections.
+
+---
+
+### **PRIMARY OBJECTIVE**
+Implement (or improve) `construct_packing()` and any helper functions **inside the evolve block** so that:
+
+- The function returns a NumPy array of shape **(26, 2)** containing the (x, y) coordinates of 26 circles packed inside the unit square `[0, 1] × [0, 1]`.  
+- The packing must be **fully valid** (`validity = 1.0`).  
+- The solution should be **deterministic** (same output on every run) and **fast** (under 0.5 s on typical hardware).
+
+---
+
+### **WHAT TO KEEP FROM PREVIOUS SUCCESSFUL APPROACHES**
+- Use a **hexagonal lattice** as the base layout because it yields the highest density for equal circles.  
+- Generate a lattice that **covers the whole unit square**, then **crop** to the first 26 points.  
+- Apply a **uniform scaling factor** so that the minimal inter‑center distance equals `2 * radius` (the radius is the largest that fits all points).  
+- Return the points **as a NumPy `float64` array**.
+
+---
+
+### **WHAT TO AVOID (based on past failures)**
+- **Do not** introduce iterative optimization loops (e.g., gradient descent, simulated annealing) that can cause non‑termination or produce invalid configurations.  
+- **Do not** use random sampling or stochastic methods; they lead to high invalidity rates.  
+- **Do not** add new external dependencies beyond NumPy.  
+- **Do not** change the function signature of `construct_packing()` or any preserved helpers.  
+- **Do not** return more than 26 points or include NaNs/Inf values.  
+- **Do not** embed additional top‑level code (imports, `if __name__ == "__main__":`, etc.) inside the evolve block.
+
+---
+
+### **CONCRETE STRATEGIES TO TRY**
+
+1. **Deterministic Hex Grid Generation**  
+   - Compute the required spacing `s` for a hexagonal lattice that fits 26 points in the unit square.  
+   - Create rows with alternating offsets (`0` and `s/2`).  
+   - Stop when you have at least 26 points, then slice the first 26.
+
+2. **Exact Scaling to Maximize Radius**  
+   - After generating the raw lattice, compute the minimal pairwise Euclidean distance `d_min`.  
+   - Set `radius = d_min / 2`.  
+   - Scale all points by `scale = (1 - 2*radius) / (max_coord - min_coord)` and translate so that the bounding box fits exactly inside `[0, 1]`.
+
+3. **Boundary Adjustment (if needed)**  
+   - If any point after scaling lies outside `[0, 1]` due to floating‑point rounding, clamp it to the interval `[radius, 1‑radius]`.  
+   - Verify that the clamped points still maintain the required `2*radius` separation; if not, slightly reduce `radius` (e.g., by `1e‑6`) and re‑scale.
+
+4. **Validation Shortcut**  
+   - Before returning, compute the pairwise distance matrix and assert that all off‑diagonal entries are ≥ `2*radius - 1e‑9`.  
+   - If the assertion fails, reduce `radius` by a tiny epsilon and recompute the scaling (this loop will run at most a few iterations because the initial lattice is dense).
+
+5. **Return Format**  
+   - `return points.astype(np.float64)` where `points.shape == (26, 2)`.
+
+---
+
+### **IMPLEMENTATION NOTES**
+
+- All helper functions you add must be defined **inside** the evolve block and called only from `construct_packing()`.  
+- Keep the code **compact** (≤ 120 lines) to avoid accidental inclusion of prohibited constructs.  
+- Use clear variable names (`spacing`, `rows`, `cols`, `raw_points`, `radius`, `scale`, `final_points`).  
+- Add short docstrings to any new helper to aid readability; they will not affect execution.
+
+---
+
+**Remember:** The only output you may produce is the Python code that belongs between the two marker lines. Follow the constraints strictly, avoid any of the listed failure patterns, and aim for a clean, deterministic hex‑grid based packing that achieves perfect validity. Good luck!

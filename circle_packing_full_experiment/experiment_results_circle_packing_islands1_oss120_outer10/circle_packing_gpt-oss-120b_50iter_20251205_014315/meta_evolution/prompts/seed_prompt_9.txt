@@ -1,0 +1,74 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving `construct_packing()` (Do Not Edit)**  
+
+You must output **only** the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+- **Do NOT** include the markers themselves in your output.  
+- **Do NOT** output any code outside those markers (imports, `run_packing()`, visualisation helpers, etc.).  
+- **Do NOT** add new import statements; only the existing standard‑library and already‑imported modules may be used.  
+- **Do NOT** modify the signatures of the functions that already exist in the evolve block.  
+- **Do NOT** introduce overly aggressive heuristics that change the problem constraints (e.g., allowing circles to leave the unit square or to overlap).  
+
+### Objective  
+Maximize the **sum of radii** returned by `construct_packing()` while guaranteeing:
+
+1. Every circle lies completely inside the unit square `[0,1] × [0,1]`.  
+2. No two circles overlap (distance between centers ≥ sum of their radii).
+
+### Allowed Helper Functions (you may edit or add new helpers **inside** the evolve block)
+
+- `_max_spacing_for_target(target, low=0.05, high=0.5, eps=1e-5)` – binary‑search the largest grid spacing that can accommodate a given number of circles.  
+- `_count_grid_points(spacing)` – return how many lattice points fit in the unit square for a given spacing.  
+- `_grid_points(spacing)` – generate the list of lattice points (as `(x, y)` tuples).  
+- `_max_feasible_radii(centers)` – compute the maximal radius for each centre that respects the square boundary and all pairwise distances.  
+
+You may create additional pure‑Python helpers (e.g., for hexagonal lattices, for adding a single “extra” point, or for a simple local improvement step) as long as they stay within the evolve block and respect the constraints above.
+
+### Suggested Concrete Strategies (you may combine them, but keep each step simple and deterministic)
+
+1. **Square lattice baseline**  
+   - Use `_max_spacing_for_target` to find a spacing that yields exactly 25 points (5 × 5 grid).  
+   - Compute radii with `_max_feasible_radii`.  
+
+2. **Add a sixth‑row/column “extra” point**  
+   - After the 5 × 5 grid, try inserting one additional centre at the centre of the biggest empty rectangle (often `(0.5, 0.5)`).  
+   - Re‑compute radii for the full set and keep the configuration if the total radius sum increases.
+
+3. **Hexagonal (triangular) lattice**  
+   - Derive the spacing for a hexagonal packing that yields ≤ 26 points.  
+   - Generate points with alternating rows offset by `spacing/2`.  
+   - Compute radii and compare to the square‑lattice result.
+
+4. **Simple local radius boost**  
+   - For each centre, compute the minimum distance to any neighbour or to a wall; set its radius to half that distance.  
+   - Perform one pass of “radius redistribution”: if a circle’s radius can be increased without violating any constraint, increase it by the smallest slack amount.  
+   - Do not iterate more than a few deterministic passes; avoid stochastic or gradient‑descent loops that may cause nondeterministic failures.
+
+5. **Selection of the best configuration**  
+   - Evaluate the total sum of radii for each candidate (square‑grid, square‑grid + extra, hexagonal).  
+   - Return the centre‑radius list (as `[(x, y, r), …]`) that yields the highest sum.
+
+### Validation Checklist (run mentally before output)
+
+- ☐ No `import` statements added.  
+- ☐ No code outside the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` region.  
+- ☐ All circles satisfy `0 + r ≤ x ≤ 1 - r` and `0 + r ≤ y ≤ 1 - r`.  
+- ☐ All pairwise distances satisfy `dist ≥ r_i + r_j`.  
+- ☐ The function returns a list of `(x, y, r)` tuples for ≤ 26 circles.  
+- ☐ The code is deterministic and uses only the provided helper functions or newly defined pure‑Python helpers inside the evolve block.
+
+**Remember:** The evaluation system will automatically merge your output with the preserved surrounding code. Any deviation from the format or constraints will cause the program to fail. Follow the instructions precisely.

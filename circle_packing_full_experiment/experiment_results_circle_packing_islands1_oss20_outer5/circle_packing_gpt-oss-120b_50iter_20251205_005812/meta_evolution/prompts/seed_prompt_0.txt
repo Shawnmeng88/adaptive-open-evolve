@@ -1,0 +1,52 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert **algorithmic optimization and computational geometry engineer** tasked with improving the code inside the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` region.  
+
+**Goal**  
+- Maximize the **combined_score** (the sum of the radii for the 26‑circle packing) while keeping **validity = 1.0** (no circles overlap and all remain inside the unit square).  
+- Any change must preserve the function signatures (`construct_packing` and `compute_max_radii`) and the overall program flow; only the internal implementation may be altered.
+
+**Relevant Techniques & Ideas**  
+- **Geometric packing heuristics**: greedy placement, force‑directed relaxation, simulated annealing, circle‑shrinking, iterative scaling, Lloyd’s algorithm, or using known optimal configurations for small n.  
+- **Distance‑based radius computation**: compute the exact maximal radius for each circle given current positions, then optionally adjust positions to increase the minimal distance between circles.  
+- **Optimization loops**: iterate between adjusting centers and recomputing radii, applying small random perturbations, or using gradient‑free methods (e.g., hill climbing).  
+- **Constraint handling**: always enforce border constraints (`radius ≤ min(x, y, 1‑x, 1‑y)`) and pairwise non‑overlap (`radius_i + radius_j ≤ distance_ij`).  
+- **Numerical stability**: avoid division by zero, clip values to a small epsilon (e.g., 1e‑6) to keep radii positive.  
+- **Performance**: keep the algorithm O(n²) or better; n=26 is small, so clarity outweighs micro‑optimizations.
+
+**Output Requirements**  
+- **Only** output the code that belongs **between** `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the marker lines themselves, any surrounding code, or explanatory comments outside the block.  
+- The output must be valid Python that can be inserted directly into the original file.
+
+**Guidance for Exploration**  
+1. Feel free to redesign `construct_packing` to generate a smarter initial layout (e.g., hexagonal lattice, spiral, or using known dense packings).  
+2. You may replace `compute_max_radii` with a more accurate routine (e.g., compute the exact limiting radius for each circle by taking the minimum of border distance and half the distance to every other center).  
+3. Consider adding an iterative refinement loop inside `construct_packing` that repeatedly:  
+   - Computes radii,  
+   - Slightly moves circles to increase the minimal pairwise distance,  
+   - Recomputes radii,  
+   until improvement stalls.  
+4. Keep the code readable; use helper functions if needed, but they must be defined inside the evolve block.  
+
+**Pitfalls to Avoid**  
+- Introducing syntax errors or breaking the existing function signatures.  
+- Allowing any circle to have a radius ≤ 0 or to exceed the unit‑square boundaries.  
+- Forgetting to update both circles when scaling radii to resolve an overlap; this can leave hidden overlaps.  
+- Using random seeds without fixing them; nondeterministic results make evaluation unstable.  
+- Excessively long loops that cause timeouts; limit iterations to a reasonable number (e.g., ≤ 500).  
+
+**Remember**: The evaluator will run `run_packing()` which calls `construct_packing()`. Your code must return `(centers, radii, sum_of_radii)` where `sum_of_radii` is the total of the radii you compute. Optimize for the highest possible sum while guaranteeing a valid packing. Good luck!

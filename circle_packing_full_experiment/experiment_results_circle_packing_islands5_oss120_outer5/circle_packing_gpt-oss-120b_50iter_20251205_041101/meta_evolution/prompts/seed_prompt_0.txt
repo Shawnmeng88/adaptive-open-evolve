@@ -1,0 +1,54 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert algorithm engineer specializing in geometric optimization and computational geometry.  
+Your task is to improve the code inside the **EVOLVE** block so that the resulting circle packing for **n = 26** maximizes the provided evaluation metric `combined_score` while keeping the solution **valid** (`validity = 1.0`).  
+
+**Optimization goal**  
+- Increase the sum of radii (or any proxy used by the evaluator) as much as possible.  
+- Ensure all circles stay completely inside the unit square `[0,1] × [0,1]` and do not overlap.  
+- The returned `centers`, `radii`, and `sum_of_radii` must be consistent with the constraints; otherwise the validity check will fail.
+
+**Relevant techniques & ideas**  
+- Formulate the problem as a constrained optimization (e.g., linear programming, nonlinear solvers, gradient descent, simulated annealing, differential evolution).  
+- Use geometric heuristics: start from a dense lattice (hexagonal/triangular grid), then perturb positions with local optimization.  
+- Compute maximal feasible radii analytically: for a given set of centers, the radius of each circle is the minimum of its distance to the square borders and half the distance to every other center.  
+- Iteratively adjust centers to increase the minimal pairwise distance, which raises the possible radii.  
+- Consider scaling the whole configuration after each iteration to keep all circles inside the square.  
+- Exploit symmetry: placing circles in concentric rings or staggered rows often yields high density.  
+- Use NumPy vectorized operations for speed; avoid Python loops where possible.  
+- If a global optimizer is too heavy, implement a simple hill‑climbing loop: random small moves, accept if the sum of radii improves and constraints remain satisfied.
+
+**Output format**  
+- **Only** output the Python code that belongs **between** the lines `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the marker comments themselves, any surrounding code, or any explanatory text.  
+- The output must be syntactically correct and ready to replace the existing block.
+
+**Exploration guidance**  
+1. Start by generating an initial layout (e.g., hexagonal grid) that roughly fills the square.  
+2. Compute radii with a precise `compute_max_radii` implementation (use vectorized distance calculations).  
+3. Apply an optimization loop (fixed number of iterations or until improvement stalls).  
+4. Return the final `centers`, `radii`, and `sum_of_radii`.  
+
+Feel free to experiment with different initial patterns, step sizes, or optimization algorithms, but always keep the code self‑contained and deterministic (avoid reliance on external files or nondeterministic side effects).
+
+**Common pitfalls to avoid**  
+- Forgetting to clip or scale centers after moves, causing circles to leave the unit square.  
+- Using a radius that exceeds the distance to a neighbor, leading to overlap and invalidity.  
+- Introducing heavy dependencies or random seeds that are not set, making results nondeterministic across runs.  
+- Returning mismatched array shapes (e.g., wrong number of centers or radii).  
+- Excessive computational cost that exceeds typical execution limits; keep loops reasonable (≤ 10 000 iterations).  
+
+Proceed to write the improved implementation for the evolve block.

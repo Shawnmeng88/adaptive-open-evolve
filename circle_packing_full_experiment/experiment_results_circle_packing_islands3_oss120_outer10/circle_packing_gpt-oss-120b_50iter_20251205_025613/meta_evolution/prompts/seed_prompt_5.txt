@@ -1,0 +1,77 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a meta‑prompt engineer tasked with guiding the model to evolve the circle‑packing code. Follow **exactly** the rules below; any deviation will cause the program to be rejected.
+
+---
+
+### Core Objective
+Create or refine `construct_packing()` (and any helper functions defined inside the evolve block) so that the generated packing:
+
+1. **Maximises the total score** (e.g., sum of radii or any provided objective).  
+2. **Guarantees validity = 1.0** – no circles overlap and every circle lies completely inside the unit square `[0,1] × [0,1]`.
+
+---
+
+### Mandatory Output‑Format Rules (do **not** break these)
+
+1. **Output ONLY the Python code that belongs between the markers**  
+   `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+2. **Do NOT include the markers themselves** or any surrounding imports, `run_packing()`, `visualize()`, etc.  
+3. The output must be **pure code** – no explanatory text, markdown, or comments that are outside the evolve block.  
+
+If you include anything else, the system will reject the submission.
+
+---
+
+### What **must NOT** be done (explicitly forbid these patterns)
+
+- Do not write code that **ignores the border constraint** (circles partially outside the unit square).  
+- Do not generate code that **allows overlapping circles** or that fails to check distances.  
+- Do not use overly aggressive heuristics that cause the model to produce many invalid programs (e.g., random placement without rejection sampling).  
+- Do not repeat the same failed strategy across iterations (e.g., always using a fixed grid regardless of radius).  
+- Do not produce code that relies on undefined variables or external libraries not already imported in the surrounding file.  
+
+---
+
+### Suggested Concrete Strategies (you may combine them)
+
+1. **Hexagonal lattice seed** – generate a dense hexagonal lattice with spacing `2 * r_min` (where `r_min` is the smallest radius you intend to place). This gives a near‑optimal packing density and guarantees non‑overlap.
+
+2. **Iterative greedy insertion** – after the lattice is created, sort candidate radii descending, then for each radius:
+   - Scan lattice points in a shuffled order.
+   - Place the circle at the first point that stays at least `radius` away from all already‑placed circles **and** from the square borders.
+   - Remove that point from the candidate list to avoid reuse.
+
+3. **Local refinement** – once the greedy pass finishes, optionally perform a few passes of tiny random perturbations (≤ 0.01) followed by a validity check; keep improvements that increase the total score.
+
+4. **Adaptive spacing** – if the required number of circles is larger than the lattice can supply, reduce the lattice spacing proportionally (but never below `2 * max_radius`) and regenerate points.
+
+5. **Efficient distance checks** – use NumPy vectorised operations or a simple KD‑tree‑like grid to avoid O(N²) checks when many circles are placed.
+
+6. **Boundary padding** – always offset candidate points by `radius` from the edges (i.e., keep points in `[radius, 1‑radius]`).
+
+---
+
+### Implementation Guidance
+
+- Keep helper functions small and pure (e.g., `_hex_lattice_points(spacing, required)` returns a NumPy array of candidate centers).  
+- `construct_packing()` should accept the list of radii (or any other problem‑specific input) and return two arrays: `centers` (shape (N,2)) and `radii` (shape (N,)).  
+- Validate internally: before returning, assert that every circle is inside the unit square and that pairwise distances ≥ sum of radii. If validation fails, raise an exception – this guarantees the outer driver will never receive an invalid packing.  
+
+---
+
+### Final Reminder
+**Output ONLY the code between the markers**, respecting the format rules. No extra text, no markers, no comments outside the block. Your code will be merged automatically with the surrounding scaffold. Good luck!

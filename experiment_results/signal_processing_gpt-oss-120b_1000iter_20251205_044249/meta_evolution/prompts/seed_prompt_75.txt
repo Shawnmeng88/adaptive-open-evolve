@@ -1,0 +1,71 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt (Improved)**  
+
+You are tasked with evolving the `construct_packing()` function and any helper functions that reside **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+**Output Rules (must be obeyed exactly):**  
+- **Only** output the Python code that belongs *inside* the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` region.  
+- **Do not** include the marker lines themselves.  
+- **Do not** output any code outside this region (imports, `run_packing()`, etc.).  
+- The surrounding scaffolding will be merged automatically; your response is inserted verbatim.
+
+**Constraints to respect (do NOT violate):**  
+- Avoid aggressive, wholesale rewrites that ignore the existing structure.  
+- Do not make vague or ambiguous changes; every modification must be clearly justified and limited to the target block.  
+- Do not produce code that would cause syntax errors, missing references, or undefined variables.  
+- Do not repeat the same failed pattern that previously yielded 13/13 invalid programs (e.g., removing required parameters, breaking the return type, or deleting essential helper calls).  
+
+**Guidelines for a successful evolution:**  
+
+1. **Incremental Improvement**  
+   - Identify a single, concrete weakness in the current `construct_packing()` implementation (e.g., handling of empty input, inefficient looping, missing edge‑case checks).  
+   - Modify or add just enough code to address that weakness while preserving the existing logic.
+
+2. **Preserve Interface**  
+   - Keep the function signature unchanged.  
+   - Ensure that any helper functions you edit still accept the same arguments and return the same types as before.
+
+3. **Add Defensive Checks**  
+   - Insert explicit validation for inputs (e.g., verify that item dimensions are positive integers, that the container size is sufficient).  
+   - Return early with a clear, documented error tuple or raise a well‑named exception if validation fails.
+
+4. **Optimize Looping / Data Structures**  
+   - Replace nested `for` loops with list comprehensions or generator expressions where readability improves.  
+   - Use `sorted(..., key=…)` instead of manual insertion sort if ordering is required.  
+   - Introduce a small helper (e.g., `_fits(item, container)`) to encapsulate the fit‑test logic, making the main function easier to read and test.
+
+5. **Maintain Clear Return Value**  
+   - The function must always return a tuple `(packing_plan, unused_space)` (or the exact structure defined by the original code).  
+   - If you add early‑exit paths, ensure they also produce a correctly‑shaped tuple.
+
+6. **Document Changes Inline**  
+   - Add concise comments next to each new or altered line explaining *why* the change is made.  
+   - Do not add block‑level docstrings that replace the original documentation; preserve any existing docstring.
+
+7. **Testability**  
+   - Where possible, factor out pure‑logic pieces into tiny helpers that can be unit‑tested independently.  
+   - Do not introduce external dependencies; use only the standard library modules already imported in the outer file.
+
+**Suggested concrete strategies to try:**  
+
+- **Edge‑Case Guard:** Add a guard at the start of `construct_packing()` that returns an empty packing plan when the input list is empty or when the container dimensions are zero.  
+- **Fit Helper:** Implement `_can_place(item, container, occupied_spaces)` that checks for overlap and boundary violations, then replace any inline conditionals with calls to this helper.  
+- **Greedy Sorting:** Before the packing loop, sort items by descending volume (or another heuristic) to improve packing efficiency; keep the sort in‑place to avoid extra memory.  
+- **Space Accounting:** After each successful placement, update a running total of used volume and compute remaining space once at the end, rather than recomputing it each iteration.  
+
+**Final Reminder:**  
+Your response must be **only** the revised code inside the evolve block, no markers, no extra text. Follow the constraints strictly to avoid invalid programs.

@@ -1,0 +1,72 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for `construct_packing()`**
+
+You are to modify *only* the code that appears between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** output the markers themselves or any code outside this region (imports, `run_packing()`, etc.). The surrounding file will be merged automatically.
+
+### Primary Goal
+Improve the `construct_packing()` function (and any helper functions defined inside the evolve block) so that it reliably builds a feasible packing plan for the given list of items and container constraints.
+
+### Constraints & Forbidden Practices
+- **Never** produce code that fails to compile or raises an exception on the first run.  
+- **Never** leave placeholder `pass` statements, `TODO` comments, or undefined variables.  
+- **Never** remove required function signatures or change the expected return type.  
+- **Never** introduce external library imports; only use the standard library modules already imported in the outer file.  
+- **Never** write overly aggressive heuristics that assume unrealistic item sizes or container capacities (this caused repeated invalid programs in earlier iterations).  
+
+### Required Output Format
+```
+<your revised code here, exactly the lines that belong between the two markers>
+```
+*Do not* include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` comments, and do not add any extra whitespace or comments outside the block.
+
+### Suggested Concrete Strategies
+1. **Pre‑process items**  
+   - Sort items by decreasing volume (or by the max dimension) to place the hardest items first.  
+   - Compute each item’s volume and keep it alongside its identifier for quick lookup.
+
+2. **Greedy placement with fallback**  
+   - Attempt to place each item in the first container that can accommodate it (checking remaining volume **and** each dimension).  
+   - If no container fits, open a new container (if allowed) or trigger a simple “re‑pack” by restarting with a different sort order (e.g., by surface area).
+
+3. **Simple 3‑D bin‑packing heuristic**  
+   - Maintain a list of free rectangular spaces per container.  
+   - When an item is placed, split the occupied space into up to three new free spaces (right, front, top).  
+   - Discard any free space that cannot fit the smallest remaining item.
+
+4. **Back‑track limited depth**  
+   - If an item cannot be placed after trying all existing containers, recursively attempt to reposition the last *k* placed items (k ≤ 2) to make room.  
+   - Limit recursion depth to avoid exponential blow‑up.
+
+5. **Memoization of container states**  
+   - Cache a hash of the current free‑space layout after each successful placement.  
+   - Skip re‑exploring identical states when back‑tracking.
+
+6. **Validation before return**  
+   - After constructing the packing plan, iterate over all containers to verify that no dimension or volume limit is violated.  
+   - If a violation is detected, raise a clear `ValueError` with a diagnostic message rather than returning an invalid plan.
+
+7. **Deterministic randomness (optional)**  
+   - If you need to break ties, use `random.Random(0)` to keep results reproducible across runs, which helps the evaluation harness.
+
+### Implementation Tips
+- Keep helper functions small and pure; they should accept the current packing state and return a new state without side effects.
+- Use descriptive variable names (`containers`, `free_spaces`, `item_vol`, `remaining_volume`) to aid readability.
+- Add inline comments **inside** the evolve block only if they are part of the code you return; they will be merged into the final file.
+- Ensure the final return value matches the original function’s contract (e.g., a list of container assignments or a dictionary mapping item IDs to positions).
+
+### Final Reminder
+Your entire response must be **only** the revised code that belongs between the two evolve markers. No extra text, no markers, no surrounding code. Follow the strategies above to produce a correct, robust implementation of `construct_packing()`.

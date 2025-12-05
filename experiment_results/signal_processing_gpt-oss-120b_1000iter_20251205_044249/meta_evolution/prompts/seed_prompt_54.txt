@@ -1,0 +1,70 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Guidance for Evolving `construct_packing()`**
+
+You are to modify **only** the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Output ONLY the code that belongs inside that block.**  
+- **Do NOT include the markers themselves** or any surrounding imports, `run_packing()`, or other unrelated code.  
+- The surrounding framework will automatically re‑insert your snippet, so any extra text will cause a merge failure.
+
+### Core Task
+Improve the implementation of `construct_packing()` and any helper functions defined inside the evolve block so that the packing algorithm:
+
+1. **Produces a valid packing** for all provided test cases (no missing items, no overlaps, respects container dimensions).  
+2. **Handles edge cases** gracefully (empty item list, items larger than the container, duplicate IDs).  
+3. **Runs deterministically and efficiently** (avoid unbounded recursion, excessive random trials, or exponential loops).  
+
+### What NOT to Do (avoid previous failure patterns)
+- **Do not write an overly aggressive heuristic** that relies on unlimited random shuffling or blind trial‑and‑error; this caused >90 % invalid programs in earlier iterations.  
+- **Do not leave ambiguous constraints** (e.g., “ensure items fit” without concrete checks). Every placement must be explicitly validated before acceptance.  
+- **Do not introduce new global state or side‑effects** outside the evolve block; the surrounding code expects only pure function modifications.  
+- **Do not omit handling of special cases** (empty input, oversized items). Missing these caused repeated invalid programs.  
+
+### Suggested Concrete Strategies
+1. **Pre‑filter Items**  
+   - Immediately discard or raise a clear error for any item whose width > container width **or** height > container height.  
+   - If the input list is empty, return an empty packing list.
+
+2. **Deterministic Placement Loop**  
+   - Sort items by descending area (or max side) to place larger pieces first.  
+   - Iterate over a **grid of candidate positions** (e.g., every integer coordinate within the container). For each item, pick the first position that does not overlap any already‑placed item.  
+   - Use a simple rectangle‑overlap check; abort the loop and return failure if any item cannot be placed.
+
+3. **Bounding‑Box Tracker**  
+   - Maintain the current occupied bounding box (min‑x, min‑y, max‑x, max‑y). When a new item is placed, update these values. This helps quickly reject positions that would exceed container limits.
+
+4. **Fallback Simple Shelf Algorithm**  
+   - If the deterministic grid fails for a particular item, try a “shelf” placement: keep a current row height, place items left‑to‑right until width is exhausted, then start a new row below. This deterministic fallback dramatically reduces the chance of endless loops.
+
+5. **Return Structure**  
+   - Ensure the function returns a list of dictionaries (or the expected format) containing each item’s id and its final `(x, y)` coordinates.  
+   - Do **not** modify the input list in‑place; work on copies to avoid side‑effects.
+
+6. **Testing Hooks**  
+   - Include internal assertions (guarded by `if __debug__:`) that verify after each placement that no two rectangles intersect and that all coordinates stay within bounds. These checks will surface logical errors during development without affecting production performance.
+
+### Implementation Checklist
+- [ ] Validate container dimensions at the start.  
+- [ ] Filter or error‑out oversized items.  
+- [ ] Sort items deterministically (e.g., by `-area`).  
+- [ ] Loop through candidate positions in a predictable order (row‑major).  
+- [ ] Perform explicit overlap checks before committing a placement.  
+- [ ] Update a running bounding box and abort early if the box would exceed container limits.  
+- [ ] Provide a deterministic shelf‑fallback if the grid search fails.  
+- [ ] Return the final packing list in the exact format expected by `run_packing()`.  
+- [ ] Keep all code confined to the evolve block; no external imports or global modifications.
+
+Follow these instructions precisely. Remember: **only output the revised code between the markers**, nothing else. Good luck!

@@ -1,0 +1,62 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a code‑evolution LLM tasked with improving **only** the `construct_packing()` function and any helper functions that live inside the `# EVOLVE‑BLOCK‑START` / `# EVOLVE‑BLOCK‑END` region.  
+
+**OUTPUT RULES (must be obeyed exactly)**  
+- Output **only** the Python statements that belong between the two markers.  
+- Do **not** include the markers themselves.  
+- Do **not** add imports, top‑level code, or any statements outside the functions already present in the block.  
+- The surrounding scaffold (e.g., `run_packing()`) will be merged automatically; do not reference or modify it.
+
+**WHAT TO AVOID (these caused previous failures)**  
+- Do not write an overly aggressive prompt that ignores the strict output format – any extra text or markers will invalidate the solution.  
+- Do not produce syntax errors, undefined names, or missing return statements.  
+- Do not ignore the packing constraints (capacity, weight, volume, item‑count limits).  
+- Do not rely on external libraries that are not already imported in the outer file.  
+- Do not add unrelated or generic code (e.g., “print debugging”, “TODO” comments outside the functions).  
+
+**CONCRETE STRATEGIES TO TRY**  
+
+1. **First‑Fit Decreasing (FFD) with pruning**  
+   - Sort items by a combined score (e.g., `size_factor = volume * weight`) in descending order.  
+   - Iterate through sorted items, placing each into the first container that satisfies **all** remaining constraints (capacity, weight, volume, max‑items).  
+   - If no existing container fits, create a new one (respecting the global `max_containers` limit).  
+
+2. **Back‑tracking with early exit**  
+   - After each placement, recompute the remaining free space/weight for every container.  
+   - If any container exceeds a constraint, backtrack immediately.  
+   - Use a depth‑first search limited to a configurable `max_depth` (e.g., 6) to keep runtime reasonable.  
+
+3. **Memoization of container states**  
+   - Cache a hashable representation of the current packing state (e.g., tuple of remaining capacities).  
+   - Skip exploring a state that has already been visited with an equal or better item‑count.  
+
+4. **Item rotation handling**  
+   - If items have a `can_rotate` flag, treat their dimensions as interchangeable when computing volume; otherwise use the given orientation.  
+
+5. **Heuristic tie‑breaker**  
+   - When multiple containers can accept an item, prefer the one with the **least** remaining free volume after placement (tight packing).  
+
+6. **Graceful failure**  
+   - If the algorithm cannot place all items within the allowed number of containers, return the best partial packing found (largest number of items placed).  
+
+**Implementation Tips**  
+- Keep helper functions pure (no side‑effects beyond returning new container states).  
+- Use clear variable names (`remaining_cap`, `remaining_weight`, `remaining_vol`, `items_in_container`).  
+- Return a list of containers, each represented in the same format the surrounding code expects (e.g., list of item IDs).  
+- Include a docstring that explains the algorithm briefly; comments inside the block are allowed, but no external commentary.  
+
+Proceed to rewrite `construct_packing()` (and any needed helpers) following these guidelines, and output **only** the code that belongs between the markers.

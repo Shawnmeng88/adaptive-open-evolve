@@ -1,0 +1,67 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are tasked with evolving the `construct_packing()` function (and any helper functions defined inside the evolve block) to correctly build a packing plan for the given items and constraints.
+
+### IMPORTANT OUTPUT RULES
+- **Only output the Python code that belongs *between* the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+- **Do NOT include the markers themselves.**  
+- **Do NOT output any code outside those markers** (e.g., imports, `run_packing()`, or other surrounding scaffolding).  
+- The surrounding file will automatically be re‑combined with your output.
+
+### CONSTRAINTS TO RESPECT (DO NOT VIOLATE)
+- The function must return a **list of packing actions** that the external evaluator can execute without raising exceptions.
+- All returned actions must conform to the expected schema (`{"action": "place", "item_id": ..., "position": (x, y, z)}` or similar) as defined elsewhere in the repository.
+- The solution must handle **empty input**, **duplicate items**, and **invalid dimensions** gracefully, returning an empty list or a clearly documented error structure rather than crashing.
+- **Do not** use overly aggressive shortcuts such as “return a hard‑coded list” unless the test harness guarantees a single fixed scenario (which it does not).
+- **Do not** produce code that relies on undefined variables, missing imports, or external state not present in the evolve block.
+- **Do not** repeat patterns that previously caused repeated invalid programs (e.g., missing return statements, syntax errors, or reference errors).
+
+### STRATEGIES TO APPLY
+1. **Validate Input Early**  
+   - Check that `items` is an iterable of dictionaries with required keys (`id`, `size`, etc.).  
+   - Return `[]` immediately if validation fails.
+
+2. **Deterministic Packing Algorithm**  
+   - Implement a simple first‑fit decreasing (FFD) heuristic:  
+     a. Sort items by volume (or a primary dimension) descending.  
+     b. Iterate through a virtual container grid, placing each item at the first location where it fits without overlapping previously placed items.  
+   - Keep a list `placed` of bounding boxes to test for collisions.
+
+3. **Helper Functions**  
+   - Write small, pure helpers inside the evolve block:  
+     - `_volume(item)` – returns numeric volume.  
+     - `_fits(item, pos, placed, container_dims)` – returns `True` if the item can be placed at `pos` without intersecting any box in `placed`.  
+     - `_next_free_position(item, placed, container_dims)` – scans the container in a row‑major order and returns the first viable `(x, y, z)` or `None`.
+
+4. **Clear Return Structure**  
+   - For each successful placement, append a dict:  
+     ```python
+     {"action": "place", "item_id": item["id"], "position": (x, y, z)}
+     ```  
+   - If an item cannot be placed, skip it (or optionally record a `"skipped"` action with a comment).
+
+5. **Defensive Coding**  
+   - Guard all list accesses with `try/except` blocks that convert unexpected errors into a harmless empty list return.  
+   - Include type hints and a concise docstring explaining the algorithm.
+
+6. **Testing Edge Cases Locally**  
+   - Before finalizing, mentally run through scenarios:  
+     - No items → returns `[]`.  
+     - One item larger than the container → skips it, returns `[]`.  
+     - Multiple items that exactly fill the container → returns a full list of actions.
+
+### FINAL REMINDER
+Your output must be **only** the function(s) code that lives inside the evolve block, respecting the format and constraints above. No extra text, markers, or surrounding code.

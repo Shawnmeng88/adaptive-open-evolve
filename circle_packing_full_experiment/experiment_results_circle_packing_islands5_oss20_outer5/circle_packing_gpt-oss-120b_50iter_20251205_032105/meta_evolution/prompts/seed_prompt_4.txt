@@ -1,0 +1,80 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidelines**
+
+You are to **modify only the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`**.  
+Your response **must contain exactly the Python statements that replace the existing code inside that region** – **do not include** the marker lines themselves, any imports, or any surrounding functions such as `run_packing`. The evaluation harness will insert your output back into the original file automatically.
+
+---
+
+### Mandatory Output Rules (absolute)
+
+1. **Output ONLY** the code that belongs *inside* the evolve block.  
+2. **Do NOT** output the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines.  
+3. **Do NOT** add any imports, top‑level statements, or definitions that lie outside the evolve block.  
+4. **Do NOT** include explanatory text, comments that are not part of the code, or extra blank lines before or after the block.  
+5. The outer code (e.g., `run_packing()`, module‑level imports, global constants) is preserved automatically; you must not touch it.
+
+---
+
+### What to Keep (successful patterns)
+
+- Use **NumPy** for vectorised distance calculations.  
+- Keep the helper functions `_max_radius_for_center`, `_compute_max_radii`, `_hex_grid`, and `_optimal_uniform_radius` as they currently work well.  
+- Preserve the overall structure: compute candidate radii, test feasibility, and return the best packing.
+
+---
+
+### What to Avoid (previous failures)
+
+- **Validity failures** caused by circles extending outside the unit square or overlapping.  
+- Returning a radius that is not the *minimum* distance to any wall or neighbor.  
+- Introducing new global variables or side‑effects that affect later runs.  
+- Adding extra imports or redefining `np` inside the block.  
+
+---
+
+### Suggested Improvement Strategies (domain‑specific)
+
+1. **Binary‑search radius refinement**  
+   - For each candidate center, perform a fast binary search between `0` and the wall‑distance to find the maximal non‑overlapping radius.  
+   - Limit the number of iterations (e.g., 15) to keep runtime low while achieving high precision.
+
+2. **Early‑exit overlap check**  
+   - When testing a new radius against existing circles, break as soon as an overlap is detected; no need to compute all distances.
+
+3. **Vectorised distance matrix**  
+   - Use `np.linalg.norm` on the difference matrix to compute all pairwise distances in one call, then compare against the sum of radii. This reduces Python loops.
+
+4. **Random‑restart heuristic**  
+   - If the current configuration fails to reach the target number of circles, optionally shuffle the order of centers and retry a limited number of times (e.g., 3). Keep the best successful packing.
+
+5. **Safety clamping**  
+   - After computing a radius, clamp it with `max(0.0, min(radius, wall_dist))` to guarantee it never becomes negative or exceeds the boundary.
+
+6. **Consistent return type**  
+   - Ensure `construct_packing()` always returns a tuple `(centers, radii)` where `centers` is an `(n,2)` NumPy array and `radii` is a 1‑D array of length `n`.
+
+---
+
+### Implementation Guidance
+
+- Modify **only** the bodies of `construct_packing()` and any helper functions that live inside the evolve block.  
+- Keep function signatures unchanged.  
+- Use only the already‑imported `numpy as np`.  
+- Preserve the public API: `construct_packing()` must accept the same parameters (if any) and return the same data structures as before.  
+
+Follow these rules precisely; any deviation will cause the evaluation harness to reject the submission. Good luck!

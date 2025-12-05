@@ -1,0 +1,89 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – GUIDELINES FOR EVOLUTION BLOCK**
+
+You are to edit **only** the code that appears between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...
+# EVOLVE-BLOCK-END
+```  
+
+When you respond, **output ONLY the Python code that belongs inside those markers** – do not include the markers themselves, any imports, or any other surrounding code. The surrounding framework (imports, `run_packing()`, etc.) will be merged automatically.
+
+### Primary Objective
+Improve the **`construct_packing()`** function (and any helper functions such as **`compute_max_radii()`**) so that the packing of **26 circles inside the unit square** achieves the highest possible `combined_score` while keeping `validity = 1.0`. Validity means:
+
+1. Every circle centre `(x, y)` satisfies `0 ≤ x ≤ 1` and `0 ≤ y ≤ 1`.
+2. All radii are non‑negative real numbers.
+3. No two circles overlap: for any pair *i, j*, `dist(i, j) ≥ r_i + r_j`.
+4. The function signatures must remain exactly:
+   ```python
+   def construct_packing() -> Tuple[np.ndarray, np.ndarray]:
+   def compute_max_radii(centers: np.ndarray) -> np.ndarray:
+   ```
+
+### What **NOT** to do (explicit prohibitions)
+- **Do not** generate circles that lie partially or fully outside the unit square.
+- **Do not** allow any overlap; any overlapping pair will cause `validity` to drop.
+- **Do not** change the return types or order of the two functions.
+- **Do not** rely on nondeterministic randomness without a fixed seed; the evaluator runs the code once and expects reproducible results.
+- **Do not** import heavy external packages (e.g., `scipy.optimize`) – only use the Python standard library and `numpy`.
+- **Do not** add I/O, print statements, or visualisation code inside these functions.
+- **Do not** leave any placeholder `pass` or `TODO` statements.
+
+### Suggested Concrete Strategies (you may combine them)
+
+1. **Hexagonal (triangular) lattice base**  
+   - Start with a dense hexagonal grid scaled to fit the unit square.  
+   - Compute the maximal uniform spacing `s` that allows at least 26 lattice points inside the square.  
+   - Trim the lattice to exactly 26 points (e.g., drop the farthest points from the centre).
+
+2. **Two‑stage radius allocation**  
+   - **Stage 1:** For each centre, compute the distance to the four square edges; this gives an upper bound `r_edge`.  
+   - **Stage 2:** For each unordered pair of centres, compute the Euclidean distance `d_ij`. The pairwise bound for the two radii is `r_i + r_j ≤ d_ij`.  
+   - Set each radius to the **minimum** of its edge bound and half of the smallest pairwise bound involving that centre.  
+   - This deterministic “min‑of‑constraints” method guarantees non‑overlap and often yields near‑optimal radii.
+
+3. **Iterative local scaling (optional but lightweight)**  
+   - After the initial radii are computed, perform a few passes (≤ 5) where each radius is increased by a tiny factor (e.g., `*1.01`) and then re‑clamped to the minimum of its edge and pairwise constraints.  
+   - Stop when any increase would violate a constraint. This cheap greedy refinement can squeeze extra radius sum without breaking validity.
+
+4. **Symmetry‑aware point selection**  
+   - Prefer configurations that are roughly centrally symmetric; this tends to maximize the minimal distance to the walls, allowing larger radii.  
+   - For 26 circles a good pattern is a **5 × 5 grid (spacing 0.2)** plus **two small circles** placed in the central voids. Implement this pattern deterministically rather than randomly.
+
+5. **Vectorised implementation**  
+   - Use `numpy` broadcasting to compute all pairwise distances in one call (`np.linalg.norm`) and to compute edge distances (`np.minimum(centers, 1 - centers)`).  
+   - This keeps the code fast and avoids loops that could introduce bugs.
+
+### Implementation Checklist
+- Define any helper functions **inside** the evolve block; they may be called from `construct_packing()` or `compute_max_radii()`.
+- Ensure `construct_packing()` returns a tuple `(centers, radii)` where:
+  - `centers` is an `np.ndarray` of shape `(26, 2)` with values in `[0,1]`.
+  - `radii` is an `np.ndarray` of shape `(26,)` with non‑negative values.
+- `compute_max_radii(centers)` must accept the same centre array and return the radii computed by the deterministic “min‑of‑constraints” method (or a refined version thereof).
+- Keep the code **deterministic**: any arithmetic must be fully reproducible; avoid `np.random` unless you set a fixed seed at the top of the block.
+
+### Output Requirement (strict)
+When you finish editing, **respond with ONLY the Python code** that belongs between the markers. Do **not** include:
+
+- The `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines.
+- Any import statements, `run_packing()`, or other surrounding code.
+- Explanatory text, comments outside the code block, or markdown formatting.
+
+The system will insert your snippet into the existing file, preserving all outer sections. Follow the instructions precisely to avoid evaluation failures.

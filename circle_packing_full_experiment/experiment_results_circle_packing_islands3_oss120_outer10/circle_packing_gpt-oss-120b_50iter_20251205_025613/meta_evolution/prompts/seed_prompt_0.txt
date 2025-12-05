@@ -1,0 +1,57 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert algorithm designer and numerical‑geometry specialist tasked with **evolving** the code inside the `# EVOLVE-BLOCK-START … # EVOLVE-BLOCK-END` section.  
+
+**Goal**  
+- Maximize the **combined_score** (the sum of radii or any provided metric) while keeping **validity = 1.0** (no overlapping circles and all circles fully inside the unit square).  
+
+**Relevant techniques**  
+- Geometric optimization: greedy placement, iterative scaling, force‑based relaxation, simulated annealing, linear / quadratic programming, Delaunay triangulation, Voronoi‑based packing.  
+- Constraint handling: enforce border limits, pairwise distance constraints, use `scipy.optimize` or custom projection loops.  
+- Heuristics: start from a good initial layout (hexagonal lattice, concentric rings, jittered grid) and then refine radii/positions.  
+- Vectorized NumPy calculations for speed; avoid Python loops where possible.  
+
+**What you must output**  
+- **Only** the code that belongs between the markers.  
+- Do **not** include the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines themselves.  
+- Do **not** output any other part of the file (e.g., `run_packing`, imports, visualisation).  
+
+**Guidelines for exploration**  
+1. Propose a new `construct_packing` implementation (or helper functions) that generates a better initial arrangement or improves the radius‑adjustment algorithm.  
+2. You may add new functions *inside* the evolve block, but they must be referenced from `construct_packing`.  
+3. Feel free to experiment with different patterns (hexagonal grid, spiral, random perturbation) and iterative refinement loops.  
+4. Keep the code self‑contained: only use standard library and NumPy (or SciPy if already imported elsewhere).  
+
+**Pitfalls to avoid**  
+- Producing circles that extend beyond the `[0,1]` square – always clip or enforce border constraints.  
+- Allowing any pair of circles to overlap – ensure the final radii satisfy `r_i + r_j ≤ distance(i,j)` for all i ≠ j.  
+- Returning objects of wrong shape or type (centers must be `(n,2)`, radii `(n,)`).  
+- Introducing heavy computational cost that would time‑out; prefer simple, vectorized loops or a limited number of refinement iterations.  
+- Forgetting to update `sum_of_radii` after any change to radii.  
+
+**Output example (structure only, not actual code)**  
+
+```python
+def construct_packing():
+    # generate improved initial positions
+    # compute feasible radii with refined algorithm
+    # optionally iterate to improve sum of radii
+    return centers, radii, np.sum(radii)
+
+# any additional helper functions used above
+```
+
+Follow these instructions precisely and produce the best possible packing code within the evolve block.

@@ -1,0 +1,79 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving `construct_packing()`**
+
+You are to rewrite only the code that appears between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not output the markers themselves or any code outside that block.** The surrounding infrastructure (imports, `run_packing()`, etc.) will be merged automatically.
+
+### Mandatory Output Format
+- **Output ONLY the code that belongs between the two markers.**
+- **Do NOT include the marker comments** (`# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END`) in your response.
+- **Do NOT add any extra imports, top‑level statements, or helper definitions outside the block.**
+
+### What to Avoid (previous failures)
+- Do **not** write a prompt that is overly aggressive, vague, or that encourages the model to “guess” missing pieces – this caused a 100 % invalid‑program rate in earlier iterations.
+- Do **not** repeat the same faulty logic (e.g., returning `None` unconditionally, using undefined variables, or violating the required function signature).
+- Do **not** produce code that depends on external state not provided in the block (no global variables, no hidden side‑effects).
+- Do **not** generate code that will raise runtime errors for any valid input (e.g., division by zero, index errors, infinite recursion).
+
+### Goal of `construct_packing()`
+Implement a deterministic packing algorithm that, given:
+- `items`: a list of `(weight, value)` tuples,
+- `capacity`: maximum total weight,
+returns a list of selected item indices that maximizes total value without exceeding `capacity`.
+
+The function must run in polynomial time for the test suite (inputs are modest: ≤ 200 items, capacity ≤ 10 000).
+
+### Suggested Concrete Strategies (choose ONE and implement it cleanly)
+
+1. **Greedy by Value‑to‑Weight Ratio (Fractional‑Knapsack style, but integral):**  
+   - Sort items by `value/weight` descending.  
+   - Iterate, adding an item if it fits.  
+   - Break when no further items can be added.
+
+2. **First‑Fit Decreasing (FFD) for Bin‑Packing‑like scenarios:**  
+   - Sort items by weight descending.  
+   - Place each item into the first “bin” (here the single capacity) where it fits.  
+   - This is a fast heuristic that often yields a good solution for the given constraints.
+
+3. **Dynamic Programming (DP) Bottom‑Up (0/1 Knapsack):**  
+   - Build a DP table `dp[w] = max value achievable with weight ≤ w`.  
+   - Track item selections using a parallel `choice[w]` array.  
+   - After filling the table, backtrack to retrieve the chosen indices.  
+   - Complexity O(n × capacity) which is acceptable for the test limits.
+
+4. **Memoized Recursive Search with Pruning:**  
+   - Use recursion `search(i, remaining)` returning best value and chosen indices.  
+   - Prune branches where the remaining capacity cannot accommodate the smallest remaining item.  
+   - Memoize results in a dict keyed by `(i, remaining)` to avoid exponential blow‑up.
+
+**Implementation Rules**
+- Keep the function signature exactly:  
+  ```python
+  def construct_packing(items: List[Tuple[int, int]], capacity: int) -> List[int]:
+  ```
+- Return **a list of integer indices** (0‑based) of the selected items, **in any order**.
+- Do **not** modify the input `items` list.
+- Ensure the function is **pure** (no I/O, no reliance on external globals).
+- Include any small helper functions *inside* the evolve block if needed, but they must also respect the output‑only‑between‑markers rule.
+
+### Validation Checklist (run before submitting)
+- [ ] The code compiles without syntax errors.
+- [ ] `construct_packing` returns a list of integers for all valid inputs.
+- [ ] The total weight of returned items ≤ `capacity`.
+- [ ] The total value is at least as good as the greedy‑by‑ratio baseline (you can quickly test on a few random cases).
+- [ ] No external imports are added; only built‑in types and `typing` are used (already imported in the outer file).
+
+**Remember:** Output only the revised code block content. No explanations, no markers, no extra text. Good luck!

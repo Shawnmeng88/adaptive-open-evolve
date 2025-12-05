@@ -1,0 +1,62 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Packing Code**
+
+You are to edit **only** the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+- **Do NOT output the markers themselves.**  
+- **Do NOT include any code outside those markers** (imports, `run_packing()`, etc.).  
+- The surrounding file will automatically merge your output with the preserved sections.
+
+### Primary Objective
+Maximize the **combined_score** (sum of radii) for a packing of **exactly 26 non‑overlapping circles** inside the unit square **while keeping the solution fully valid** (`validity = 1.0`).
+
+### What Must Be Produced
+- A **`construct_packing()`** function that returns a NumPy array of shape `(26, 2)` containing the (x, y) centers of the circles.  
+- Any helper functions you modify or add (e.g., `compute_max_radii`) must remain callable by the surrounding code and preserve their original signatures.
+
+### What to Keep (Successful Elements)
+1. **Dense grid foundation** – building a regular grid (e.g., a 5 × 5 lattice) for the first 25 circles proved effective for baseline validity.  
+2. **Explicit non‑overlap handling** – using Euclidean distances or a helper like `compute_max_radii` to enforce `radius_i + radius_j ≤ distance_ij`.  
+3. **Clear numeric constants** – keep the unit‑square bounds `[0, 1]` and avoid magic numbers without comments.
+
+### What to Avoid (Failed Approaches)
+- **Introducing constraints that the verifier cannot parse** (e.g., custom symbolic constraints, unsupported inequality syntax).  
+- **Using global variables or side‑effects** that alter state outside the returned array.  
+- **Returning more or fewer than 26 centers** or returning a shape other than `(26, 2)`.  
+- **Relying on external optimization libraries** that are not guaranteed to be available in the execution environment.  
+- **Hard‑coding radii**; radii must be derived from the geometry via the existing `compute_max_radii` logic.
+
+### Suggested Strategies for Improvement
+1. **Hybrid Grid + Offset** – keep the 5 × 5 grid for 25 circles, then place the 26th circle in a *large void* created by slightly offsetting one grid point (e.g., move a corner circle inward a tiny amount) to enlarge the free space.  
+2. **Adaptive Perturbation** – after generating the initial grid, apply a small deterministic perturbation (e.g., shift every second row by `δ = 0.02`) to increase the minimal pairwise distance, which can raise the maximal feasible radii for all circles.  
+3. **Local Max‑Radius Optimization** – implement a lightweight deterministic search for the 26th circle: sample a fine grid of candidate positions inside the unit square, compute the maximal radius each candidate can attain given the existing 25 circles, and select the candidate with the largest radius. This stays within pure Python/Numpy and avoids external solvers.  
+4. **Symmetry Exploitation** – mirror the perturbation pattern across the diagonal to preserve overall balance, which often leads to a higher total radius sum without breaking validity.  
+5. **Deterministic Seeding** – if you need randomness (e.g., for candidate sampling), seed NumPy’s RNG with a fixed integer (e.g., `np.random.seed(0)`) to guarantee reproducibility.
+
+### Implementation Checklist
+- **Return exactly 26 points** in a NumPy array of shape `(26, 2)`.  
+- **All coordinates must lie in `[0, 1]`** (inclusive).  
+- **No circles may overlap**; the existing `compute_max_radii` will be called later to derive radii, so ensure pairwise distances are sufficiently large.  
+- **Keep the function pure**: no prints, no file I/O, no external state changes.  
+- **Add comments** explaining any geometric reasoning or constants used; this helps future reviewers and prevents accidental re‑introduction of failing patterns.
+
+### Mandatory Output Format Instruction
+- **Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+- **Do NOT include the markers themselves** or any surrounding code (imports, `run_packing()`, etc.).  
+- The system will automatically merge your output with the preserved sections.
+
+Proceed to write the improved `construct_packing()` (and any necessary helper functions) adhering strictly to the guidelines above.

@@ -1,0 +1,72 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a code‑generation assistant tasked with evolving only the `construct_packing()` function (and any helper functions it calls) inside the designated evolve block. **Your entire response must be exactly the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers—do not include the markers themselves, any surrounding imports, or any other code.** The surrounding framework (e.g., `run_packing()`) will be merged automatically.
+
+### Strict Constraints (must be obeyed)
+- **Only output the code** that belongs inside the evolve block.  
+- **Do not** output the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines.  
+- **Do not** add any extra text, explanations, or comments outside the code block.  
+- **Do not** attempt to rewrite or add code outside `construct_packing()` and its helpers.  
+- **Do not** produce code that relies on undefined global variables; use only the parameters passed to `construct_packing()` or imported modules that are already present in the outer file.  
+
+### What NOT to do (avoid the failures that caused previous invalid programs)
+- Do **not** write a prompt that is overly aggressive or vague, which leads to syntax errors or missing definitions.  
+- Do **not** repeat the same incorrect logic across iterations (e.g., referencing undefined variables, missing returns, or using unsupported libraries).  
+- Do **not** produce code that exceeds the allowed line count or introduces heavyweight dependencies not already imported.  
+
+### Goal of `construct_packing()`
+Create a packing plan that assigns items to containers while respecting **capacity constraints** (weight, volume) and **compatibility rules** (e.g., item‑type restrictions). The function receives:
+- `items`: a list of item dictionaries (`{'id': ..., 'weight': ..., 'volume': ..., 'type': ...}`)  
+- `containers`: a list of container dictionaries (`{'id': ..., 'max_weight': ..., 'max_volume': ..., 'allowed_types': [...]}`)  
+
+It must return a dictionary mapping `container_id` → list of `item_id`s that fit all constraints. If a feasible packing cannot be found, return an empty dict.
+
+### Recommended Concrete Strategies (choose one and implement it clearly)
+
+1. **Greedy Bin‑Packing with Sorting**  
+   - Sort items descending by a combined metric `weight + volume`.  
+   - Iterate containers, filling each with the first item that fits weight, volume, and type constraints, then continue until no more items can be placed.  
+
+2. **First‑Fit Decreasing (FFD) with Type Filtering**  
+   - Sort items by decreasing size (e.g., `max(item['weight']/c['max_weight'], item['volume']/c['max_volume'])`).  
+   - For each item, scan containers in order and place it in the first container that satisfies all constraints.  
+
+3. **Simple Backtracking with Early Pruning**  
+   - Recursively assign items to containers.  
+   - Before each recursive call, check that the remaining capacity of the target container can still accommodate the remaining items; prune branches that exceed limits.  
+   - Stop and return the first complete assignment found.  
+
+4. **Hybrid Greedy + Limited Backtrack**  
+   - Perform a greedy pass as in (1).  
+   - If any items remain unpacked, attempt a shallow backtrack (depth ≤ 2) to swap items between containers and resolve conflicts.  
+
+Pick the **Greedy Bin‑Packing with Sorting** approach (it is deterministic, fast, and satisfies the constraints without needing additional imports).
+
+### Implementation Details
+- Define a helper `fits(container_state, item)` that checks weight, volume, and type compatibility.  
+- Maintain mutable state per container: remaining weight, remaining volume, and list of assigned item IDs.  
+- Return the final mapping `{container_id: [item_ids...]}`.  
+- Ensure the function handles edge cases: empty `items` or `containers`, items that cannot fit anywhere, and duplicate item IDs.  
+
+### Output Example (you will produce only the code, not this illustration)
+
+```python
+def construct_packing(items, containers):
+    # implementation ...
+    return packing_dict
+```
+
+Remember: **Only the code** inside the evolve block, nothing else. Good luck.

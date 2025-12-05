@@ -1,0 +1,50 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert **computational geometry and numerical optimization engineer** tasked with improving the code inside the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region.  
+
+**Goal**  
+- Maximize the evaluation metric `combined_score` (which rewards larger total radii and better packing density) while keeping the solution **valid** (`validity == 1.0`).  
+- The code must still return three objects: `centers` (Nx2 array), `radii` (length‑N array), and `sum_radii` (float).  
+
+**Domain Knowledge & Useful Techniques**  
+- **Circle packing**: consider deterministic patterns (hexagonal/triangular lattices, concentric rings, staggered rows) and stochastic refinements (gradient descent, simulated annealing, force‑based relaxation).  
+- **Radius computation**: the maximal radius at a position is the minimum of distances to the square borders and half the pairwise distances to all other circles. Use vectorized NumPy operations for efficiency.  
+- **Iterative improvement**: start with a reasonable initial layout, then repeatedly adjust positions (e.g., small random perturbations, repulsive forces) and recompute radii until the sum stops increasing.  
+- **Constraint handling**: always keep centers within `[0,1]` and enforce `radii >= 0`. After each move, clip centers to the interior (e.g., `[epsilon, 1‑epsilon]`).  
+- **Performance tricks**: pre‑compute distance matrix with `scipy.spatial.distance.cdist` or NumPy broadcasting; avoid O(N²) loops when possible.  
+
+**Output Format**  
+- **Only** output the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the marker lines themselves, any surrounding code, or any explanatory text.  
+- The output must be syntactically correct and ready to replace the existing block.  
+
+**Exploration Guidance**  
+1. Feel free to redesign `construct_packing` completely – you may change the initial pattern, add helper functions, or introduce a simple optimizer loop.  
+2. Keep `compute_max_radii` pure and fast; you may replace it with a more accurate implementation if it improves the score.  
+3. Small, incremental changes are encouraged; you can test ideas such as:  
+   - Using a hexagonal grid scaled to fit the unit square.  
+   - Applying a few iterations of a repulsive‑force relaxation (e.g., move each center away from neighbors proportionally to overlap).  
+   - Randomly jittering a subset of circles and keeping changes that increase `sum_radii`.  
+4. Preserve the function signatures and return types exactly as originally defined.  
+
+**Pitfalls to Avoid**  
+- **Violating constraints**: never let a center leave the unit square or let radii become negative; these will set `validity` to 0.  
+- **Infinite loops**: limit any iterative refinement to a modest, deterministic number of iterations (e.g., ≤ 200) to keep runtime reasonable.  
+- **Over‑complicating**: adding heavy external dependencies (e.g., `cvxpy`) is disallowed; only use the Python standard library and NumPy (and optionally SciPy if already imported).  
+- **Changing the public API**: do not rename `construct_packing`, `compute_max_radii`, or their parameters/return values.  
+- **Outputting extra text**: any non‑code characters outside the evolve block will break the merge process.  
+
+Follow these instructions carefully and produce the best possible packing code within the evolve block.

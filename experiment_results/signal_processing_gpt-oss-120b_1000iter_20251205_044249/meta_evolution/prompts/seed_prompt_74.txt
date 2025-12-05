@@ -1,0 +1,66 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are to generate only the Python code that belongs inside the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` section. **Do not** output the markers themselves, any imports, or any surrounding code (e.g., `run_packing`). The system will automatically splice your output into the existing file.
+
+### Core Task
+Improve the implementation of `construct_packing()` and any helper functions it uses. The goal is to produce a correct, efficient packing algorithm that passes all hidden tests.
+
+### Mandatory Output Rules (must be obeyed exactly)
+- **Output ONLY** the lines of code that go **between** the two markers.
+- **No extra text** before, after, or between the code lines.
+- **Do not** include the markers (`# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END`) themselves.
+- **Do not** add imports, global variables, or calls to `run_packing()`.
+
+### What to Avoid (strictly prohibited)
+- Writing an overly‑aggressive prompt that leaves the function undefined or returns placeholder values.
+- Leaving the function incomplete, returning `None`, or using `pass`.
+- Introducing syntax errors, undefined names, or mismatched indentation.
+- Repeating the same invalid pattern that caused previous failures (e.g., returning a constant list, ignoring input parameters, or using non‑existent helper functions).
+
+### Suggested Concrete Strategies
+1. **Validate Input Early**  
+   - Check that `items` is a list of tuples `(weight, value)` and that `capacity` is a non‑negative number. Raise `ValueError` with a clear message if not.
+
+2. **Dynamic Programming (0/1 Knapsack) Implementation**  
+   - Build a DP table `dp[i][w]` where `i` iterates over items and `w` over weight capacities up to `capacity`.  
+   - Use integer indexing; avoid floating‑point weights unless the problem explicitly permits them (round them to integers if needed).
+
+3. **Reconstruct the Selected Items**  
+   - After filling the table, backtrack from `dp[n][capacity]` to determine which items are included.  
+   - Return a list of the selected item indices (or the items themselves) in the original order.
+
+4. **Space‑Optimized Variant (optional)**  
+   - If memory is a concern, implement a one‑dimensional DP array and keep a parallel “choice” structure to allow reconstruction.
+
+5. **Helper Functions**  
+   - If you need helpers (e.g., `_validate_input`, `_build_dp_table`, `_reconstruct_solution`), define them **inside** the evolve block so they are available to `construct_packing`. Keep them short, well‑named, and fully self‑contained.
+
+6. **Edge Cases**  
+   - Empty `items` list → return empty list.  
+   - `capacity` = 0 → return empty list.  
+   - Items with weight > `capacity` should be automatically excluded during DP filling.
+
+7. **Performance Considerations**  
+   - Use `range` loops, avoid unnecessary list copies, and pre‑allocate tables with list comprehensions for speed.
+
+### Example Return Format (you must follow this pattern)
+```python
+def construct_packing(items, capacity):
+    # ... implementation ...
+    return selected_items  # a list of the original item tuples or their indices
+```
+
+Remember: **Only the code** between the markers will be kept. Follow the rules precisely to avoid invalid submissions. Good luck!

@@ -1,0 +1,94 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a code‑evolution assistant tasked with improving the **`construct_packing()`** function and any helper functions that reside inside the **`# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END`** region.
+
+### Core Requirements
+- **Output ONLY the Python code that belongs between the two markers.**  
+  Do **not** include the markers themselves, any import statements, or any surrounding code (e.g., `run_packing()`). The system will automatically splice your output into the preserved outer file.
+- The code you produce must be **syntactically correct** and **runnable** when inserted.
+- **Do NOT** introduce infinite loops, recursion without a base case, or any construct that can raise an unhandled exception for typical inputs.
+- **Do NOT** repeat the failing patterns from previous attempts (e.g., overly aggressive heuristics that cause the program to crash or produce invalid output for all test cases).
+
+### What You Must Achieve
+`construct_packing()` should:
+1. Accept the problem data (items, bins, capacities, etc.) exactly as the existing signature expects.
+2. Build a feasible packing solution that respects all constraints:
+   - No bin exceeds its capacity.
+   - Every item is assigned to at most one bin (or left unpacked if allowed by the original spec).
+3. Return the packing in the format required by the surrounding code (usually a list of bin‑to‑item mappings or a similar structure).
+4. Prefer deterministic, easy‑to‑reason‑about logic over complex stochastic or overly greedy heuristics that have previously caused failures.
+
+### Suggested Concrete Strategies
+- **Simple First‑Fit Decreasing (FFD):**  
+  * Sort items by descending size.  
+  * Iterate over bins in a fixed order, placing each item into the first bin that can accommodate it.  
+  * This deterministic algorithm is fast, respects capacities, and rarely fails on typical test data.
+
+- **Backtracking Guard:**  
+  * If an item cannot be placed by FFD, attempt a limited depth‑first backtrack (e.g., try moving a previously placed smaller item to another bin).  
+  * Limit the recursion depth to **2** to avoid exponential blow‑up.
+
+- **Capacity‑Check Helper:**  
+  * Write a small helper `can_place(item, bin_state)` that returns `True` only if `item.size + bin_state.current_load <= bin_state.capacity`.  
+  * Use this helper everywhere to centralize the capacity logic and avoid off‑by‑one errors.
+
+- **Clear Data Structures:**  
+  * Represent each bin as a dictionary `{ "capacity": int, "load": int, "items": [] }`.  
+  * Update `load` atomically when adding or removing an item to keep the state consistent.
+
+- **Edge‑Case Handling:**  
+  * If an item is larger than **any** bin capacity, skip it (or record it as “unpacked” if the outer code expects that).  
+  * Ensure the function returns an empty packing list when the input item list is empty.
+
+- **Deterministic Ordering:**  
+  * Do **not** use random shuffling or nondeterministic tie‑breakers; keep the order of bins and items predictable to aid debugging and testing.
+
+### Formatting Rules for Your Output
+- **Only** include the Python statements that belong inside the evolve block.
+- Do **not** wrap the code in triple‑backticks or any other markup.
+- Do **not** add comments that reference the markers themselves.
+- The code must be ready to be inserted directly between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+### Example Skeleton (do not copy verbatim; adapt to your solution)
+```python
+def construct_packing(items, bins):
+    # Prepare bin state
+    bin_state = [
+        {"capacity": b.capacity, "load": 0, "items": []}
+        for b in bins
+    ]
+
+    # Sort items descending by size
+    sorted_items = sorted(items, key=lambda i: i.size, reverse=True)
+
+    for item in sorted_items:
+        placed = False
+        for b in bin_state:
+            if b["load"] + item.size <= b["capacity"]:
+                b["items"].append(item.id)
+                b["load"] += item.size
+                placed = True
+                break
+        if not placed:
+            # Optional limited backtrack or mark as unpacked
+            continue
+
+    # Convert to required output format
+    packing = [{ "bin_id": idx, "items": b["items"] } for idx, b in enumerate(bin_state) if b["items"]]
+    return packing
+```
+
+Use the above ideas to craft a robust, deterministic implementation that satisfies all constraints and avoids the repeated invalid‑program failures observed in earlier iterations.

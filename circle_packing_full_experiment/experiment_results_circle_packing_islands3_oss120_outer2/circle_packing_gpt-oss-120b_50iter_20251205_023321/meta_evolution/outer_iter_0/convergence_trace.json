@@ -1,0 +1,191 @@
+[
+  {
+    "iteration": 0,
+    "score": 0.36423689449571406,
+    "best_so_far": 0.36423689449571406,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 1,
+    "score": 0.5620628174101302,
+    "best_so_far": 0.5620628174101302,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 2,
+    "score": 0.7400379506641365,
+    "best_so_far": 0.7400379506641365,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 3,
+    "score": 0.8880455407969636,
+    "best_so_far": 0.8880455407969636,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 4,
+    "score": 0.579663347448659,
+    "best_so_far": 0.8880455407969636,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 5,
+    "score": 0.9256038959694769,
+    "best_so_far": 0.9256038959694769,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 6,
+    "score": 0.5048009780647569,
+    "best_so_far": 0.9256038959694769,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 6,
+    "score": 0.9256038959694769,
+    "best_so_far": 0.9256038959694769,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 7,
+    "score": 0.6726455832442833,
+    "best_so_far": 0.9256038959694769,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 8,
+    "score": 0.09208377120168088,
+    "best_so_far": 0.9256038959694769,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 9,
+    "score": 0.5920303605313094,
+    "best_so_far": 0.9256038959694769,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 10,
+    "score": 0.9127134724857683,
+    "best_so_far": 0.9256038959694769,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 11,
+    "score": 0.9256038965706254,
+    "best_so_far": 0.9256038965706254,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 12,
+    "score": 0.5750899048831295,
+    "best_so_far": 0.9256038965706254,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 13,
+    "score": 0.9256038959694769,
+    "best_so_far": 0.9256038965706254,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 14,
+    "score": 0.9256038959694769,
+    "best_so_far": 0.9256038965706254,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 15,
+    "score": 0.9256038966697128,
+    "best_so_far": 0.9256038966697128,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 16,
+    "score": 0.5123339658444023,
+    "best_so_far": 0.9256038966697128,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 17,
+    "score": 0.9256038965706254,
+    "best_so_far": 0.9256038966697128,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 18,
+    "score": 0.9352996890173272,
+    "best_so_far": 0.9352996890173272,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 19,
+    "score": 0.0,
+    "best_so_far": 0.9352996890173272,
+    "validity": 0.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 20,
+    "score": 0.9528092338846347,
+    "best_so_far": 0.9528092338846347,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 21,
+    "score": 0.39468690702087283,
+    "best_so_far": 0.9528092338846347,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 22,
+    "score": 0.0,
+    "best_so_far": 0.9528092338846347,
+    "validity": 0.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 23,
+    "score": 0.5885016130926929,
+    "best_so_far": 0.9528092338846347,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 24,
+    "score": 0.9256038974636714,
+    "best_so_far": 0.9528092338846347,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 25,
+    "score": 0.9104976120351299,
+    "best_so_far": 0.9528092338846347,
+    "validity": 1.0,
+    "is_improvement": false
+  }
+]

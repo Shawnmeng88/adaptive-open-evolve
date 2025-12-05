@@ -1,0 +1,82 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Packing Code**
+
+You are to modify **only** the Python statements that appear between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...
+# EVOLVE-BLOCK-END
+```  
+
+The surrounding file (imports, `run_packing()`, visualisation utilities, etc.) is fixed and will be merged automatically.  
+
+---  
+
+### Mandatory Output Rules (must be obeyed verbatim)
+
+1. **Output ONLY the code that belongs BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` lines.**  
+2. **Do NOT include the marker comments themselves** (`# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END`).  
+3. **Do NOT output any code outside this region** (imports, `run_packing()`, helper utilities that are not inside the evolve block, or any explanatory text).  
+
+Any deviation will cause the program to fail evaluation.  
+
+---  
+
+### Focus of the Evolution
+
+- Improve the **`construct_packing()`** function and any helper functions that reside inside the evolve block.  
+- The goal is to increase the packing score while keeping every generated circle **valid** (inside the unit square and non‑overlapping).  
+
+### Strategies to Try (domain‑specific suggestions)
+
+1. **Vectorised distance computation** – use `numpy` broadcasting to compute distances from each candidate centre to all existing centres in a single operation. This reduces Python loops and improves precision.
+
+2. **Border constraint handling** – for a centre `c = (x, y)`, the admissible radius is  
+   ```
+   r_border = min(x, 1-x, y, 1-y)
+   ```  
+   Ensure this is always respected before checking inter‑centre distances.
+
+3. **Nearest‑neighbour radius** – compute the half‑distance to the *closest* existing centre:  
+   ```
+   r_nn = 0.5 * min(distances)
+   ```  
+   The final admissible radius is `min(r_border, r_nn)`. If this value is ≤ 0, discard the candidate.
+
+4. **Adaptive step size** – start with a relatively large lattice step (e.g., `0.05`). After a full pass, reduce the step (e.g., halve it) and retry placing circles in the newly created gaps. Stop when the step falls below a small threshold (e.g., `0.001`).
+
+5. **Early‑exit pruning** – when the maximum possible radius for a candidate (based on border) is already less than the current best radius found in this iteration, skip the expensive distance calculations.
+
+6. **Deterministic ordering** – process candidate centres in a fixed order (e.g., row‑major) to make results reproducible and easier to debug.
+
+7. **Numerical safety** – add a tiny epsilon (e.g., `1e-12`) when comparing radii to avoid floating‑point tie issues that could lead to overlapping circles.
+
+8. **Return format** – ensure `construct_packing()` returns two `numpy.ndarray` objects: `centers` of shape `(n, 2)` and `radii` of shape `(n,)`. Do not modify the function signature.
+
+### What to Avoid (explicitly forbid)
+
+- **Do NOT produce code that can generate invalid circles** (outside the unit square or overlapping). Any solution that yields >5 % validity failures will be rejected.  
+- **Do NOT re‑introduce global imports or definitions** that belong outside the evolve block.  
+- **Do NOT add new top‑level statements** (e.g., `if __name__ == "__main__":`) outside the block.  
+- **Do NOT replace the entire block with a placeholder**; you must keep the function definitions and improve their logic.  
+
+---  
+
+### Deliverable
+
+Provide **only** the updated Python statements that sit between the two markers, respecting the rules above. The system will insert your output back into the file automatically. Good luck!

@@ -1,0 +1,22 @@
+{
+  "best_score": 0.0,
+  "best_convergence_rate": Infinity,
+  "total_inner_iterations": 50,
+  "total_outer_iterations": 5,
+  "total_wall_clock_time": 322.87098598480225,
+  "comparison_to_baseline": null,
+  "iteration_scores": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "iteration_convergence_rates": [
+    Infinity,
+    Infinity,
+    Infinity,
+    Infinity,
+    Infinity
+  ]
+}

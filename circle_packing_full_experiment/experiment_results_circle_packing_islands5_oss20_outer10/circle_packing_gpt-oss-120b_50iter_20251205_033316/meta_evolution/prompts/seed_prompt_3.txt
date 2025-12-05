@@ -1,0 +1,96 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – GUIDELINES FOR EVOLUTION BLOCK**
+
+You are to edit **only** the code that appears between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...
+# EVOLVE-BLOCK-END
+```  
+
+When you respond, **output ONLY the Python code that belongs inside those markers** – do **not** include the markers themselves, any imports, or any other surrounding code. The surrounding framework (imports, `run_packing()`, etc.) will be merged automatically.
+
+---
+
+### Primary Objective
+Improve the **`construct_packing()`** function (and any helper functions such as **`compute_max_radii()`**) so that the packing of **26 circles inside the unit square**:
+
+1. **Validity = 1.0** – every circle centre `(x, y)` satisfies `0 ≤ x ≤ 1` and `0 ≤ y ≤ 1`; all radii are non‑negative; no two circles overlap (distance between centres ≥ sum of radii).  
+2. **Maximum combined_score** – the sum of all radii (or the metric used by the evaluator) should be as large as possible.
+
+---
+
+### What **must NOT** be done (avoid previous failures)
+
+- **Do not** generate circles that lie partially or completely outside the unit square.  
+- **Do not** assign negative radii or zero radii unless required for exact count.  
+- **Do not** allow any pair of circles to intersect (distance < sum of radii).  
+- **Do not** return fewer or more than 26 circles; the function must always produce exactly 26 centre‑radius pairs.  
+- **Do not** rely on hard‑coded radii that cause overlap after a slight perturbation; radii must be robust to floating‑point tolerances.  
+- **Do not** leave debugging `print` statements or temporary variables that are not used in the final packing logic.
+
+---
+
+### Suggested Concrete Strategies
+
+1. **Hexagonal (triangular) lattice foundation**  
+   - Start with a dense hexagonal grid scaled to fit inside the unit square with a small margin (e.g., `margin = 1e‑4`).  
+   - Compute the maximal uniform radius that keeps all circles inside the square and non‑overlapping.  
+
+2. **Adaptive radius scaling**  
+   - After placing the initial lattice, compute the *local* limiting distance for each centre (minimum distance to the square edges and to neighboring centres).  
+   - Set each radius to `0.5 * min(local_limit, global_limit)` to guarantee non‑overlap.  
+
+3. **Exact count adjustment**  
+   - If the hexagonal grid yields fewer than 26 circles, identify the largest empty regions (using a simple distance‑to‑nearest‑center map) and insert additional circles there with radii limited by the local clearance.  
+   - If it yields more than 26, remove the circles with the smallest radii until exactly 26 remain, then recompute radii for the remaining set to possibly enlarge them.
+
+4. **Iterative refinement (optional but encouraged)**  
+   - Perform a few iterations of “radius inflation”: for each circle, increase its radius by a small factor (e.g., `*1.01`) and clamp it back to the minimum of the distances to neighbours and walls.  
+   - Stop when any increase would cause an overlap or exceed the boundary.
+
+5. **Vectorized NumPy calculations**  
+   - Use NumPy arrays for centre coordinates and radii; compute pairwise distances with `scipy.spatial.distance.cdist` or manual broadcasting for speed and clarity.  
+   - This makes the validity checks concise and reliable.
+
+6. **Robust return format**  
+   - Return two NumPy arrays: `centers` of shape `(26, 2)` and `radii` of shape `(26,)`.  
+   - Ensure the arrays are `float64` and that `np.all(radii >= 0)` holds.
+
+7. **Deterministic randomness (if used)**  
+   - If you introduce any random perturbations (e.g., to break symmetry), seed NumPy’s RNG with a fixed integer (`np.random.seed(42)`) so the packing is reproducible for evaluation.
+
+---
+
+### Implementation Checklist (inside the evolve block)
+
+- [ ] Define `construct_packing()` that follows the strategies above and returns exactly 26 centres and radii.  
+- [ ] If needed, implement a helper `compute_max_radii(centers)` that returns the maximal safe radii for a given set of centres.  
+- [ ] All helper functions must be defined **inside** the evolve block; do not import new modules beyond what is already imported globally.  
+- [ ] No `print`, `assert` (except internal sanity checks that are removed before returning), or debugging code.  
+- [ ] The function must run quickly (under a few seconds) on typical hardware.
+
+---
+
+### Mandatory Output Format Instruction (must be obeyed)
+
+- **Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+- **Do NOT include the markers themselves** or any surrounding code (imports, `run_packing()`, etc.).  
+- The system will automatically merge your output with the preserved sections.
+
+Follow these instructions precisely; any deviation will cause the evaluation to fail. Good luck!

@@ -1,0 +1,66 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for `construct_packing()`**
+
+You are to modify **only** the code that lies between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do NOT** include the markers themselves in your response.  
+- **Do NOT** add any imports, helper definitions, or other code outside this block – the surrounding framework (e.g., `run_packing()`) will be merged automatically.  
+- Your output must be **exactly** the Python statements that replace the existing content inside the block.
+
+### Goal
+Improve the `construct_packing()` function (and any helper functions defined inside the evolve block) so that it builds a valid, efficient packing plan for the given items and container constraints.
+
+### What **must NOT** be done (learn from past failures)
+- Do not rewrite the function in a way that changes its signature or removes required parameters.  
+- Do not introduce syntax errors, undefined variables, or external library calls that are not already imported.  
+- Do not produce code that simply returns `None` or a placeholder; the function must return a concrete packing representation.  
+- Do not repeat the same naive greedy approach that previously caused all programs to be invalid.  
+- Do not leave any `TODO` or `pass` statements unresolved.
+
+### Concrete Strategies to Try
+1. **Two‑phase heuristic**  
+   - **Phase 1:** Sort items by decreasing volume‑to‑weight ratio (or by a combined score) to prioritize dense, heavy items.  
+   - **Phase 2:** Iterate over the sorted list and place each item into the first container that can accommodate **both** remaining volume *and* remaining weight. If no container fits, create a new container (if allowed) or skip the item with a clear comment.
+
+2. **Bin‑packing with back‑tracking fallback**  
+   - After the greedy pass, attempt a simple back‑track for the last few items that failed to fit: try swapping them with already placed items in containers where a swap would satisfy both constraints. Limit the depth to keep runtime reasonable.
+
+3. **Capacity‑aware container selection**  
+   - Maintain for each container a tuple `(remaining_volume, remaining_weight)`.  
+   - When choosing a container for an item, compute a **feasibility score** such as `min(remaining_volume/item_volume, remaining_weight/item_weight)`.  
+   - Select the container with the **highest** score (i.e., the one that leaves the most balanced slack). This reduces the chance of later items being blocked by a single exhausted dimension.
+
+4. **Explicit return format**  
+   - Return a list of containers, where each container is a dictionary:  
+     ```python
+     {
+         "id": <container_id>,
+         "items": [<item_id>, ...],
+         "used_volume": <float>,
+         "used_weight": <float>
+     }
+     ```  
+   - Ensure the IDs match the input item identifiers and that `used_volume`/`used_weight` are correctly summed.
+
+5. **Safety checks**  
+   - At the end of the function, assert that every placed item satisfies `used_volume <= container.max_volume` and `used_weight <= container.max_weight`.  
+   - If an assertion would fail, adjust the placement logic (e.g., fall back to placing the item in a new empty container) before returning.
+
+### Formatting Reminder
+- **Only** output the code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the markers themselves, any surrounding imports, or other unrelated code.  
+
+Follow these guidelines precisely to produce a valid, high‑scoring implementation of `construct_packing()`.

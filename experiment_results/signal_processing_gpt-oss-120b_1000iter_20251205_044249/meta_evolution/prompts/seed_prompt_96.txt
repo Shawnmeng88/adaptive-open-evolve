@@ -1,0 +1,70 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Evolve Block for `construct_packing()`**
+
+You are to generate **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** output the markers themselves, any imports, or any surrounding code (e.g., `run_packing`). The surrounding framework will automatically merge your contribution with the preserved sections.
+
+### Output Requirements (must be obeyed exactly)
+- **Only** the code lines that belong inside the evolve block.
+- No extra whitespace before or after the code block.
+- No comments or text outside the code block.
+- Do **not** include the markers `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END`.
+
+### What NOT to do (avoid repeating past failures)
+- Do **not** produce overly aggressive or vague implementations that ignore the problem constraints (e.g., “fill the bin with any items” without respecting size limits).
+- Do **not** repeat the same logical errors that caused repeated invalid programs, such as:
+  - Returning `None` or an undefined variable.
+  - Modifying global state that the rest of the program relies on.
+  - Using recursion depth that can overflow for typical input sizes.
+  - Ignoring edge‑case inputs (empty item list, items larger than the container, duplicate IDs).
+- Do **not** submit code that fails to compile or raises exceptions for standard test cases.
+
+### Goal of `construct_packing()`
+Implement a robust, deterministic packing algorithm that:
+1. Accepts the provided list of `Item` objects and a `Container` specification.
+2. Returns a `PackingResult` (or the appropriate data structure defined in the surrounding code) that:
+   - Lists which items are placed in the container.
+   - Provides the total used volume/weight and remaining capacity.
+   - Preserves the original order of items where possible, unless reordering improves fit.
+3. Handles typical bin‑packing scenarios efficiently for up to a few hundred items.
+
+### Suggested Concrete Strategies (choose one or combine)
+- **First‑Fit Decreasing (FFD)**:  
+  1. Sort items by descending size (or weight) while keeping a reference to their original indices.  
+  2. Iterate through the sorted list, placing each item into the first container that can accommodate it.  
+  3. Record the placement order and update remaining capacity after each insertion.
+
+- **Best‑Fit Decreasing (BFD)**:  
+  Similar to FFD, but for each item choose the container whose remaining capacity will be minimized after placement (i.e., the “tightest” fit). This often yields a higher packing density.
+
+- **Hybrid Greedy + Exact Check**:  
+  1. Run a quick greedy pass (FFD or BFD).  
+  2. If any items remain unpacked, attempt a limited backtrack (depth ≤ 3) to swap a failing item with a previously placed smaller one, ensuring the algorithm stays fast and deterministic.
+
+- **Capacity‑First Validation**:  
+  Before attempting to place an item, verify that its size does not exceed the container’s total capacity; if it does, skip it and record it as “unpackable”. This prevents runtime errors.
+
+- **Deterministic Tie‑Breaking**:  
+  When two items have identical size, break ties by their original index to keep results reproducible across runs.
+
+### Implementation Checklist
+- Use only standard library modules already imported in the outer file.
+- Do not introduce new global variables; keep all state local to the function or passed explicitly.
+- Return the exact type expected by the surrounding code (e.g., `PackingResult(items=…, used=…, remaining=…)`).
+- Include clear, concise inline comments **inside** the code block to explain each step (these comments are part of the allowed code).
+- Ensure the function runs in O(n log n) time for sorting plus O(n) placement, which is acceptable for the target problem size.
+
+Follow these directives precisely and produce a clean, valid implementation of `construct_packing()` that satisfies the above criteria.

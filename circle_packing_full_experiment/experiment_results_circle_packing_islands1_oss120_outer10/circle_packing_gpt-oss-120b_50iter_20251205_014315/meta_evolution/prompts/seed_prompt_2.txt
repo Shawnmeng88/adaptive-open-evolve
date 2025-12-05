@@ -1,0 +1,75 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving `construct_packing()`**
+
+You are to generate **only** the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+- **Output ONLY the code that belongs BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+- **Do NOT include the markers themselves** in your output.  
+- **Do NOT output any code outside those markers** (e.g., imports, `run_packing()`, visualisation helpers, etc.).  
+
+The surrounding framework will automatically merge your output with the preserved sections; violating these rules will cause the evaluation to fail.
+
+---
+
+### Goal  
+Maximize the **sum of radii** returned by `construct_packing()` while keeping every circle completely inside the unit square `[0,1]×[0,1]` and ensuring no two circles overlap.
+
+### What to Keep (successful elements)  
+- Use a **hexagonal (triangular) lattice** as the initial placement pattern – this yields a dense, regular arrangement.  
+- Compute the **maximum feasible radius** for each center by taking the minimum of:  
+  1. The distance to the square boundaries, and  
+  2. Half the Euclidean distance to every other center.  
+- Return two NumPy arrays: `centers` (shape `(n,2)`) and `radii` (shape `(n,)`).
+
+### What to Avoid (failed approaches)  
+- **Do not** introduce aggressive random perturbations or stochastic search loops that dramatically increase invalidity rates.  
+- **Do not** rely on external optimization libraries (e.g., `scipy.optimize`) inside this block; they have caused many programs to be invalid.  
+- **Do not** add new top‑level imports or modify code outside the evolve block.  
+- **Do not** produce code that may raise exceptions for edge cases (e.g., division by zero, empty arrays).  
+
+### Suggested Strategies (concrete, domain‑specific)  
+
+1. **Parameterize the lattice spacing** (`d`) based on the desired number of circles `n`.  
+   - Compute the number of rows `r` and columns `c` needed to fit at least `n` points in a hexagonal grid.  
+   - Choose `d` as the largest spacing that still allows all points to lie inside the unit square after applying the necessary offset for the staggered rows.  
+
+2. **Trim excess points** after generating the full grid:  
+   - Slice the first `n` points (or the `n` points with the smallest y‑coordinate) to keep the configuration compact.  
+
+3. **Vectorized radius calculation** for speed and reliability:  
+   - Use NumPy broadcasting to obtain a distance matrix `D` between all centers.  
+   - Set the diagonal of `D` to `np.inf` so it does not affect the minimum‑distance computation.  
+   - Compute `boundary_dist = np.minimum.reduce([centers[:,0], 1-centers[:,0], centers[:,1], 1-centers[:,1]])`.  
+   - Set `radii = np.minimum(boundary_dist, D.min(axis=1) / 2.0)`.  
+
+4. **Safety checks** (still inside the evolve block):  
+   - Ensure `radii` are non‑negative; if any radius is negative due to numerical error, clip it to zero.  
+   - Verify that the number of returned centers matches the length of `radii`.  
+
+5. **Return order**:  
+   - Return `centers` and `radii` exactly as the surrounding code expects (no additional wrapper objects).  
+
+### Implementation Checklist  
+
+- Define a helper `def _hex_lattice(n):` inside the evolve block that builds the lattice and returns the first `n` centers.  
+- Define a helper `def _max_radii(centers):` that performs the vectorized radius calculation described above.  
+- In `construct_packing()`:  
+  1. Call `_hex_lattice(n)` to obtain `centers`.  
+  2. Call `_max_radii(centers)` to obtain `radii`.  
+  3. Return `centers, radii`.  
+
+Follow the **output‑only** rule strictly and do not include any code outside the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` region.

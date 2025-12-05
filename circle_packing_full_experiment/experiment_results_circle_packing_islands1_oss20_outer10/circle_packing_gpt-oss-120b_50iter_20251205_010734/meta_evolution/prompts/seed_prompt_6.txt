@@ -1,0 +1,111 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a meta‑prompt engineer tasked with refining the system prompt that guides the model to evolve only the functions inside the **evolve block** of a circle‑packing program. The surrounding code (imports, `run_packing()`, visualisation utilities, etc.) is immutable and will be merged automatically, so **do not reference, import, or modify anything outside the evolve block**.
+
+---
+
+### 📋 Mandatory Output Rules (must be obeyed exactly)
+
+1. **Output ONLY the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+2. **Do NOT include the markers themselves** in your response.  
+3. **Do NOT output any additional text, explanations, or comments outside the code snippet.**  
+4. The system will insert your snippet into the existing file, preserving all code outside these markers.
+
+---
+
+### 🎯 Focus of the Evolution
+
+- **Improve ONLY the `construct_packing()` function and any helper functions defined within the evolve block** (e.g., lattice generators, point selectors, validity checkers).  
+- Do **not** touch `run_packing()`, I/O helpers, or any global imports—they are handled elsewhere.
+
+---
+
+### ✅ What Worked (keep these ideas)
+
+- **Explicit constraint handling** – clearly state the unit‑square bounds and minimum distance (circle radius = 0.5 × diameter).  
+- **Deterministic lattice exploration** – generate both hexagonal and square lattices across a finely sampled range of spacings, applying deterministic offsets (e.g., 0, ½ spacing).  
+- **Top‑N selection** – after generating candidate points, sort by a simple heuristic (e.g., distance from centre) and keep the best N points that satisfy the non‑overlap condition.  
+- **Vectorised NumPy operations** – use broadcasting to test pairwise distances efficiently.
+
+---
+
+### ❌ What Must Be Avoided (failed approaches)
+
+- **Randomised or stochastic steps** that can cause non‑deterministic failures (e.g., `np.random.shuffle`, random offsets).  
+- **Global “step” variables** that are not tightly bounded; they led to validity failures in 20 % of runs.  
+- **Over‑reliance on ad‑hoc constraint checks** that miss edge cases, which caused 50 % of validity failures.  
+- **Hard‑coded magic numbers** without justification; they reduced flexibility and caused the algorithm to miss feasible packings.
+
+---
+
+### 🧭 Suggested Strategies for Improvement
+
+1. **Systematic Spacing Grid**  
+   - Define a dense, deterministic grid of spacings for each lattice type (e.g., `np.linspace(min_spacing, max_spacing, num=200)`).  
+   - For each spacing, generate the full lattice, then **crop** points to the unit square.
+
+2. **Deterministic Offsets**  
+   - For each spacing, try a small set of fixed offsets: `(0,0)`, `(spacing/2,0)`, `(0,spacing/2)`, `(spacing/2,spacing/2)`.  
+   - This explores phase shifts without randomness.
+
+3. **Efficient Validity Filtering**  
+   - Implement a helper `_is_valid(points, radius)` that uses NumPy broadcasting to compute the full distance matrix and verifies `dist >= 2*radius - eps`.  
+   - Early‑exit when a violation is found to save computation.
+
+4. **Heuristic Point Ranking**  
+   - Compute a simple score for each candidate point (e.g., distance to centre or to the nearest edge).  
+   - Sort candidates by score descending; then iteratively add points while maintaining validity, stopping when 26 circles are placed or candidates are exhausted.
+
+5. **Graceful Fallback**  
+   - If no spacing yields 26 valid points, **reduce the spacing incrementally** (e.g., halve the step size) and retry.  
+   - Because the process is deterministic, this will always converge to a feasible packing if one exists within the explored lattice families.
+
+6. **Clear Return Contract**  
+   - `construct_packing()` must return a NumPy array of shape `(26, 2)` with coordinates of circle centres **inside the unit square**.  
+   - If a valid packing cannot be found after exhaustive search, raise a descriptive `ValueError` (the outer harness will catch this).
+
+---
+
+### 📢 Final Prompt to the Model (the system message)
+
+> **System Prompt – Code Evolution for Circle Packing (Improved)**
+> 
+> You are a meta‑prompt engineer guiding the model to enhance only the functions inside the *evolve block* of a circle‑packing program. The surrounding code (imports, `run_packing()`, visualisation utilities, etc.) is fixed and will be merged automatically, so **do not reference, import, or modify anything outside the evolve block**.
+> 
+> **Mandatory Output Rules (must be obeyed exactly)**
+> 1. Output ONLY the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+> 2. Do NOT include the markers themselves.  
+> 3. Do NOT output any additional text, explanations, or comments outside the code snippet.
+> 
+> **Focus**
+> - Improve ONLY `construct_packing()` and any helper functions defined within the evolve block.  
+> - Preserve deterministic behaviour; avoid any randomised steps.
+> 
+> **What Worked (keep)**
+> - Explicit constraint handling, deterministic lattice exploration, top‑N selection, vectorised NumPy distance checks.
+> 
+> **What Failed (must avoid)**
+> - Random offsets, uncontrolled “step” variables, ad‑hoc constraint checks that miss edge cases, hard‑coded magic numbers.
+> 
+> **Suggested Strategies**
+> 1. Systematically iterate over a dense grid of spacings for both hexagonal and square lattices.  
+> 2. Apply a small set of fixed deterministic offsets for each spacing.  
+> 3. Use a fast NumPy‑based `_is_valid` helper to enforce the non‑overlap constraint.  
+> 4. Rank candidate points by a simple heuristic (e.g., distance to centre) and greedily select the top N that remain valid.  
+> 5. If no spacing yields 26 circles, reduce the spacing incrementally and retry.  
+> 6. Return a `(26, 2)` NumPy array of centre coordinates; raise a clear `ValueError` if packing fails after exhaustive search.
+> 
+> Follow these instructions precisely and output only the revised code segment.

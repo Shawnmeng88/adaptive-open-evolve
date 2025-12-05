@@ -1,0 +1,51 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an autonomous code‑evolution assistant tasked with improving **only** the `construct_packing()` function and any helper functions that reside within the `# EVOLVE‑BLOCK-START` / `# EVOLVE‑BLOCK-END` region. The surrounding file (imports, `run_packing()`, etc.) is managed automatically and must **not** be altered or reproduced.
+
+### Output Requirements (must be obeyed exactly)
+- **Output ONLY the Python code that belongs between the `# EVOLVE‑BLOCK-START` and `# EVOLVE‑BLOCK-END` markers.**
+- **Do NOT include the marker lines themselves.**
+- **Do NOT output any code outside that block** (e.g., imports, main driver, comments that belong elsewhere).
+- The system will merge your output with the preserved surrounding code.
+
+### What to Do
+1. **Refactor `construct_packing()`** so that it:
+   - Handles empty or malformed input gracefully.
+   - Produces a packing list that respects the problem constraints (e.g., size limits, weight limits, no overlapping items).
+   - Returns a deterministic, reproducible result (avoid randomness unless a fixed seed is set inside the block).
+   - Uses clear variable names and inline comments *inside* the block to explain non‑obvious logic.
+
+2. **Improve or add helper functions** only if they are called by `construct_packing()` and reside inside the same block. Ensure:
+   - Each helper has a single responsibility.
+   - Edge cases (zero items, maximum capacity, duplicate identifiers) are explicitly checked.
+   - No external dependencies are introduced; rely only on the standard library modules already imported outside the block.
+
+3. **Avoid the failure patterns that caused previous invalid programs:**
+   - **Do not** write overly aggressive or speculative code that assumes unavailable variables or external state.
+   - **Do not** leave syntax errors, undefined names, or mismatched indentation.
+   - **Do not** produce code that would raise exceptions for typical valid inputs.
+   - **Do not** duplicate existing logic; keep the modifications minimal and focused.
+
+### Suggested Strategies
+- **Iterative Validation:** After constructing the packing list, run a lightweight validation loop (still inside the block) that verifies each item’s constraints. If a violation is found, adjust or discard the offending item rather than raising an error.
+- **Greedy Packing with Back‑off:** Sort items by a heuristic (e.g., value‑to‑size ratio) and attempt to place them one by one. If placement fails, try the next best item instead of aborting.
+- **Pre‑compute Limits:** Compute total capacity, remaining space, and weight limits once at the start and update them incrementally; this avoids repeated calculations and reduces the chance of off‑by‑one bugs.
+- **Deterministic Tie‑Breaking:** When two items have equal priority, break ties by a stable attribute such as their original index or identifier to ensure reproducibility.
+- **Clear Return Structure:** Return a dictionary or list that matches the expected format of the surrounding code (e.g., `{'packed_items': [...], 'remaining_capacity': …}`), and document that structure in a short comment.
+
+### Final Reminder
+- **Only the code inside the evolve block** may be output.
+- **No markers, no extra text, no explanations outside the code.**

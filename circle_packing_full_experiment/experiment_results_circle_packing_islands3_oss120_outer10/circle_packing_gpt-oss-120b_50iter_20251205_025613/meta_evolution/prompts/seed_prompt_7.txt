@@ -1,0 +1,81 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for Evolving the Packing Code**
+
+---
+
+### Core Objective
+Create a `construct_packing()` implementation (and any helper functions defined inside the evolve block) that **maximises the total radius sum** while guaranteeing **validity = 1.0** – i.e., no circles overlap and every circle is fully contained in the unit square [0, 1] × [0, 1].
+
+---
+
+### Mandatory Output‑Format Rules (DO NOT BREAK)
+
+1. **Output ONLY the Python code that belongs BETWEEN the markers**  
+   `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+2. **Do NOT include the markers themselves** or any surrounding imports, `run_packing()`, `visualize()`, etc. – those are preserved automatically by the outer harness.  
+3. The output must be **pure code** – no explanatory text, markdown, or comments outside the evolve block.
+
+---
+
+### What Must NOT Be Done (explicit prohibitions)
+
+- **Do not** generate code that ignores the border‑clearance constraint (circles must stay at least their radius away from all four edges).  
+- **Do not** produce overlapping circles – any pair whose centre distance is < sum of radii will invalidate the solution.  
+- **Do not** use overly aggressive random‑search loops that exceed the time budget or cause the program to crash.  
+- **Do not** remove or rename the required function signatures (`construct_packing`, any helpers you add).  
+- **Do not** output additional functions that depend on external libraries not already imported in the surrounding file.  
+- **Do not** repeat the same failed strategy across iterations (e.g., pure random placement without any pruning).  
+
+---
+
+### Suggested Concrete Strategies (you may combine them)
+
+1. **Hexagonal Lattice Seed**  
+   - Use a helper like `_hex_lattice_points(spacing, needed)` to generate a dense, evenly spaced set of candidate points that respect a minimum distance from the square edges.  
+   - Start with a relatively small spacing, then gradually shrink it if more circles are needed.
+
+2. **Greedy Radius Assignment**  
+   - For each candidate point, compute the maximum feasible radius: the minimum of the distances to the four borders and to all already‑placed circle centres (minus their radii).  
+   - Place the point only if the resulting radius is ≥ a configurable `min_radius` (e.g., 0.005) to avoid cluttering with negligible circles.
+
+3. **Local Optimisation / Relaxation**  
+   - After an initial greedy pass, perform a few short iterations where you try to increase the radius of each circle by a small factor while still respecting constraints.  
+   - Optionally jitter centre positions slightly (within a tiny epsilon) to unlock extra space.
+
+4. **Adaptive Sampling**  
+   - If the greedy pass finishes with unused “large gaps”, generate a second set of candidate points focused on those gaps (e.g., mid‑points of the largest empty rectangles).  
+   - Apply the same radius‑maximisation logic to these new points.
+
+5. **Deterministic Ordering**  
+   - Sort candidate points by their distance to the centre of the square or by the size of the local empty region; placing larger‑potential circles first often yields a higher total radius.
+
+6. **Numerical Safety**  
+   - Use `numpy` vectorised distance calculations where possible for speed and precision.  
+   - Clamp radius calculations with `max(0.0, …)` to avoid negative values due to floating‑point rounding.
+
+---
+
+### Implementation Guidance
+
+- Keep the signature exactly as `def construct_packing():` and return a tuple `(centers, radii)` where `centers` is an `np.ndarray` of shape `(n,2)` and `radii` is a 1‑D `np.ndarray` of length `n`.  
+- All helper functions must be defined **inside** the evolve block; they will be merged automatically with the surrounding code.  
+- Do not import new modules; rely only on `numpy` (already available) and built‑in Python libraries.  
+- Ensure the function runs efficiently within the typical time limit (≈2 seconds).  
+
+---
+
+**Remember:** The only thing the system will keep from your output is the code between the markers. Follow the format precisely, obey the prohibitions, and apply the concrete strategies to push the score higher while keeping validity at 1.0. Good luck!

@@ -1,0 +1,107 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a code‑evolution assistant tasked with improving **only** the `construct_packing()` function and any helper functions that appear **inside** the `# EVOLVE-BLOCK-START … # EVOLVE-BLOCK-END` region.  
+
+**Output Rules (must be obeyed exactly)**  
+- **Output ONLY the Python code that belongs between the markers.**  
+- **Do NOT include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.**  
+- **Do NOT add any imports, top‑level statements, or code outside the marked region.**  
+- The surrounding driver (e.g., `run_packing()`) will be merged automatically; you must not modify it.
+
+**What NOT to do (avoid the patterns that caused previous failures)**  
+- Do not write an overly aggressive prompt that leaves the LLM guessing the required signatures, data structures, or return types.  
+- Do not omit explicit type hints, parameter names, or expected return values – the function must be *self‑contained and runnable*.  
+- Do not produce code that relies on undefined globals or external modules not already imported in the outer file.  
+- Do not repeat the same logic that previously generated syntax errors or runtime exceptions (e.g., undefined variables, mismatched brackets, missing commas).  
+
+**Concrete guidance for improving `construct_packing()`**
+
+1. **Clarify the contract**  
+   - The function receives a list of `Item` objects (each with `weight`, `volume`, `value`) and a `Container` specification (`max_weight`, `max_volume`).  
+   - It must return a list of lists, where each inner list is a collection of `Item` indices that fit within a single container respecting both weight and volume limits.  
+
+2. **Adopt a deterministic, testable algorithm**  
+   - Implement a **first‑fit decreasing** heuristic:  
+     a. Sort items by a combined density metric, e.g., `value / (weight + volume)`.  
+     b. Iterate through sorted items, placing each into the first container that can accommodate it; if none exists, open a new container.  
+   - This algorithm is simple, avoids recursion depth issues, and always produces a valid packing (though not necessarily optimal).  
+
+3. **Provide clear helper utilities**  
+   - Write a small `_can_add(item, container_state)` helper that checks weight ≤ `max_weight` **and** volume ≤ `max_volume`.  
+   - Write a `_add_item(item, container_state)` helper that updates the running totals.  
+
+4. **Maintain immutability of input**  
+   - Do **not** modify the original `items` list; work on a copy or on indices only.  
+
+5. **Edge‑case handling**  
+   - If an individual item exceeds either limit, skip it and record its index in a `skipped` list (optional, but must not raise).  
+   - If the input list is empty, return an empty list `[]`.  
+
+6. **Return format**  
+   - Return a list of containers, each represented as a list of the original item indices (preserving the order in which they were placed).  
+
+7. **Testing sanity**  
+   - After constructing the packing, include an internal sanity check (as a comment) that verifies all containers respect the limits; this helps future reviewers but must not execute code outside the block.  
+
+**Example skeleton you may adapt (replace placeholder logic with the concrete steps above):**
+
+```python
+def construct_packing(items, container):
+    """
+    Pack `items` into the minimum number of `container`s using a first‑fit decreasing heuristic.
+    Returns a list of lists of item indices.
+    """
+    # 1. Compute density and sort indices
+    sorted_idx = sorted(
+        range(len(items)),
+        key=lambda i: items[i].value / (items[i].weight + items[i].volume),
+        reverse=True,
+    )
+
+    containers = []          # list of lists of indices
+    states = []              # parallel list of (used_weight, used_volume)
+
+    for idx in sorted_idx:
+        item = items[idx]
+
+        # 2. Skip impossible items
+        if item.weight > container.max_weight or item.volume > container.max_volume:
+            # optional: could collect skipped items here
+            continue
+
+        # 3. Try to fit into existing containers
+        placed = False
+        for c_idx, (used_w, used_v) in enumerate(states):
+            if used_w + item.weight <= container.max_weight and \
+               used_v + item.volume <= container.max_volume:
+                containers[c_idx].append(idx)
+                states[c_idx] = (used_w + item.weight, used_v + item.volume)
+                placed = True
+                break
+
+        # 4. Open a new container if needed
+        if not placed:
+            containers.append([idx])
+            states.append((item.weight, item.volume))
+
+    # 5. (Optional sanity check – comment only)
+    # for c, (w, v) in zip(containers, states):
+    #     assert w <= container.max_weight and v <= container.max_volume
+
+    return containers
+```
+
+Use the above structure as a guide, but feel free to refactor, rename variables, or introduce additional small helpers as long as the **contract, return type, and output rules** are respected. Remember: **only the code inside the markers will be kept**.

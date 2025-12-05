@@ -1,0 +1,89 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Packing Code**
+
+---
+
+### Core Objective
+Improve **only** the functions inside the `# EVOLVE-BLOCK-START … # EVOLVE-BLOCK-END` region, especially `construct_packing()` and any helper utilities it uses. The goal is to **maximise the combined_score** (e.g., total radius sum) while guaranteeing **validity = 1.0** – every circle must lie completely inside the unit square and must not overlap any other circle.
+
+---
+
+### Mandatory Output Format (Do **not** deviate)
+
+- **You must output ONLY the Python code that belongs between the markers** `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- **Do NOT include the markers themselves** in your response.
+- **Do NOT output any code outside this region** (imports, `run_packing()`, visualisation, etc.).
+- The surrounding framework will automatically merge your snippet with the preserved code.
+
+---
+
+### What Worked (Keep These Elements)
+
+1. **Hexagonal lattice baseline** – generating a regular hex‑grid and binary‑searching the feasible radius is a solid foundation.
+2. **Explicit geometric checks** – functions that test border constraints and pairwise distances (`_can_place`, `_distance_ok`) are essential for correctness.
+3. **Clear documentation** – doc‑strings describing the algorithm help maintainability.
+
+---
+
+### What Failed (Strictly Avoid)
+
+- **Validity failures**: Any change that leads to circles crossing the unit‑square boundary or overlapping (the current failure rate is ~26.9%).  
+- **Blind scaling**: Simply enlarging the radius without re‑validating placement will break feasibility.  
+- **Random placement without pruning**: Pure stochastic approaches that do not enforce constraints cause frequent invalid packings.  
+
+---
+
+### Recommended Strategies (Try These, Not Those)
+
+1. **Refined Binary Search with Adaptive Tolerance**  
+   - Use a while‑loop that stops when the radius interval width < 1e‑5.  
+   - After each candidate radius, **re‑generate the entire grid** and verify with a fast vectorised NumPy check; only accept if *all* circles satisfy the constraints.
+
+2. **Edge‑Trimming & Shift Optimization**  
+   - After generating the hex grid for a candidate radius, compute the minimal translation (dx, dy) that pushes every circle fully inside the unit square (e.g., shift by `max(0, -min_x + r)` etc.).  
+   - Apply the same translation to all centers; this often recovers feasibility for radii that are otherwise borderline.
+
+3. **Local Radius Adjustment per Row**  
+   - For rows that touch the left or right border, slightly reduce the radius of those circles while keeping the rest at the global candidate radius.  
+   - Implement a helper `_adjust_border_circles(centers, r)` that returns a list of radii (mostly `r`, possibly `r‑δ` for border circles) and ensures no overlap after adjustment.
+
+4. **Vectorised Distance Checks**  
+   - Replace nested Python loops with NumPy broadcasting to compute the full pairwise distance matrix efficiently.  
+   - Early‑exit when any distance < 2 r + ε to keep the search fast.
+
+5. **Optional Post‑Processing Relaxation**  
+   - After a feasible configuration is found, run a few iterations of a **simple force‑directed relaxation**: for each overlapping pair (if any due to floating‑point jitter) push them apart by a tiny amount, and re‑project any out‑of‑bounds circles back inside.  
+   - Keep the number of iterations low (≤ 5) to avoid breaking the deterministic nature of the binary search.
+
+6. **Deterministic Seed & No Randomness**  
+   - Do **not** introduce any random number generation inside the evolve block; the evaluator expects reproducible results.
+
+---
+
+### Implementation Checklist
+
+- **[ ]** Keep the public signature `def construct_packing():` unchanged.
+- **[ ]** Any new helper functions must be defined **inside** the evolve block.
+- **[ ]** Use only the standard library and NumPy (already imported elsewhere).
+- **[ ]** Return the final `(centers, radii)` tuple exactly as the original code expects.
+- **[ ]** Ensure all geometric calculations respect floating‑point tolerances (`epsilon = 1e‑9`).
+
+---
+
+### Final Reminder
+
+Your response **must be only the Python code** that lives between the two marker comments. No explanatory text, no markers, no surrounding code. The system will splice your snippet into the existing file and run the evaluation. Follow the strategies above and avoid any approach that caused validity failures. Good luck!

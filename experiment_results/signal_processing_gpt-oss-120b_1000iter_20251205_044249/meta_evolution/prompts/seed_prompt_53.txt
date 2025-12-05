@@ -1,0 +1,79 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving `construct_packing()`**
+
+You are tasked with improving the `construct_packing()` function (and any helper functions it calls) that lives inside the **EVOLVE BLOCK** delimited by `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+### Mandatory Output Rules  
+- **Only** output the Python code that belongs *between* the two markers.  
+- **Do not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+- **Do not** output any other code (imports, `run_packing()`, comments outside the block, etc.).  
+- The surrounding framework will automatically merge your submission with the preserved outer code.
+
+### What You Must NOT Do (learn from past failures)  
+- Do **not** write a prompt that is overly aggressive or vague; this leads to high invalidity rates.  
+- Do **not** repeat the same faulty logic that caused consecutive invalid programs in earlier iterations.  
+- Do **not** introduce syntax errors, undefined variables, or mismatched indentation.  
+- Do **not** change the function signature or the expected return type of `construct_packing()`.  
+
+### Goal of `construct_packing()`  
+The function should take the problem description (items, container dimensions, constraints) and produce a **deterministic, efficient packing plan** that can be validated by the test harness. Typical responsibilities include:
+1. Parsing the input data structures (list of items, each with size/weight).  
+2. Selecting a packing heuristic (e.g., first‑fit decreasing, shelf‑packing, or 3‑D bin‑packing) appropriate for the given constraints.  
+3. Building the output dictionary/list that matches the required schema (`container_id`, `item_ids`, `coordinates`, etc.).  
+4. Handling edge cases gracefully (empty item list, items too large for any container, duplicate IDs).  
+
+### Specific Strategies to Try  
+1. **Pre‑process Items**  
+   - Sort items by volume (or weight) descending before packing.  
+   - Filter out items that cannot fit any container and record them as “unpacked”.
+
+2. **Simple Heuristic Implementation**  
+   - Implement a **First‑Fit Decreasing (FFD)** algorithm: iterate over sorted items and place each into the first container that has enough remaining space.  
+   - Maintain a per‑container remaining‑space tracker (width, height, depth, weight).  
+
+3. **Spatial Placement Logic**  
+   - Use a **shelf‑packing** approach for 2‑D layers inside each container: keep a current shelf height, fill width until exhausted, then start a new shelf.  
+   - Record the (x, y, z) coordinate for each placed item based on the current shelf origin.
+
+4. **Validation Hooks**  
+   - After assigning an item, assert that the placement does not exceed any dimension or weight limit.  
+   - If an assertion would fail, backtrack: try the next container or start a new shelf.  
+
+5. **Determinism**  
+   - Avoid random choices; always iterate containers and shelves in a fixed order.  
+   - Use stable sorting (`sorted(..., reverse=True)`) to guarantee repeatable results.
+
+6. **Return Structure**  
+   - Build a list of packing entries, each entry being a dict with keys:  
+     ```python
+     {
+         "container_id": <id>,
+         "items": [
+             {"item_id": <id>, "position": (x, y, z)}
+         ]
+     }
+     ```  
+   - Ensure the outer function returns this list (or the exact structure expected by the test harness).
+
+### Implementation Tips  
+- Keep helper functions small and pure (e.g., `can_place(item, container_state)`, `place_item(item, container_state)`).  
+- Use clear variable names (`remaining_volume`, `current_shelf_height`).  
+- Include inline comments **inside** the evolve block only if they help readability; they will be part of the final code.  
+- Do not import new modules unless they are already available in the execution environment (standard library only).  
+
+### Final Reminder  
+Produce **only** the revised code for the evolve block, respecting the output rules above. Your changes should make `construct_packing()` robust, deterministic, and able to pass the hidden test suite without causing syntax or runtime errors.

@@ -1,0 +1,52 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a code‑evolution assistant tasked with improving the `construct_packing()` function (and any helper functions defined inside the evolve block) while preserving the surrounding program structure.  
+
+**IMPORTANT OUTPUT RULES**  
+- **Only** output the Python code that belongs between the lines `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do not** include the marker lines themselves, any imports, the `run_packing()` driver, or any other surrounding code.  
+- The system will automatically splice your output back into the original file, so any extra text will cause a failure.
+
+**WHAT TO DO**  
+1. **Analyse the current implementation** of `construct_packing()` and its helpers (e.g., item placement, bin selection, constraint checks).  
+2. **Identify inefficiencies or bugs** such as:  
+   - Unnecessary nested loops that increase time complexity.  
+   - Failure to handle edge cases (empty item list, items larger than any bin, duplicate items).  
+   - Hard‑coded constants that prevent flexible sizing.  
+3. **Rewrite the core logic** using clear, modular steps:  
+   - Validate input data early and return a sensible empty result if impossible.  
+   - Sort items by decreasing size (or another heuristic) to improve packing density.  
+   - Use a greedy bin‑first strategy with a fallback to a simple back‑track when a placement fails.  
+   - Keep track of remaining capacities in a lightweight structure (e.g., a list of tuples) to avoid recomputing sums.  
+4. **Add helper functions** inside the evolve block only if they make the main routine shorter and more readable (e.g., `_can_place(item, bin_capacity)`, `_select_bin(item, bins)`). Ensure they are defined **within** the evolve block so they are included in your output.  
+5. **Return a well‑structured result**: a list of bins, each containing the items placed in that bin, and optionally a summary dictionary with total bins used and unused space.
+
+**WHAT TO AVOID (based on previous failures)**  
+- Do **not** write code that references variables or functions outside the evolve block.  
+- Do **not** introduce syntax errors, missing colons, or mismatched indentation.  
+- Do **not** produce code that will raise exceptions for normal inputs (e.g., index errors, division by zero).  
+- Do **not** leave placeholder `pass` statements or `TODO` comments; the function must be fully operational.  
+- Do **not** change the function signature of `construct_packing()` or any public helper that the outer code expects.  
+- Do **not** output any explanatory text, comments outside the code block, or the marker lines themselves.
+
+**STRATEGIC SUGGESTIONS**  
+- Consider implementing the **First‑Fit Decreasing (FFD)** algorithm as a baseline; it is simple, fast (O(n log n)), and often yields near‑optimal results.  
+- If the current code uses a naïve first‑fit without sorting, add a sorting step to improve packing density.  
+- For tighter packing, you may add a **best‑fit** secondary pass: after the initial FFD pass, try to move items from partially filled bins into bins with the smallest remaining space that can still accommodate them.  
+- Use list comprehensions or generator expressions for concise capacity calculations, but keep readability high.  
+- Include inline comments **inside** the code (still within the evolve block) to clarify non‑obvious steps; these comments are allowed because they are part of the code output.
+
+Follow these instructions precisely and output only the revised code segment. Good luck!

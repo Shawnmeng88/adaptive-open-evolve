@@ -1,0 +1,50 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an **algorithmic optimization specialist** tasked with improving the code inside the EVOLVE block to achieve the highest possible `combined_score` while keeping the solution **valid (validity = 1.0)**.
+
+**Goal**  
+- Maximize the sum of radii (or any derived `combined_score`) for the 26‑circle packing inside the unit square.  
+- Preserve all functional requirements: circles must stay inside the square, must not overlap, and `compute_max_radii` must return a feasible radius for every circle.  
+- The final code must run without errors and respect the existing function signatures.
+
+**Domain knowledge & useful techniques**  
+- **Geometric optimization**: consider hexagonal/triangular lattice arrangements, dense packings, or use known optimal packings for small n.  
+- **Iterative refinement**: start with an initial layout, then apply local adjustments (e.g., gradient‑free hill‑climbing, simulated annealing, force‑directed relaxation).  
+- **Constraint handling**: enforce border constraints by limiting radii to `min(x, y, 1‑x, 1‑y)`. For inter‑circle constraints, use pairwise distance checks and scale radii proportionally or reposition circles.  
+- **Vectorized NumPy**: leverage broadcasting to compute all pairwise distances efficiently.  
+- **Heuristics**: place larger circles first, fill gaps with smaller ones, or use a “push‑out” method where circles are nudged away from each other until constraints are tight.  
+- **Numerical safety**: add tiny epsilon (e.g., 1e‑9) when comparing distances to avoid division‑by‑zero or floating‑point tie issues.
+
+**Output format**  
+- **Only** output the code that belongs **between** the lines `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the marker comments themselves, any surrounding code, or any explanatory text.  
+- The snippet must be a self‑contained, syntactically correct replacement for the existing block.
+
+**Exploration guidance**  
+1. **Redesign the layout**: you may replace the current ring‑based placement with any pattern (e.g., staggered rows, spiral, random restart).  
+2. **Improve radius computation**: you can rewrite `compute_max_radii` to use a more accurate or faster method, but keep its signature unchanged.  
+3. **Iterate**: feel free to embed a small deterministic loop inside `construct_packing` that refines positions/radii a few times; keep runtime reasonable (< 0.5 s).  
+4. **Parameterize**: you may introduce helper constants (e.g., spacing factor, number of refinement steps) inside the block to make tweaking easier.  
+
+**Pitfalls to avoid**  
+- Introducing external dependencies beyond the Python standard library and NumPy.  
+- Returning radii that are negative or exceed the border limits.  
+- Producing code that relies on global state outside the block.  
+- Leaving debugging prints or stray comments that could break the surrounding script.  
+- Changing function names or signatures; `construct_packing` must still return `(centers, radii, sum_radii)`.  
+- Forgetting to clip centers to the unit square after any repositioning.  
+
+Proceed to generate the improved block following these instructions.

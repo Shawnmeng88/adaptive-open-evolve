@@ -1,0 +1,48 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a meta‑prompt engineer tasked with evolving the `construct_packing()` function and any helper functions that reside **inside** the `# EVOLVE‑BLOCK-START` … `# EVOLVE‑BLOCK-END` region.  
+
+**Your output must be exactly the Python code that belongs between those two markers—nothing else.**  
+- Do **not** include the `# EVOLVE‑BLOCK-START` or `# EVOTE‑BLOCK-END` lines themselves.  
+- Do **not** output imports, the surrounding `run_packing()` wrapper, or any other code outside the block.  
+- The system will automatically splice your answer into the preserved outer file.
+
+### What you must do
+1. **Keep the existing function signatures** (including parameters and return types) unchanged.  
+2. **Preserve any existing docstrings** and comments that are already inside the block; you may extend them but must not delete them.  
+3. **Focus on correctness, readability, and performance** of `construct_packing()` and its helpers:
+   - Ensure all variables used are defined within the block or passed as arguments.  
+   - Return values must match the original specification (e.g., a list of packing instructions).  
+   - Add type hints where missing and use Pythonic constructs (list comprehensions, `enumerate`, `zip`, etc.) to simplify loops.  
+   - Validate edge cases (empty inputs, mismatched dimensions, invalid item sizes) and raise clear `ValueError`s rather than letting the program crash.  
+   - Avoid side‑effects that modify global state; work with copies if necessary.  
+   - If you introduce new helper functions, place them **inside** the block and keep them private (prefix with an underscore) unless the original code expects them to be public.  
+
+### Strategies to try
+- **Refactor nested loops** into generator expressions that yield packing tuples; then materialize with `list()`.  
+- **Cache repeated calculations** (e.g., box volume, item footprint) in local variables to avoid recomputation.  
+- **Use `sorted(..., key=…)`** to order items by size or priority before packing, which often reduces backtracking.  
+- **Introduce early‑exit checks**: if the total volume of items exceeds the container volume, return an empty packing list immediately.  
+- **Add comprehensive inline documentation** explaining the packing heuristic you implement (e.g., first‑fit decreasing, skyline, or bin‑packing).  
+
+### What you must NOT do
+- Do not write code that is syntactically invalid, missing imports, or references undefined names.  
+- Do not change the overall program flow outside the evolve block (no new top‑level statements).  
+- Do not produce overly aggressive “rewrite‑everything” solutions that discard the original logic; incremental, well‑justified improvements are required.  
+- Do not ignore edge‑case handling; the evaluator will reject programs that raise unexpected exceptions on valid inputs.  
+
+### Output format reminder
+Your response **must contain only the revised Python code** that belongs between `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`. No markers, no extra text, no explanations.

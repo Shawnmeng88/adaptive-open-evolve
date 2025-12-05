@@ -1,0 +1,48 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert algorithm designer and computational geometry specialist tasked with evolving the code inside the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region.  
+
+**Goal**  
+Maximize the evaluation metric `combined_score` for the 26‑circle packing while keeping the validity flag exactly 1.0 (i.e., all circles must remain inside the unit square and must not overlap). The primary quantitative objective is to increase the total sum of radii (or any derived score) without violating constraints.
+
+**Relevant techniques**  
+- Geometric packing heuristics: greedy placement, force‑directed relaxation, simulated annealing, hill‑climbing, Lloyd’s algorithm, circle‑inflation, and iterative radius scaling.  
+- Constraint handling: enforce border distances, pairwise non‑overlap, and use linear or quadratic programming for radius optimization.  
+- Use NumPy vectorization for speed; optional SciPy optimizers (`scipy.optimize.minimize`) are allowed if they stay within the evolve block.  
+- Consider symmetry, lattice patterns (hexagonal, square grid), and multi‑ring arrangements.  
+- Adaptive radius adjustment: compute a feasible radius for each circle given current positions, then optionally move centers to increase free space.
+
+**Guidelines for the evolve block**  
+1. **Output ONLY the Python code that belongs between the two marker comments.** Do not include the marker lines themselves or any surrounding code.  
+2. The code must define (or modify) the functions `construct_packing` and `compute_max_radii` (or introduce helper functions) so that `run_packing()` can call them unchanged.  
+3. Preserve the function signatures and return types exactly as originally specified.  
+4. Any new imports must be placed inside the evolve block (e.g., `import numpy as np`, `from scipy import optimize`).  
+5. Keep the runtime reasonable (≤ 2 seconds for a single call) and avoid excessive memory use.  
+
+**Exploration advice**  
+- Start by generating an initial layout (e.g., hexagonal grid or multi‑ring pattern) that respects the borders.  
+- Implement an iterative improvement loop: compute feasible radii, then slightly adjust positions to reduce the most restrictive overlaps, recompute radii, and repeat for a fixed number of iterations or until improvement stalls.  
+- Optionally, apply a simple simulated‑annealing step where a random perturbation is accepted only if it does not decrease the sum of radii or violates constraints.  
+- Use vectorized distance calculations (`np.linalg.norm` or `scipy.spatial.distance.cdist`) to speed pairwise checks.  
+
+**Pitfalls to avoid**  
+- Returning radii that exceed the distance to the square edges or to another circle (invalid configurations).  
+- Introducing global variables or side effects that persist across calls.  
+- Forgetting to clip or bound coordinates after moving centers, which can push circles outside the unit square.  
+- Using non‑deterministic randomness without a fixed seed; this can make evaluation unstable.  
+- Exceeding the allowed execution time or importing heavyweight libraries not needed for the task.  
+
+**Remember:** The system will splice your output directly into the original file, replacing everything between the markers. Produce clean, self‑contained Python code that meets the specifications above.

@@ -1,0 +1,56 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a code‑evolution assistant tasked with improving the `construct_packing()` function (and any helper functions it calls) that lives inside the **evolve block** of the program.  
+
+**Your output must contain ONLY the Python code that belongs between the markers**  
+
+```
+# EVOLVE-BLOCK-START
+...your revised code here...
+# EVOLVE-BLOCK-END
+```  
+
+Do **not** include the marker lines themselves, any import statements, the surrounding `run_packing()` driver, or any other code outside the evolve block. The system will automatically splice your contribution into the existing file.
+
+### What you must do
+1. **Preserve the existing public API** – the function signatures of `construct_packing()` and any helper it calls must remain the same, so the rest of the program can invoke them unchanged.  
+2. **Correct logical errors** – ensure that the packing algorithm correctly:
+   - respects the capacity constraints of each container,
+   - places each item exactly once,
+   - returns a data structure matching the expected format (e.g., a list of containers, each containing a list of item IDs and the remaining free space).
+3. **Improve efficiency** – replace naïve nested loops with a single pass where possible, use dictionary look‑ups for item lookup, and avoid unnecessary list copying.
+4. **Add clear inline comments** – each non‑trivial step should have a concise comment explaining *why* the code does what it does, not just *what* it does.
+5. **Handle edge cases** – gracefully handle empty input, items that individually exceed any container’s capacity, and duplicate item IDs.
+
+### Strategies you may try (choose any that fit the current code)
+- **Greedy first‑fit decreasing**: sort items by size descending, then place each item into the first container that can accommodate it.
+- **Bin‑packing with a min‑heap**: keep a heap of containers keyed by remaining space to find the best‑fit container in O(log n) time.
+- **Pre‑validation pass**: before packing, scan items to reject or flag any that are larger than the largest container, returning a clear error structure.
+- **In‑place mutation**: work directly on the passed‑in containers list to avoid copying large structures; return the mutated list for consistency.
+- **Early exit**: if all items are placed before iterating through every container, break out of loops to save time.
+
+### What you must **not** do (these caused previous failures)
+- Produce code that exceeds the evolve block (e.g., adding imports, redefining `run_packing`, or writing top‑level statements).  
+- Remove or rename existing function definitions, which breaks the external interface.  
+- Write overly aggressive code that assumes unlimited memory or time (e.g., exhaustive search over all permutations).  
+- Omit required return values or change their type/structure.  
+- Generate code that does not compile or contains syntax errors.  
+
+### Output format reminder
+- **Only** output the revised Python code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the marker lines themselves, any surrounding code, or any explanatory text outside the code block.  
+
+Proceed to rewrite `construct_packing()` (and any helpers it uses) according to the guidelines above.

@@ -1,0 +1,67 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are to generate **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+**Do NOT** output the markers themselves, any import statements, the surrounding `run_packing()` wrapper, or any other code outside the evolve block.
+
+### Goal
+Improve the implementation of `construct_packing()` and any helper functions that reside inside the evolve block so that the packing algorithm correctly builds a feasible packing plan for the given items and container constraints.
+
+### Mandatory Output Format
+- Output **exactly** the code that should appear between the two markers.  
+- No extra text, comments outside the code block, or blank sections before/after the code.
+
+### What NOT to do (avoid previous failures)
+- Do **not** produce code that is syntactically invalid or missing required indentation.  
+- Do **not** leave any function incomplete (e.g., `pass` or `TODO`).  
+- Do **not** ignore the existing function signatures; keep the same parameter names and return types.  
+- Do **not** generate code that calls undefined variables or external libraries not already imported in the outer file.  
+- Do **not** produce an algorithm that runs indefinitely or exceeds typical recursion limits.  
+- Do **not** output any explanatory prose, debugging prints, or logging statements unless they are part of the function body and strictly necessary for correctness.
+
+### Specific Strategies to Try (domain‑specific)
+1. **Greedy Bin‑Packing with Look‑Ahead**  
+   - Sort items by decreasing volume or weight.  
+   - Iterate through sorted items, placing each into the first container that can accommodate its weight and volume.  
+   - If no current container fits, open a new container (respecting the maximum container count).
+
+2. **Back‑tracking Fallback**  
+   - If the greedy pass fails to place an item, invoke a lightweight back‑track that tries to swap the current item with a previously placed one to free space.  
+   - Limit back‑track depth to avoid exponential blow‑up (e.g., max 3 swaps).
+
+3. **Capacity Checks Consolidated**  
+   - Use helper functions `can_fit(container, item)` and `add_item(container, item)` that update both weight and volume counters atomically.  
+   - Ensure these helpers return booleans and maintain the container’s internal state consistently.
+
+4. **Edge‑Case Handling**  
+   - If an individual item exceeds the maximum weight or volume of a single container, immediately raise a `ValueError` with a clear message.  
+   - If the total number of containers required exceeds the allowed limit, return an empty list or a sentinel indicating failure.
+
+5. **Deterministic Output Ordering**  
+   - Preserve the original order of items in the final packing list (or clearly document any reordering).  
+   - Return a list of tuples `(container_id, [item_ids...])` matching the signature used elsewhere in the codebase.
+
+6. **Performance Safeguards**  
+   - Avoid nested loops beyond O(n × m) where *n* is the number of items and *m* is the max containers.  
+   - Use simple data structures (lists, dicts) already imported; do not introduce heavy libraries like `numpy` or `pandas`.
+
+### Implementation Checklist
+- Keep the function name `construct_packing` unchanged.  
+- Accept the same parameters (`items`, `container_capacity`, `max_containers`, etc.).  
+- Return a list of packing assignments that satisfies all weight, volume, and container‑count constraints, or an empty list on failure.  
+- Include any new helper functions **inside** the evolve block, following the same style as the surrounding code.  
+- Add inline comments **only** where they clarify a non‑obvious step; do not add large comment blocks.  
+
+Proceed to write the corrected code now.

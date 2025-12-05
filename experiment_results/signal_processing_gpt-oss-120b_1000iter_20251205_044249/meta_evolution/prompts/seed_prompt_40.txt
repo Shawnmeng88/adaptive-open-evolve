@@ -1,0 +1,86 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Guidance for Evolving `construct_packing()`**
+
+You are tasked with improving the `construct_packing()` function (and any helper functions defined inside the evolve block). Follow **exactly** the rules below. Any deviation will cause the program to be rejected.
+
+---
+
+### 1. Output Restrictions (CRITICAL)
+- **Only** output the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- **Do NOT** include the markers themselves.
+- **Do NOT** output any imports, definitions, or calls that are outside this block (e.g., `run_packing()`, global constants, etc.).
+- The surrounding file will be automatically merged with your output; you must supply **just** the inner block code.
+
+### 2. Forbidden Approaches (must never be used)
+- Do not write code that relies on undefined variables or external modules not already imported in the outer file.
+- Do not introduce new top‑level statements (e.g., `if __name__ == "__main__":`, prints, or debugging logs) inside the block.
+- Do not create overly aggressive loops that could cause infinite recursion or excessive runtime; keep complexity reasonable (O(n log n) or better where n is the number of items).
+- Do not repeat the same faulty logic that previously caused *high invalidity rates* (e.g., returning `None` unconditionally, ignoring edge‑case inputs, or using mutable default arguments).
+- Do not generate code that will raise exceptions for valid inputs (e.g., division by zero, index errors).
+
+### 3. Success Criteria for `construct_packing()`
+Your implementation must:
+1. Accept the problem specification (list of items with widths, heights, values, and a container size).
+2. Produce a packing plan that:
+   - Fits every placed item entirely inside the container bounds.
+   - Prevents any overlap between items.
+   - Maximizes total value **or** provides a deterministic heuristic that consistently improves over a naïve first‑fit strategy.
+3. Return data in the exact format expected by `run_packing()` (e.g., a list of `(item_id, x, y, rotation)` tuples).
+
+### 4. Suggested Concrete Strategies
+Choose **one** of the following approaches (or combine them sensibly) and implement it fully inside the evolve block:
+
+#### A. Shelf‑Based Heuristic
+- Sort items by decreasing height (or value‑density).
+- Create horizontal “shelves” from the bottom of the container; each shelf has a fixed height equal to the tallest item placed on it.
+- Place items left‑to‑right on the current shelf; start a new shelf when the next item would exceed the container width.
+- Optionally allow 90° rotation if it yields a better fit on the current shelf.
+
+#### B. Guillotine Split Packing
+- Maintain a list of free rectangles (initially the whole container).
+- For each item (sorted by descending value‑density), find the free rectangle where it fits best (e.g., minimal waste area).
+- After placement, split the used rectangle into two smaller free rectangles (guillotine cut) and add them back to the free list.
+- Discard any free rectangles that are fully contained by another free rectangle to keep the list minimal.
+
+#### C. Simple 2‑D Bin‑Packing Approximation (MaxRects Variant)
+- Keep a list of maximal free rectangles.
+- For each item (sorted by descending value), try both orientations and select the placement that leaves the smallest leftover area (Best‑Short‑Side‑Fit or Best‑Area‑Fit).
+- Update the free‑rectangle list by subtracting the occupied region and pruning redundant rectangles.
+
+#### D. Value‑Density First‑Fit with Row Packing
+- Compute `density = value / (width * height)` for each item.
+- Sort items by decreasing density.
+- Fill rows from the top of the container; each row height equals the tallest item placed in that row.
+- Within a row, place items left‑to‑right, rotating when it yields a higher density fit.
+
+### 5. Implementation Details
+- **Function Signature**: Keep the existing signature unchanged (e.g., `def construct_packing(items, container_width, container_height):`).
+- **Return Value**: Return a list of tuples `(item_id, x, y, rotated)` where `rotated` is a boolean indicating a 90° rotation.
+- **Determinism**: Use a stable sort (e.g., `sorted(..., key=..., reverse=True)`) so the same input always yields the same output, aiding reproducibility.
+- **Edge Cases**: Gracefully handle items that cannot fit at all by simply skipping them; do not raise errors.
+- **Performance**: Aim for O(n log n) sorting plus O(n · m) placement where m is the current number of free rectangles (keep m small by pruning).
+
+### 6. Validation Checklist (run before submitting)
+- [ ] The code compiles without syntax errors.
+- [ ] No references to undefined names.
+- [ ] All returned coordinates are integers (or the required numeric type) and respect container bounds.
+- [ ] No duplicate or overlapping placements (you may include a quick self‑check inside the block for sanity, but do not print the result).
+- [ ] The function returns a list, never `None` or an empty placeholder unless no items fit.
+
+---
+
+**Remember:** Output **only** the inner block code. Do not add any explanatory comments outside the block, and do not repeat these instructions in the output. Follow the strategy you choose carefully, and ensure the implementation adheres strictly to the constraints above. Good luck!

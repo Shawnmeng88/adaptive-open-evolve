@@ -1,0 +1,83 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Packing Code**
+
+You are to edit **only** the code that resides between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...
+# EVOLVE-BLOCK-END
+```  
+
+When responding, **output ONLY the code that goes between those markers**.  
+- Do **not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+- Do **not** include any imports, the `run_packing()` function, or any other surrounding code – those sections are preserved automatically by the evaluation harness.  
+
+### Primary Objective
+Create a `construct_packing()` function (and any helper functions you modify or add) that returns a NumPy array of shape `(26, 2)` containing the (x, y) centers of 26 circles inside the unit square `[0,1]×[0,1]`.  
+The solution must:
+
+1. **Achieve the highest possible combined_score** (sum of the maximal radii for the given centers).  
+2. **Maintain full validity** (`validity = 1.0`): no two circles may overlap and every circle must lie completely inside the unit square.  
+
+### What **must NOT** be done (these caused validity failures in previous attempts)
+
+- **Do not place circles randomly without a deterministic post‑check** – random placement led to overlapping circles in 20 % of runs.  
+- **Do not omit the distance‑to‑boundary constraint** – circles that touch or cross the square edges cause validity failures.  
+- **Do not return fewer or more than 26 centers** – the evaluator expects exactly 26 points.  
+- **Do not rely on external state or global variables** – the function must be pure and return its result directly.  
+- **Do not use unbounded loops that may never converge** – limit iterative refinements to a reasonable maximum (e.g., 200 iterations) and break early when changes fall below `1e-12`.  
+
+### Suggested Concrete Strategies (you may combine them)
+
+1. **Base Grid + Optimized Extra Circle**  
+   - Build a uniform `5×5` grid (25 points) that evenly covers the unit square.  
+   - Compute the maximal radius for each grid point using `compute_max_radii`.  
+   - Determine the location for the 26th circle that **maximises the total sum of radii**.  
+   - A simple deterministic search (e.g., a fine mesh over the square) or a small gradient‑ascent from the point of maximal *minimum distance to existing circles and boundaries* works well and guarantees reproducibility.
+
+2. **Iterative Radius Inflation**  
+   - After placing the 26 centers, run a short iterative routine that inflates each radius to the minimum of:  
+     - distance to the nearest other center minus that other’s current radius,  
+     - distance to the left/right/top/bottom edges of the unit square.  
+   - Stop when the maximum change in any radius is `< 1e-12` or after `max_iter` steps (default 200).  
+   - This ensures the radii are the true maximal values for the given centers, which directly improves the combined_score.
+
+3. **Local Perturbation / Hill‑Climbing for the Extra Circle**  
+   - Start the 26th circle at the point of maximal clearance (the centre of the largest empty square found by scanning a fine grid).  
+   - Perform a few hill‑climbing steps: move the point in the direction that most increases the sum of radii, respecting the unit‑square bounds.  
+   - Keep the best position encountered; this often yields a modest but consistent score boost without sacrificing validity.
+
+4. **Deterministic Mesh Search for the 26th Center**  
+   - Generate a mesh of candidate points (e.g., `101×101` grid).  
+   - For each candidate, temporarily add it to the 25‑grid centers, compute the new total radius sum, and keep the candidate with the highest sum.  
+   - Because the mesh is fixed, the result is reproducible and avoids random failures.
+
+5. **Safety Checks**  
+   - After constructing the final `centers` array, assert `centers.shape == (26, 2)`.  
+   - Verify that every coordinate lies in `[0, 1]`.  
+   - Compute pairwise distances and ensure `dist >= r_i + r_j - 1e-12` for all `i ≠ j`.  
+   - If any check fails, fall back to the plain 5×5 grid (which is always valid) to guarantee `validity = 1.0`.
+
+### Implementation Guidance
+
+- Keep the function signatures identical to the originals (`construct_packing()`, `compute_max_radii(centers, max_iter=200, eps=1e-12)`).  
+- Use only NumPy (`import numpy as np`) – no external libraries.  
+- Write clear, commented code so future reviewers can see the deterministic steps.  
+- Ensure the function returns the `centers` array directly; do not print or write to files.  
+
+**Remember:** The evaluation will merge your output with the surrounding code, so any syntax error, missing return, or extra import will cause the whole program to fail. Follow the format rules exactly and focus on deterministic, validity‑preserving improvements that raise the combined_score.

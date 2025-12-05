@@ -1,0 +1,112 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are to modify **only** the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not output the markers themselves** and **do not include any code outside this region** (imports, `run_packing()`, visualisation helpers, etc.). The surrounding file will automatically splice your output into the correct location.
+
+---
+
+### Mandatory Output Format (Do *not* violate)
+
+- **Output ONLY the code** that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- **Do NOT** include the marker lines themselves.
+- **Do NOT** include any other code (imports, helper functions defined elsewhere, `run_packing()`, etc.).
+- The system will merge your output with the preserved sections automatically.
+
+---
+
+### Primary Objective  
+
+Maximize the `combined_score` for a 26‑circle packing inside the unit square **while keeping the `validity` flag exactly 1.0**. Validity means:
+
+1. **Containment** – For every circle `i`, `radius_i ≤ min(x_i, y_i, 1‑x_i, 1‑y_i)`.
+2. **Non‑overlap** – For every distinct pair `(i, j)`, `dist(centers_i, centers_j) ≥ radius_i + radius_j`.
+
+Any violation of these constraints will cause a validity failure (currently 1/11 ≈ 9 %). Your code must guarantee they are never broken.
+
+---
+
+### What Worked (keep these ideas)
+
+- **Explicit LP formulation** – Building linear‑programming matrices that encode the containment and non‑overlap constraints, then solving a maximization of the sum of radii with `scipy.optimize.linprog`.
+- **Border distance pre‑computation** – Using `np.minimum.reduce([x, y, 1‑x, 1‑y])` to obtain the tightest possible radius from each centre to the square boundary.
+- **Iterative centre augmentation** – Adding extra centres only when they increase the objective and do not introduce infeasibility.
+- **Numerical tolerance handling** – Adding a small epsilon (e.g., `1e‑9`) to the right‑hand side of constraints to avoid floating‑point edge‑cases.
+
+---
+
+### What Failed (strictly avoid)
+
+- **Omitting the containment constraints** – leads to circles spilling outside the square.
+- **Using strict “>” instead of “≥”** in constraints – can produce infeasible LP solutions that the solver discards, lowering the score.
+- **Relying on heuristic placement without LP verification** – caused the 9 % validity failure rate.
+- **Neglecting to round or clip radii after solving** – produced tiny negative radii or radii exceeding the border distance.
+- **Re‑solving the LP with the same centre set after a failure** – resulted in infinite loops or wasted computation.
+
+---
+
+### Suggested Strategies for Improvement
+
+1. **Strengthen Constraint Generation**
+   - For each centre `c_i`, compute `max_radius_i = min(c_i.x, c_i.y, 1‑c_i.x, 1‑c_i.y)`.
+   - Add a linear constraint `r_i ≤ max_radius_i` (with a tiny epsilon margin).
+   - For every unordered pair `(i, j)`, add `r_i + r_j ≤ dist(c_i, c_j)`. Use the Euclidean distance matrix (`scipy.spatial.distance.cdist`) for efficiency.
+
+2. **Robust LP Solving**
+   - Build the LP in **standard form**: maximize `c·r` where `c = 1…1`.
+   - Use `method='highs'` (default) and set `options={'presolve': True, 'dual_feasibility_tolerance': 1e‑9}`.
+   - After solving, **verify** the solution manually: clamp any negative radii to zero, and re‑apply the containment check. If any radius exceeds its border distance, reduce it to the border distance minus epsilon.
+
+3. **Iterative Centre Enrichment**
+   - Start with a modest seed set (e.g., a grid or low‑discrepancy sequence).
+   - After each successful LP solve, evaluate the **marginal gain** of inserting a new random centre:
+     * Sample a candidate centre uniformly in the square.
+     * Tentatively append it, rebuild the LP, and solve.
+     * Accept the candidate only if the new objective improves **and** the LP remains feasible.
+   - Limit the number of trials per iteration (e.g., 50) to keep runtime reasonable.
+
+4. **Numerical Safety Net**
+   - Define a global `EPS = 1e‑9`.
+   - When constructing right‑hand sides, subtract `EPS` from distances to enforce a strict safety margin.
+   - After the LP, run a **post‑validation pass** that checks every constraint with tolerance `1e‑8`. If any violation is detected, shrink the offending radii by `EPS` and re‑validate.
+
+5. **Cache Expensive Computations**
+   - The distance matrix between centres is symmetric; compute it once per centre set and reuse.
+   - Store the border‑distance vector for each centre; recompute only when centres change.
+
+6. **Graceful Degradation**
+   - If `linprog` reports infeasibility, fall back to a **feasibility repair**:
+     * Reduce all radii by a factor (e.g., 0.95) and re‑check constraints.
+     * Continue shrinking until the LP becomes feasible, then resume normal optimisation.
+
+7. **Documentation & Clean API**
+   - Keep helper functions pure (no side‑effects) and type‑annotated.
+   - Add docstrings that explicitly state the purpose, inputs, and guarantees (e.g., “returns radii that satisfy containment and non‑overlap within tolerance”).
+
+---
+
+### Implementation Checklist (inside the evolve block)
+
+- `[ ]` Refactor `_build_lp_matrices` to include the epsilon safety margin.
+- `[ ]` Ensure `_solve_radius_lp` returns a **feasible** radii vector; if not, invoke the repair routine.
+- `[ ]` Update `construct_packing` to:
+  1. Initialise a seed centre set.
+  2. Loop: attempt to add new centres (using the strategy above) until no improvement is observed or a maximum iteration count is reached.
+  3. Return the final centres and radii as a dictionary compatible with `run_packing`.
+- `[ ]` Add a private `_validate_solution` helper used both after solving and before returning, raising an assert if validity ≠ 1.0 (this will help catch regressions during development).
+- `[ ]` Keep the public signature unchanged: `def construct_packing() -> dict:`.
+
+Follow the **Mandatory Output Format** strictly and output **only** the revised code segment that lives between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.

@@ -1,0 +1,66 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving `construct_packing()`**
+
+You must output **only** the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+- **Do NOT include the markers themselves** in your response.  
+- **Do NOT output any code outside those markers** (e.g., imports, `run_packing()`, visualisation helpers, etc.).  
+- The surrounding framework will automatically merge your output with the preserved sections; any deviation will cause evaluation failure.
+
+### Objective
+Maximize the **total sum of radii** returned by `construct_packing()` while satisfying:
+
+1. Every circle must lie completely inside the unit square `[0,1] × [0,1]`.
+2. No two circles may overlap (distance between centers ≥ sum of radii).
+
+### What **must NOT** be done (learned from past failures)
+- **Do not** write code that performs uncontrolled iterative searches without clear termination (e.g., “while True” loops that rely on break conditions that may never fire).  
+- **Do not** introduce vague constraints such as “must improve” without concrete mathematical formulation.  
+- **Do not** add unnecessary parameters like “step” or “constraint” that are never used.  
+- **Do not** produce code that has a high invalidity rate (≥ 40 % of generated programs failing the geometric checks).  
+- **Do not** use overly aggressive heuristic tweaks that change the problem definition (e.g., allowing circles to extend outside the unit square).  
+- **Do not** include any debugging prints, `input()` calls, or external file I/O.  
+
+### Recommended Concrete Strategies
+1. **Hexagonal (triangular) lattice**  
+   - Compute the lattice spacing `s` that yields at least 26 points inside the unit square when using a staggered rows pattern.  
+   - Use a binary‑search or simple analytical formula to find the largest `s` that satisfies the point‑count requirement while keeping all points at least `s/2` from the borders.  
+   - Set each circle’s radius to `r = s/2`. This choice guarantees non‑overlap on a perfect hexagonal grid.
+
+2. **Greedy pruning (if the lattice produces more than 26 points)**  
+   - After generating the full lattice, sort points by their distance to the square centre (or any deterministic criterion).  
+   - Keep the first 26 points; discard the rest.  
+   - Because all points share the same spacing, the radius `r = s/2` remains valid for the retained subset.
+
+3. **Boundary safety**  
+   - When generating lattice coordinates, offset every point by `r` from the left/bottom edges and ensure the right/top edges are `≤ 1‑r`.  
+   - This guarantees each circle is fully contained.
+
+4. **Return format**  
+   - `construct_packing()` must return a tuple `(centers, radii)`, where `centers` is a list of `(x, y)` tuples and `radii` is a list of floats of equal length (26).  
+
+5. **Determinism**  
+   - Avoid any random sampling; the solution must be fully deterministic so that repeated runs produce identical outputs.
+
+### Implementation Checklist (inside the evolve block)
+- Define a helper `_hex_lattice_spacing(min_points=26)` that computes the maximal spacing `s`.  
+- Define a helper `_generate_hex_grid(s)` that returns all lattice points respecting the border margin `s/2`.  
+- In `construct_packing()`, call the helpers, prune to exactly 26 points, build the `radii` list (`[s/2] * 26`), and return the tuple.  
+- Include comprehensive docstrings explaining the math and the pruning rule.  
+- Ensure the code runs with only the standard library and `numpy` (already imported in the outer file).  
+
+Follow these guidelines precisely; any deviation will lead to an invalid submission.

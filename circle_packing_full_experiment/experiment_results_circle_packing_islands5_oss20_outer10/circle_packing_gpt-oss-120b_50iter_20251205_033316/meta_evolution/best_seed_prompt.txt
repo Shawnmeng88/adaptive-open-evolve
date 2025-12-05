@@ -1,0 +1,78 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – GUIDELINES FOR EVOLUTION BLOCK**
+
+You may edit **only** the code that appears between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...
+# EVOLVE-BLOCK-END
+```  
+
+When you respond, **output ONLY the Python code that belongs inside those markers** – do **not** include the markers themselves, any import statements, or any other surrounding code. The surrounding framework (imports, `run_packing()`, etc.) will be merged automatically.
+
+---
+
+### PRIMARY OBJECTIVE
+Improve the **`construct_packing()`** function (and any helper functions defined within the evolve block, such as `compute_max_radii`, `_assert_valid`, `_generate_hex_lattice`, etc.) so that a packing of **26 circles inside the unit square** achieves:
+
+1. **Validity = 1.0** – every circle centre `(x, y)` satisfies `0 ≤ x ≤ 1` and `0 ≤ y ≤ 1`; all radii are **non‑negative**; no two circles overlap (distance between centres ≥ sum of radii, with a tiny tolerance for floating‑point error).  
+2. **Maximal total area** – the sum of radii (or the sum of squared radii) should be as large as possible while respecting the validity constraints.
+
+---
+
+### MANDATORY CONSTRAINTS (DO NOT DO)
+
+- **Do NOT** produce packings that violate the boundary constraints (centres outside `[0,1]²`).  
+- **Do NOT** return any negative radii.  
+- **Do NOT** allow overlapping circles; the distance check must be strict (≥ sum of radii − 1e‑9 is acceptable to tolerate rounding).  
+- **Do NOT** leave helper functions incomplete, raise `NotImplementedError`, or contain placeholder `pass` statements.  
+- **Do NOT** modify code outside the evolve block (imports, `run_packing()`, etc.).  
+- **Do NOT** ignore performance: the algorithm should run comfortably within a few seconds on a standard CPU.
+
+These failures were observed in previous attempts (e.g., “Validity failures: 3/6”, “Validity failures: 2/5”, etc.). Ensure every validation check passes for **all** 26 circles.
+
+---
+
+### SUGGESTED STRATEGIES (you may combine them)
+
+1. **Hexagonal lattice seed** – generate a dense hexagonal grid that fits inside the unit square, then truncate or shift it to obtain exactly 26 points.  
+2. **Iterative radius expansion** – start with a small uniform radius for all centres, then repeatedly increase each radius to the minimum of:
+   - distance to the nearest neighbour minus that neighbour’s current radius,
+   - distance to the nearest wall (min of `x, 1‑x, y, 1‑y`),
+   - a small safety margin (e.g., `1e‑9`).  
+   Stop when no radius can be increased without violating a constraint.
+3. **Local optimization / gradient ascent** – treat the radii as variables and perform a few iterations of a simple heuristic (e.g., for each circle set its radius to the *current* maximal feasible value computed as in (2)). This often converges in < 10 passes.
+4. **Boundary‑aware placement** – after the hex lattice is generated, push any points that are too close to a wall inward by the excess amount, then recompute radii.
+5. **Vectorized NumPy operations** – compute pairwise distances with `scipy.spatial.distance.cdist` or NumPy broadcasting to keep the algorithm fast and avoid Python loops.
+6. **Robust validation helper** – implement `_assert_valid(centers, radii)` that raises a clear `AssertionError` if any of the three validity conditions fails. Call this helper at the end of `construct_packing()` to guarantee correctness before the result is returned.
+
+---
+
+### IMPLEMENTATION NOTES
+
+- Keep all helper functions **inside** the evolve block; they can be called by `construct_packing()`.  
+- Return a tuple `(centers, radii)` where `centers` is an `np.ndarray` of shape `(26, 2)` and `radii` is an `np.ndarray` of shape `(26,)`.  
+- Use a small tolerance (`eps = 1e‑9`) when checking overlaps and wall distances to avoid false negatives due to floating‑point rounding.  
+- Document each function with a concise docstring explaining its role; this aids future maintenance and debugging.  
+- If you need auxiliary constants (e.g., `HEX_SPACING = 1/5`), define them **within** the evolve block.
+
+---
+
+### OUTPUT INSTRUCTION
+
+When you are finished, **output ONLY the Python code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`**. Do not include the markers themselves, any import statements, or any surrounding code. The system will automatically merge your output with the preserved sections.

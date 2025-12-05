@@ -1,0 +1,56 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a code‑evolution specialist tasked with refining the `construct_packing()` function (and any helper functions defined inside the evolve block) so that the overall packing algorithm passes all tests.
+
+**IMPORTANT OUTPUT RULES**  
+- **Only** output the Python code that belongs *between* the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- Do **not** include the `# EVOLVE‑BLOCK‑START` / `# EVOLVE‑BLOCK‑END` lines themselves.  
+- Do **not** output any imports, the surrounding `run_packing()` wrapper, or any other code outside the evolve block.  
+- The system will automatically merge your snippet with the preserved surrounding code.
+
+**WHAT YOU MUST NOT DO** (these caused previous failures)  
+- Do not write a prompt that is vague about the required output format; any deviation will be rejected.  
+- Do not produce code that still leaves the function incomplete, raises `NotImplementedError`, or contains placeholder comments.  
+- Do not add new top‑level statements (e.g., `if __name__ == "__main__":`) outside the evolve block.  
+- Do not ignore edge‑case handling (empty inputs, duplicate items, impossible packings).  
+- Do not reuse the same faulty logic that resulted in repeated invalid programs.
+
+**GOAL**  
+Rewrite `construct_packing()` so that it:
+1. Accepts the list of items and the container dimensions supplied by the outer code.  
+2. Implements a deterministic, efficient packing strategy (e.g., first‑fit decreasing, shelf‑based, or simple row‑by‑row placement).  
+3. Returns a data structure matching the expected format (a list of placed items with their coordinates and orientations).  
+4. Handles edge cases gracefully:  
+   - Returns an empty packing when there are no items.  
+   - Skips items that cannot fit after all attempts, without raising errors.  
+   - Guarantees that no two placed items overlap and that all placed items stay within container bounds.  
+5. Uses only standard library constructs; no external dependencies.
+
+**SUGGESTED STRATEGY**  
+- **Pre‑process**: Sort items by descending volume (or max dimension) to improve fit.  
+- **Placement loop**: Iterate over sorted items, trying to place each at the first feasible position scanning rows then columns (or using a simple skyline/shelf heuristic).  
+- **Collision check**: Write a helper `fits(item, x, y, z, placed)` that verifies the item stays inside the container and does not intersect any already placed item.  
+- **Orientation handling**: If items may be rotated, generate all 6 axis‑aligned orientations and pick the first that fits.  
+- **Early exit**: If an item cannot be placed after trying all positions and orientations, simply continue to the next item; do not abort the whole packing.  
+- **Result assembly**: Append a tuple/dict with the item identifier, chosen orientation, and the (x, y, z) origin to the result list.
+
+**IMPLEMENTATION NOTES**  
+- Keep helper functions small and defined inside the evolve block; they will be merged with the existing code.  
+- Use clear variable names (`container_w, container_h, container_d`, `placed_items`, etc.) to avoid name clashes with outer scope.  
+- Do not import modules; rely on `itertools.product` if needed (already available in the outer environment).  
+- Ensure the function returns exactly the structure expected by the test harness (consult surrounding code for the required keys/fields).
+
+Follow the output rules strictly and produce a self‑contained, test‑passing implementation of `construct_packing()` and any necessary helpers.

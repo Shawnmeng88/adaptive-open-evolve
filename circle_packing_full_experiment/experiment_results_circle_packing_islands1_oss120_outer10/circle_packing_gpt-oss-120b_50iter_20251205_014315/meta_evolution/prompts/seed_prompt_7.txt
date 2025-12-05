@@ -1,0 +1,73 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving `construct_packing()` (Do Not Edit)**  
+
+You must output **only** the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+- **Do NOT** include the markers themselves in your output.  
+- **Do NOT** output any code outside those markers (imports, `run_packing()`, visualisation helpers, etc.).  
+- The surrounding framework will automatically merge your output with the preserved sections; any deviation will cause the evaluation to fail.
+
+### Objective  
+Maximize the **sum of radii** returned by `construct_packing()` while guaranteeing:
+
+1. Every circle lies completely inside the unit square `[0,1] × [0,1]`.  
+2. No two circles overlap (distance between centers ≥ sum of their radii).
+
+### Mandatory Constraints (Never violate)
+
+- **No new imports** – you may only use modules already imported in the surrounding code (e.g., `numpy`, `math`).  
+- **Do not change function signatures** of `construct_packing()` or any helper functions already defined inside the evolve block.  
+- **Do not add global variables**; keep all state local to the functions.  
+- **Do not use external files or network access**; the solution must be self‑contained.  
+
+### What to Avoid (based on previous failures)
+
+- Aggressive heuristics that leave many circles outside the square or cause overlaps – these lead to high invalidity rates.  
+- Introducing additional loops or complex recursion that dramatically increase runtime; the evaluation budget is limited.  
+- Adding parameters like `step`, `avoid`, `constraint`, or `must` that were present in earlier unsuccessful attempts.  
+- Over‑optimizing with exhaustive search; keep the algorithm deterministic and fast.  
+
+### Recommended Strategies (you may combine them)
+
+1. **Lattice‑Based Core Packing**  
+   - Compute the largest uniform spacing `s` for a square grid that yields at least `N‑1` points (where `N` is the target number of circles, e.g., 26).  
+   - Place circles on the grid with radius `r = s/2` (or a slightly smaller value to ensure interior safety).  
+
+2. **Extra Circle Placement**  
+   - After the lattice is filled, add one additional circle by solving a simple geometric optimization:  
+     *Sample a few candidate positions (e.g., centroids of largest empty triangles formed by existing centers) and choose the one with maximal feasible radius.*  
+   - Compute the feasible radius as the minimum of the distances to the square edges and to existing circle centers, minus a tiny epsilon (e.g., `1e-6`).  
+
+3. **Iterative Radius Adjustment**  
+   - Once all centers are fixed, run a short pass that uniformly scales down all radii by a factor `α` (starting at `1.0` and decreasing by `0.01` until all constraints are satisfied).  
+   - This guarantees feasibility without recomputing positions.  
+
+4. **Helper Functions** (keep them concise and pure):  
+   - `_grid_spacing_for_target(target, low=0.05, high=0.5, eps=1e-5)`: binary search for the maximal `s` that yields at least `target` grid points.  
+   - `_grid_points(spacing)`: return a list of `(x, y)` coordinates for the lattice inside the unit square.  
+   - `_max_feasible_radius(point, centers)`: compute the maximal radius for a new circle at `point` given existing `centers`.  
+
+5. **Numerical Safety**  
+   - Always subtract a small epsilon (`1e-7` or similar) from radius calculations to avoid floating‑point edge cases where a circle would touch the boundary or another circle.  
+
+### Output Requirements (Critical)
+
+- **Only** the code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **No** marker lines, no surrounding context, no additional text.  
+- The code must be syntactically correct and ready to be inserted into the existing file.  
+
+Follow these instructions precisely to produce a valid, high‑scoring `construct_packing()` implementation.

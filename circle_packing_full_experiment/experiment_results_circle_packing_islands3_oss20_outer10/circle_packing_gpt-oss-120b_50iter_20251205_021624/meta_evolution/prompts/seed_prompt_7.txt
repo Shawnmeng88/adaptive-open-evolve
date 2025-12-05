@@ -1,0 +1,89 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM PROMPT – Guidance for Evolving the Packing Code**
+
+You may edit **only** the code that appears between the markers  
+
+```
+# EVOLVE-BLOCK-START
+# EVOLVE-BLOCK-END
+```  
+
+All other parts of the file (imports, `run_packing()`, etc.) are preserved automatically.
+
+---
+
+### **OUTPUT REQUIREMENTS (CRITICAL)**
+1. **Output ONLY** the Python code that belongs **inside** the two markers.  
+2. **Do NOT** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+3. **Do NOT** output any imports, `run_packing()`, or any code outside the evolve block.  
+4. The surrounding file will merge your output automatically; violating any of the above will cause the program to fail evaluation.
+
+---
+
+### **PRIMARY OBJECTIVE**
+Create a `construct_packing()` function (and any helper functions you modify or add) that returns a NumPy array of shape **(26, 2)** – the (x, y) centers of 26 equal‑radius circles packed **inside the unit square**. The returned packing must be **fully valid** (`validity = 1.0`) according to the evaluator.
+
+---
+
+### **WHAT TO KEEP FROM PREVIOUS SUCCESS**
+- Use **NumPy** for all vectorized operations.  
+- Generate a **deterministic hexagonal lattice** (or a regular square lattice) that guarantees a minimum separation of `2 * radius`.  
+- After generating a superset of points, **slice** the first `max_points` (26) points to satisfy the exact count.  
+- Apply a **simple scaling** step to ensure all points lie strictly inside `[0, 1]` (e.g., multiply by `0.99` and add a small margin).  
+
+---
+
+### **WHAT TO AVOID (based on past failures)**
+- **Do not** add complex iterative optimizers, stochastic search loops, or constraint‑solving libraries – they caused high invalidity rates and timeouts.  
+- **Do not** introduce additional constraints (e.g., “avoid edges”, “minimize variance”) that are not explicitly required; each extra constraint increased the chance of invalid solutions.  
+- **Do not** write code that may produce **duplicate** or **overlapping** points; the evaluator rejects any violation of the minimum‑distance rule.  
+- **Do not** rely on random sampling without a deterministic fallback; randomness led to nondeterministic failures in many runs.  
+
+---
+
+### **CONCRETE STRATEGIES TO TRY**
+
+1. **Hexagonal Grid Generation**  
+   - Compute the required spacing `s = 2 * radius`.  
+   - Generate rows with alternating offsets (`0` and `s/2`) to form a hex pattern.  
+   - Continue until you have at least 26 points; then trim.
+
+2. **Square Grid with Diagonal Offsets**  
+   - If the hex grid produces too many points, fall back to a simple `⌈√26⌉ × ⌈√26⌉` square grid with spacing `s`.  
+   - Optionally jitter each point by a tiny deterministic offset (`ε = 1e‑4`) to avoid exact alignment with the border.
+
+3. **Deterministic Scaling & Margin**  
+   - After generating the raw lattice, compute the bounding box of the points.  
+   - Scale the entire set uniformly so that the farthest point is ≤ `1 - radius`.  
+   - Add a constant margin `radius` to all coordinates to guarantee containment.
+
+4. **Helper Functions (allowed to edit)**  
+   - `_hex_grid(max_points: int, radius: float) -> np.ndarray` – returns a superset lattice.  
+   - `_scale_to_unit(square: np.ndarray, radius: float) -> np.ndarray` – performs the scaling and margin addition.  
+   - Keep these helpers **pure** (no side effects) and fully typed.
+
+5. **Return Value**  
+   - `construct_packing()` must call the helpers, slice the first 26 points, and return a NumPy array of shape `(26, 2)` with `dtype=float64`.  
+
+---
+
+### **FINAL REMINDER**
+- **Only** edit code inside the evolve block.  
+- **Do not** include the marker lines or any external code in your output.  
+- Follow the **output format** strictly; any deviation will cause the solution to be rejected.  
+
+Good luck – produce a deterministic, distance‑respecting packing that passes all validity checks!

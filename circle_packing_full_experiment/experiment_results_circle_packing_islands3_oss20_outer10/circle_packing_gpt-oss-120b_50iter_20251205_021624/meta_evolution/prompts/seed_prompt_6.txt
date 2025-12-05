@@ -1,0 +1,90 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM PROMPT – Guidance for Evolving the Packing Code**
+
+You may edit **only** the code that appears between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...your code...
+# EVOLVE-BLOCK-END
+```  
+
+The surrounding file (imports, `run_packing()`, etc.) is preserved automatically.
+
+---
+
+### OUTPUT REQUIREMENTS (CRITICAL – DO NOT VIOLATE)
+
+1. **Output ONLY the Python code that belongs inside the markers.**  
+2. **Do NOT include** the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+3. **Do NOT output** any imports, `run_packing()`, or any other code outside the evolve block.  
+
+The system will merge your output with the preserved sections.
+
+---
+
+### PRIMARY OBJECTIVE
+
+Implement (or improve) the `construct_packing()` function **and any helper functions defined inside the evolve block** so that:
+
+* It returns a NumPy array of shape **`(26, 2)`** containing the (x, y) centers of 26 equal‑radius circles packed inside the unit square `[0, 1] × [0, 1]`.  
+* The packing must be **fully valid** (`validity = 1.0`), i.e., no circles overlap and all lie completely within the square.  
+* The solution must be **deterministic** (the same input always yields the same output) to avoid randomness‑induced invalidity.
+
+---
+
+### WHAT TO AVOID (based on past failures)
+
+* **Do not** use aggressive random search, simulated‑annealing loops, or any stochastic optimization that can produce invalid configurations in a majority of runs.  
+* **Do not** introduce new external dependencies beyond `numpy`.  
+* **Do not** write code that may raise exceptions (e.g., division by zero, index errors) for the fixed input size of 26 points.  
+* **Do not** change the function signature of `construct_packing()` or the expected return type.  
+* **Do not** add global side‑effects (printing, file I/O) that interfere with the evaluation harness.
+
+---
+
+### SPECIFIC STRATEGIES TO TRY (domain‑specific guidance)
+
+1. **Start from a deterministic hexagonal lattice** that comfortably fits at least 26 points inside the unit square.  
+   * Compute a lattice spacing `s = 1 / (ceil(sqrt(26)) + 0.5)` (or a similar heuristic) and generate points `(i * s, j * s * sqrt(3)/2)` with the appropriate offset for odd rows.  
+   * Trim or slice the array to exactly 26 points, preserving the regular spacing.
+
+2. **Apply a lightweight local adjustment** (e.g., a few iterations of a simple repulsive “force‑push”) **only if** the initial lattice violates the boundary constraint.  
+   * Use vectorized NumPy operations; avoid Python loops over points.  
+   * Clamp any point that moves outside `[0, 1]` back to the nearest valid location.
+
+3. **Compute the maximal feasible radius** after the points are placed:  
+   * For each point, find the distance to its nearest neighbor and to the square edges.  
+   * Set the circle radius to half the minimum of those distances.  
+   * Return only the point coordinates; the evaluator will compute validity using this radius.
+
+4. **Keep the code compact and readable** – fewer than ~120 lines inside the evolve block is sufficient.  
+   * Use helper functions (`_hex_lattice`, `_push_inside`, `_max_radius`) that are defined **inside** the evolve block and called by `construct_packing()`.
+
+5. **Validate internally** before returning:  
+   * Compute pairwise distances with `scipy.spatial.distance.cdist`‑style logic (or pure NumPy) and assert that the minimal distance is ≥ 2 × radius − 1e‑9.  
+   * If the check fails, fall back to the original lattice without adjustment (ensuring validity).
+
+---
+
+### FINAL REMINDER
+
+* **Only modify code inside the evolve block.**  
+* **Return a NumPy array of shape `(26, 2)`** with deterministic, non‑overlapping circle centers.  
+* **Output ONLY that code**, nothing else.  
+
+Good luck!

@@ -1,0 +1,64 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for Evolving the Circle‑Packing Code**
+
+---
+
+### Core Goal
+Create the most powerful `construct_packing()` (and any helper functions defined inside the evolve block) that **maximises the total radius sum** while guaranteeing **validity = 1.0** (no overlaps, every circle fully inside the unit square [0, 1] × [0, 1]).
+
+---
+
+### What You Must Do
+1. **Only edit code that lives between the markers** `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+2. **Output ONLY the Python source code** that belongs **inside** those markers.  
+   - Do **not** include the markers themselves.  
+   - Do **not** include imports, `run_packing()`, visualisation, or any other surrounding code – those are automatically preserved.  
+3. Keep the function signatures unchanged; you may add new helper functions **inside** the evolve block, but they must be defined before they are used.
+
+---
+
+### What You Must NOT Do (previous failures)
+- **Do not** write code that violates the unit‑square boundary or allows circles to intersect.  
+- **Do not** produce code that raises exceptions, uses undefined variables, or depends on external libraries not already imported.  
+- **Do not** attempt overly aggressive heuristics that cause a high invalid‑program rate (e.g., random placement without feasibility checks).  
+- **Do not** leave the function empty or return a constant dummy value; the evaluator expects a genuine packing strategy.  
+- **Do not** include any explanatory text, markdown, or comments that are outside the evolve block.
+
+---
+
+### Suggested Strategies (you may combine them)
+
+| Strategy | How to Apply Inside `construct_packing()` |
+|----------|-------------------------------------------|
+| **Hexagonal lattice seed** | Generate a dense hexagonal grid with spacing `2 * r_min` (where `r_min` is a small base radius). Trim points that would cross the square border. |
+| **Greedy radius growth** | Start from the lattice points, then iteratively increase each circle’s radius until it touches either a neighbour or the square edge. Use a simple distance‑to‑nearest‑obstacle update. |
+| **Local optimisation loop** | After the greedy pass, run a few sweeps where you slightly enlarge a circle and shrink neighbours to recover feasibility, keeping the total sum non‑decreasing. |
+| **Adaptive refinement** | If the initial lattice leaves large empty gaps, insert additional points in the largest uncovered region (e.g., centre of the biggest empty triangle) and repeat the greedy growth. |
+| **Vectorised NumPy operations** | Use NumPy arrays for distances and radius updates to keep the code fast and avoid Python loops that may cause timeouts. |
+| **Safety checks** | Before returning, verify that every circle satisfies `center ± radius ∈ [0,1]` and that all pairwise distances ≥ sum of radii (with a tiny epsilon). If a check fails, fall back to the last valid state. |
+
+Feel free to implement any subset of the above, but **ensure the final packing is always valid**.
+
+---
+
+### Output Requirements (Critical)
+
+- **Only** the code that belongs **between** `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do not** include the markers themselves.  
+- **Do not** add any surrounding text, explanations, or comments outside the evolve block.
+
+Your submission will be merged automatically with the surrounding framework; adherence to the format is mandatory for successful evaluation. Good luck!
