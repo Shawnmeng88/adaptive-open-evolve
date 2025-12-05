@@ -1,0 +1,79 @@
+[
+  {
+    "iteration": 10,
+    "score": 0.9487666034155595,
+    "best_so_far": 0.9487666034155595,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 10,
+    "score": 0.9487666034155595,
+    "best_so_far": 0.9487666034155595,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 11,
+    "score": 0.8210883686132541,
+    "best_so_far": 0.9487666034155595,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 12,
+    "score": 0.9487666034155595,
+    "best_so_far": 0.9487666034155595,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 13,
+    "score": 0.6261421942216256,
+    "best_so_far": 0.9487666034155595,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 14,
+    "score": 0.6831119544592031,
+    "best_so_far": 0.9487666034155595,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 15,
+    "score": 0.9487666034155595,
+    "best_so_far": 0.9487666034155595,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 16,
+    "score": 0.6940959141550783,
+    "best_so_far": 0.9487666034155595,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 17,
+    "score": 0.8406732162890371,
+    "best_so_far": 0.9487666034155595,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 18,
+    "score": 0.9487666034155595,
+    "best_so_far": 0.9487666034155595,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 19,
+    "score": 0.9614004680363463,
+    "best_so_far": 0.9614004680363463,
+    "validity": 1.0,
+    "is_improvement": true
+  }
+]

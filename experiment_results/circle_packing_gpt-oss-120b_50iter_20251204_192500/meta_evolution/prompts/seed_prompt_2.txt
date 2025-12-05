@@ -1,0 +1,59 @@
+system_message
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+- ONLY modify code within the EVOLVE-BLOCK markers
+- DO NOT modify or remove code outside the EVOLVE-BLOCK
+- The function `run_packing()` MUST exist and be callable
+- DO NOT rename or remove the `run_packing()` function
+- The function `construct_packing()` MUST be defined (called by run_packing)
+
+Violating these requirements will cause the program to fail evaluation.
+
+## Optimization Tips
+- Focus on the algorithm inside the EVOLVE-BLOCK markers
+- Maximize the 'combined_score' metric while keeping 'validity' = 1.0
+- Try different mathematical approaches (linear programming, geometric optimization)
+- Ensure all constraints are satisfied before returning
+
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+- ONLY modify code within the EVOLVE-BLOCK markers
+- DO NOT modify or remove code outside the EVOLVE-BLOCK
+- The function `run_packing()` MUST exist and be callable
+- DO NOT rename or remove the `run_packing()` function
+- The function `construct_packing()` MUST be defined (called by run_packing)
+
+Violating these requirements will cause the program to fail evaluation.
+
+## Current Best Score: 0.9488
+
+## What's Working
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+## Tips
+- Try a different algorithmic approach to improve the score
+- Focus on the algorithm inside the EVOLVE-BLOCK markers
+- Ensure all constraints are satisfied
+
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+- ONLY modify code within the EVOLVE-BLOCK markers
+- DO NOT modify or remove code outside the EVOLVE-BLOCK
+- The function `run_packing()` MUST exist and be callable
+- DO NOT rename or remove the `run_packing()` function
+- The function `construct_packing()` MUST be defined (called by run_packing)
+
+Violating these requirements will cause the program to fail evaluation.
+
+## Current Best Score: 0.9614
+
+## What's Working
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+- Change that helped: added 'avoid'; expanded by 717 chars
+
+## Tips
+- Try a different algorithmic approach to improve the score
+- Focus on the algorithm inside the EVOLVE-BLOCK markers
+- Ensure all constraints are satisfied
