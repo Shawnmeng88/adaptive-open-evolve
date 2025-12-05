@@ -1,0 +1,91 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION INSTRUCTIONS**
+
+---
+
+### 📌 CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+
+1. **Output ONLY the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+2. **Do NOT include the marker lines themselves** (`# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END`).  
+3. **Do NOT output any code outside this region** (e.g., imports, `run_packing()`, visualisation utilities, test harnesses).  
+4. The surrounding framework will automatically merge your output with the preserved sections. Violating any of these rules will cause the evaluation to fail.
+
+---
+
+### 🎯 FOCUS OF THIS EVOLUTION
+
+- **Target functions:** `construct_packing()` and any **helper functions defined inside the evolve block** (e.g., `_hex_grid_positions`, `compute_max_radii_lp`, etc.).  
+- **Goal:**  
+  1. Produce a **valid packing of exactly 26 circles** inside the unit square (validity = 1.0).  
+  2. **Maximize the hidden `combined_score`** (which heavily rewards larger radii and uniform distribution).  
+
+All other functions (`run_packing()`, visualisation, etc.) are **preserved automatically** and must **not** be modified or reproduced.
+
+---
+
+### 🚫 WHAT TO AVOID (LEARNED FROM PREVIOUS FAILURES)
+
+- **Do not** return a packing that leaves any circle partially outside the unit square or overlaps another circle.  
+- **Do not** rely on hard‑coded radii that violate the linear‑programming constraints; the LP must be solvable for the generated centers.  
+- **Do not** omit the LP‑based radius optimisation step or replace it with a naïve heuristic that cannot guarantee feasibility.  
+- **Do not** introduce new external dependencies that are not already imported (e.g., `cvxopt`, `ortools`).  
+- **Do not** change the function signatures of the targets; the surrounding code expects the original signatures.  
+
+---
+
+### 🛠️ SUGGESTED STRATEGIES TO IMPROVE `construct_packing()`
+
+1. **Hexagonal Lattice Seeding**  
+   - Generate candidate center coordinates using a hexagonal grid with a tentative spacing `s`.  
+   - Adjust `s` iteratively (e.g., binary search) until exactly 26 points fit within the unit square **and** the subsequent LP returns feasible radii.
+
+2. **Dynamic Margin Adjustment**  
+   - Start with a generous margin `m` (e.g., `m = s/2`).  
+   - After each LP solution, compute the minimum distance from any circle to the square boundary; if any margin is violated, shrink the grid or shift the pattern.
+
+3. **LP‑Driven Feasibility Check**  
+   - Call `compute_max_radii_lp(centers)` **inside** `construct_packing()` to verify that the current set of centers yields a feasible solution.  
+   - If the LP is infeasible, discard the offending center(s) and regenerate the grid with a slightly larger spacing.
+
+4. **Local Perturbation for Score Boost**  
+   - Once a feasible set of 26 centers is found, apply small random perturbations (e.g., Gaussian jitter with σ = 0.001) and re‑run the LP.  
+   - Keep the perturbation that increases `combined_score` while preserving feasibility.
+
+5. **Deterministic Tie‑Breaking**  
+   - When the grid yields more than 26 points, select the 26 with the **largest minimal pairwise distance** (greedy farthest‑point selection) before passing them to the LP.
+
+6. **Caching & Early Exit**  
+   - Cache the last successful spacing and center list; if the algorithm is re‑run with the same parameters, return the cached result immediately to avoid unnecessary recomputation.
+
+---
+
+### 📋 IMPLEMENTATION GUIDELINES
+
+- Keep all helper functions **pure** (no side effects) and **self‑contained** within the evolve block.  
+- Use only `numpy` and `scipy.optimize.linprog`, which are already imported in the surrounding code.  
+- Return a tuple `(centers, radii)` where `centers` is an `(N, 2)` NumPy array and `radii` is a length‑`N` NumPy array.  
+- Ensure the final radii array is **non‑negative** and respects the constraints:  
+  - `r_i <= min(x_i, 1 - x_i, y_i, 1 - y_i)` (boundary)  
+  - `r_i + r_j <= distance(centers[i], centers[j])` (pairwise)  
+
+---
+
+### ✅ FINAL REMINDER
+
+- **Only** output the updated code between the markers.  
+- **Do not** include any explanatory text, comments about the instruction set, or the markers themselves.  
+- Follow the strategies above to produce a feasible, high‑scoring packing of 26 circles.

@@ -1,0 +1,113 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION INSTRUCTIONS**
+
+---
+
+### 📌 CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+
+1. **Output ONLY the code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+2. **Do NOT include the marker lines themselves** (`# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END`).  
+3. **Do NOT output any code outside this region** (e.g., imports, `run_packing()`, visualisation utilities).  
+4. The surrounding framework will automatically merge your output with the preserved sections.
+
+---
+
+### 🎯 FOCUS OF THIS EVOLUTION
+
+- **Primary target:** the `construct_packing()` function **and any helper functions defined inside the evolve block**.  
+- **Goal:** produce a *valid* packing of **26 circles** inside the unit square (validity = 1.0) **and maximize the hidden `combined_score`** (which heavily rewards larger total radii and efficient use of space).  
+- **Do NOT modify** any code outside the evolve block (e.g., `run_packing()`, imports, global constants).  
+
+---
+
+### ✅ WHAT TO KEEP (PROVEN SUCCESSFUL APPROACHES)
+
+1. **Hexagonal seed lattice** – generate initial centre positions with a hex‑grid spacing based on a tentative radius `r0`.  
+2. **Linear‑programming radius optimisation** – formulate the problem as a `linprog` instance that maximises the sum of radii subject to:
+   - Pairwise non‑overlap constraints: `ri + rj ≤ dist(ci, cj)`.
+   - Boundary constraints: `ri ≤ min(xi, 1‑xi, yi, 1‑yi)`.
+3. **Use of `numpy` for vectorised distance calculations** and `scipy.optimize.linprog` with the “highs” method for speed and reliability.  
+4. **Post‑LP refinement** – after solving the LP, clip any negative radii to zero and optionally perform a few Newton‑step adjustments to tighten the packing.
+
+---
+
+### 🚫 WHAT TO AVOID (FAILED OR RISKY STRATEGIES)
+
+- **Pure random placement** without a feasibility check – leads to overlapping circles and validity < 1.0.  
+- **Scaling all radii by a single factor** after the LP – breaks the optimality of the linear constraints and often creates overlaps.  
+- **Hard‑coding a fixed radius** for all circles – prevents the optimizer from exploiting asymmetries in the square.  
+- **Using `linprog` with default tolerance only** – may return a solution that violates constraints by a tiny epsilon; always enforce a small safety margin (e.g., subtract `1e‑6` from each radius).  
+- **Neglecting the boundary margin** when generating the hex grid – points too close to the edges cause infeasible LP constraints.
+
+---
+
+### 🛠️ SUGGESTED STRATEGIES TO TRY (DOMAIN‑SPECIFIC)
+
+1. **Adaptive Hex‑Grid Radius**  
+   - Start with a generous `r_guess = 0.05`.  
+   - Compute the maximal feasible `r_max` that fits a full hex lattice of 26 points inside the square (use a simple binary search on `r`).  
+   - Use `r_max * 0.95` as the initial seed radius to give the LP breathing room.
+
+2. **Multi‑Start LP**  
+   - Generate **two or three** different hex‑grid orientations (rotate by 0°, 30°, 60°) and run the LP for each.  
+   - Keep the solution with the highest sum of radii; this combats local‑optimality caused by a single lattice orientation.
+
+3. **Safety‑Margin Shrinkage**  
+   - After the LP, apply `r_i = max(0, r_i - epsilon)` where `epsilon = 1e‑6`.  
+   - Re‑evaluate all constraints; if any are still violated, iteratively increase `epsilon` until the packing is strictly feasible.
+
+4. **Iterative Radius Inflation**  
+   - With the LP solution as a baseline, perform a few iterations of **uniform radius inflation**: increase every radius by a tiny `δ = 1e‑4` and resolve only the violated constraints via a secondary LP that only adjusts the offending circles.  
+   - Stop when any overlap would occur.
+
+5. **Pairwise Distance Pre‑Filtering**  
+   - Before building the LP matrix, discard pairs whose centre distance is > `0.5` (they cannot be binding) to keep the constraint matrix sparse and speed up solving.
+
+6. **Explicit Constraint Tightening**  
+   - Add a tiny slack term (`-1e‑7`) to every inequality in the LP to force a strictly interior solution, which helps the downstream safety‑margin step.
+
+7. **Result Normalisation**  
+   - After final radii are obtained, normalise the sum of radii to the theoretical upper bound for 26 circles in a unit square (≈ 0.5).  
+   - If the sum exceeds this bound (unlikely with a correct LP), proportionally scale all radii down while preserving feasibility.
+
+---
+
+### 📋 IMPLEMENTATION GUIDELINES FOR `construct_packing()`
+
+- **Structure** the function into clear stages:  
+  1. **Seed generation** (`_hex_grid_positions` with optional rotation).  
+  2. **Linear‑program set‑up** (`_build_lp_matrices`).  
+  3. **Solve LP** (`linprog`).  
+  4. **Safety‑margin clipping** and **optional inflation loop**.  
+  5. **Return** two arrays: `centers` (shape `(26,2)`) and `radii` (shape `(26,)`).
+
+- **Maintain pure‑numpy operations** – avoid Python loops over all 325 pairwise combos; use broadcasting to compute distance matrix efficiently.
+
+- **Document** each helper with a concise docstring explaining its purpose and any assumptions (e.g., “expects `centers` to be inside the unit square”).
+
+- **Return early** if the LP fails (status ≠ 0); in that case fall back to the previous best solution or raise a clear exception – the outer harness will catch it.
+
+- **Keep the function deterministic** (set `np.random.seed(0)` only if you introduce randomness for multi‑start rotations) so that repeated runs yield identical scores, facilitating reproducibility.
+
+---
+
+### 🎉 FINAL REMINDER
+
+- **Only output the modified/added code inside the evolve block** – no markers, no extra text.  
+- Follow the **exact format** above; any deviation will cause the evaluation harness to reject the submission.  
+
+Good luck – craft a tight, high‑score packing!

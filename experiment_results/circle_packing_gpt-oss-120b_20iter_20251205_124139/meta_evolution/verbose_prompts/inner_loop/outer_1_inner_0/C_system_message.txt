@@ -1,0 +1,71 @@
+# Prompt Type: C
+# Outer Iteration: 1
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – GUIDELINES FOR THE EVOLUTION BLOCK**
+
+---
+
+### 1. Output Formatting (CRITICAL)
+- **Only** output the Python code that belongs **between** the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **Do not** include the marker lines themselves.  
+- **Do not** include any calls to the outer driver functions such as `run_packing()` or `visualize()` – those are automatically retained.  
+- The system will splice your output into the existing file, so the code you provide must be a **self‑contained replacement** for everything inside the evolve block.
+
+### 2. Imports
+- You may add additional import statements if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available globally; you do not need to import them again unless you prefer an explicit import.
+
+### 3. Functional Requirements
+- **All functions that you call must be defined** within the code you output. The evolve block is the only place the interpreter will look for definitions, so missing helpers will cause a `NameError`.  
+- The primary responsibility is to generate a placement of the required number of circles and compute the maximal feasible radii for that placement, returning the data structure expected by the outer driver (centers, radii, and a validity flag equal to 1.0).
+
+### 4. Proven Strategies (keep these)
+- **Hexagonal (triangular) lattice** as a base layout – it yields dense, regular arrangements and simplifies boundary handling.  
+- **Linear programming** to maximize a uniform radius subject to linear inequality constraints that enforce:
+  * Each circle stays completely inside the unit square.  
+  * Pairwise non‑overlap (distance between centers ≥ 2 · r).  
+- **Grid‑based generation** of candidate center coordinates (e.g., using `np.linspace` on a hexagonal offset) to create a deterministic, repeatable pattern.  
+- **Iterative refinement**: after solving the LP for a uniform radius, you can optionally adjust radii locally (e.g., increase a subset while decreasing neighbors) using a small local optimization or a simple greedy pass, provided all constraints remain satisfied.  
+
+### 5. Approaches to Avoid (failed in previous attempts)
+- **Missing or incomplete boundary constraints** – leads to circles crossing the square edge and a validity penalty.  
+- **Non‑linear solvers without proper bounds** – can diverge or return infeasible solutions, increasing the failure rate.  
+- **Random‑search methods without deterministic fallback** – produce high variance and occasional invalid packings.  
+- **Over‑complicated constraint formulations** that exceed the capabilities of the supplied LP solver, causing solver errors or timeouts.
+
+### 6. Implementation Tips
+- Build the list of center coordinates **first** (using the hexagonal pattern).  
+- Formulate the LP with variables: a single radius `r` (or a vector of radii if you implement local refinement).  
+- Encode each circle’s distance to the four square sides as `x_i - r ≥ 0`, `x_i + r ≤ 1`, `y_i - r ≥ 0`, `y_i + r ≤ 1`.  
+- Encode each pairwise separation as `‖c_i - c_j‖₂ - 2 r ≥ 0`. Since the LP requires linear constraints, replace the Euclidean distance with the **Manhattan** or **Chebyshev** bound that is still safe, or pre‑compute the exact distances and use them as constants in the linear inequality `2 r ≤ d_ij`.  
+- After solving, verify all constraints with a small tolerance (e.g., `1e-9`). If any violation is detected, shrink `r` slightly (e.g., multiply by `0.999`) to guarantee validity.  
+- Return the centers as an `(n, 2)` NumPy array, the radii as a length‑`n` NumPy array (all entries equal to the final `r` unless you performed refinement), and set the validity flag to `1.0`.
+
+### 7. Reminder
+- **Do not** reference or rely on any function names that exist outside the evolve block.  
+- Ensure **every** identifier you use is either a built‑in, an imported module, or defined within the block you output.
+
+--- 
+
+Follow these guidelines strictly to produce a valid, high‑scoring circle‑packing implementation.

@@ -1,0 +1,59 @@
+# Prompt Type: C
+# Outer Iteration: 3
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Instructions for Evolving the Packing Code**
+
+You may edit **only** the functions that lie between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers. All other code (imports, `run_packing()`, visualisation, etc.) is fixed and will be merged automatically.
+
+### Primary Goal
+Maximise the total sum of radii for the 26‑circle packing **while guaranteeing full validity** (`validity = 1.0`). Any overlap between circles or any circle crossing the unit‑square boundary makes the solution unacceptable.
+
+### What to Keep / Build Upon
+1. **Linear‑Programming radius optimisation** – retain the LP formulation that:
+   * Maximises `∑ r_i`.
+   * Constrains each radius to be ≤ the distance from its centre to each of the four square edges.
+   * Enforces pairwise non‑overlap: `r_i + r_j ≤ distance(centre_i, centre_j)`.
+   * Uses a tiny safety margin (e.g., `1e‑9`) on every inequality to avoid numerical edge‑cases.
+2. **Deterministic or random layout generation** – you may keep the existing deterministic layout as a fallback and the random‑layout generator for diversity.
+3. **Local search / refinement** – if you add a refinement step, it must respect the same constraints and never increase a radius beyond the LP‑computed bound.
+
+### Mandatory Behaviour
+* After the LP solution, **verify** that all constraints are satisfied (including the safety margin). If any violation is detected, fall back to a safe configuration (e.g., the deterministic layout) rather than returning an invalid packing.
+* The function `construct_packing()` must return a tuple `(centers, radii, validity)` where `validity` is exactly `1.0` for a valid packing and `0.0` otherwise.
+* Do **not** introduce new imports that are not already available in the surrounding code. Use only `numpy`, `scipy.optimize.linprog`, and the standard library.
+
+### What to Avoid (based on previous failures)
+* **Missing overlap checks** – every pair of circles must be checked after any modification.
+* **Undefined variables or name‑resolution errors** – ensure all helper functions are defined before they are used and that all variable names are consistent.
+* **Runtime errors due to shape mismatches** – keep array dimensions consistent; use `.reshape(-1, 2)` only when appropriate.
+* **Uncontrolled random walks that can diverge** – if you use random perturbations, limit the number of iterations and clamp changes to stay within the feasible region.
+
+### Implementation Guidance
+* Keep the LP construction simple and robust: build the `A_ub` matrix and `b_ub` vector once, then call `linprog` with method `"highs"` (or the default) and `bounds=(0, None)` for each radius.
+* After solving, clip radii with `np.clip(radii, 0, max_possible)` where `max_possible` is the minimum distance to the square edges for each centre.
+* Optionally, run a short deterministic local improvement that tries to shift a centre slightly (by at most `1e‑3`) if doing so allows a marginal radius increase without breaking any constraint.
+
+### Output Requirements (CRITICAL)
+* **Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**
+* **Do NOT include the markers themselves** in your response.
+* **Do NOT include any code outside the markers** (imports, `run_packing()`, etc.).
+* The system will automatically merge your output with the preserved surrounding code.
+
+Follow these instructions precisely to produce a valid, higher‑scoring packing solution.

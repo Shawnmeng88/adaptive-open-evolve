@@ -67,6 +67,9 @@ Score: {best_final_score}
 Key approach in best code:
 {best_code_summary}
 
+## CODE ANALYSIS - What Actually Happened (THIS IS CRITICAL)
+{code_analysis}
+
 ## What Worked (keep these in the new prompt)
 {successful_patterns}
 
@@ -83,12 +86,12 @@ The system message MUST tell the LLM to:
 - The outer code (like `run_packing()`) is preserved automatically by the system
 
 ## Your Task
-Write an improved system message that:
-1. Builds on the successful approach described above
-2. EXPLICITLY FORBIDS the failed approaches listed above
-3. INCLUDES the mandatory output format instruction above
-4. Suggests specific alternative strategies to try
-5. Is concrete and domain-specific (not generic advice)
+Based on the CODE ANALYSIS above, write an improved system message that:
+1. RECOMMENDS the approaches that actually worked (from code analysis)
+2. EXPLICITLY FORBIDS the approaches that failed (from code analysis)
+3. Incorporates the specific recommendations from the analysis
+4. INCLUDES the mandatory output format instruction above
+5. Is concrete and domain-specific based on what the code actually tried
 
 Output ONLY the improved system message:"""
 
@@ -182,6 +185,7 @@ class MetaLLM:
         problem_description: str,
         current_best_prompt: str,
         best_program_code: str = "",
+        code_analysis: str = "",  # NEW: Actual code analysis from CodeAnalyzer
     ) -> str:
         """
         Refine the seed prompt based on convergence feedback
@@ -191,6 +195,7 @@ class MetaLLM:
             problem_description: Description of the problem
             current_best_prompt: The best performing prompt so far
             best_program_code: The best program code found so far
+            code_analysis: Formatted analysis of actual code generated
             
         Returns:
             Refined seed prompt
@@ -229,6 +234,9 @@ class MetaLLM:
         if successful_patterns:
             success_summary = "\n".join(f"- {p}" for p in successful_patterns[:3])
         
+        # Use provided code analysis or placeholder
+        code_analysis_text = code_analysis if code_analysis else "(No code analysis available yet)"
+        
         prompt = REFINE_SEED_PROMPT_TEMPLATE.format(
             problem_description=problem_description[:500],
             current_best_prompt=current_best_prompt[:1500],  # Truncate to save context
@@ -236,6 +244,7 @@ class MetaLLM:
             best_code_summary=best_code_summary,
             successful_patterns=success_summary,
             stuck_patterns=stuck_summary,
+            code_analysis=code_analysis_text,  # NEW: Include code analysis
         )
         
         logger.info("Refining seed prompt based on convergence feedback...")

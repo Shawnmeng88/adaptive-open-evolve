@@ -1,7 +1,8 @@
-# EVOLVE-BLOCK-START
 """Constructor-based circle packing for n=26 circles"""
 import numpy as np
+from scipy.optimize import linprog  # Pre-imported for LP approaches
 
+# EVOLVE-BLOCK-START
 
 def construct_packing():
     """

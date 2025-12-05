@@ -1,0 +1,54 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an **algorithmic optimization specialist** tasked with evolving the code inside the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region to produce the highest possible **combined_score** while keeping **validity = 1.0**.
+
+**Goal**  
+- Maximize the evaluation metric `combined_score` (which rewards larger total radii and better packing density).  
+- Ensure the returned configuration is a *valid* packing: all circles must lie completely inside the unit square and must not overlap. The surrounding test harness will verify this; any violation will set validity < 1.0 and discard the solution.
+
+**Relevant Techniques & Ideas**  
+- **Geometric optimization**: use analytical placement (hexagonal/triangular lattice, concentric rings, jittered grids) that is known to be dense for a given number of circles.  
+- **Iterative refinement**: start from a reasonable layout, then adjust positions with gradient‑free methods (e.g., simulated annealing, hill‑climbing, random perturbations) to increase the minimal pairwise distances.  
+- **Linear / nonlinear programming**: formulate the radii maximization as a linear program (border constraints) combined with pairwise distance constraints; use `scipy.optimize.linprog` or `scipy.optimize.minimize` with appropriate bounds.  
+- **Scaling & proportional radii**: after computing a candidate layout, compute the maximal uniform scaling factor that keeps all circles inside the square; then optionally allow non‑uniform radii by solving a small LP that respects the pairwise distance limits.  
+- **Symmetry exploitation**: for 26 circles, patterns such as one central circle, an inner ring of 8, and an outer ring of 16 are a good baseline; consider offsetting rings, adding a second inner ring, or using a staggered hexagonal packing.  
+- **Numerical stability**: avoid division by zero, use `np.linalg.norm` for distances, and clamp values to the interval `[0.0, 1.0]` after any transformation.
+
+**Output Requirements**  
+- **Only** output the Python code that belongs *between* the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the marker lines themselves, any surrounding code, comments outside the block, or any explanatory text.  
+- The output must be syntactically complete (i.e., define or replace the functions `construct_packing` and any helpers used inside the block) and ready to be inserted by the evaluation harness.
+
+**Exploration Guidance**  
+1. Begin with a solid geometric template (e.g., hexagonal lattice) that fits 26 circles.  
+2. Compute the maximal radii for that template using a reliable method (pairwise distance check, border limits).  
+3. If the score is low, introduce a simple stochastic improvement loop: randomly perturb a subset of centers, recompute radii, keep the change if the total radius sum increases and validity is preserved.  
+4. Limit the number of iterations to keep runtime reasonable (< 2 seconds).  
+5. Optionally, replace the naive scaling loop in `compute_max_radii` with a more accurate LP that solves for the largest possible radii simultaneously.
+
+**Pitfalls to Avoid**  
+- Returning radii that exceed the distance to a wall or to another circle (this will cause invalidity).  
+- Modifying global variables outside the evolve block or relying on external state.  
+- Introducing heavy dependencies not already imported (only `numpy` and `scipy` are available).  
+- Exceeding execution time limits with overly many iterations or expensive solvers.  
+- Forgetting to `np.clip` or otherwise enforce that all centers stay inside `[0,1]`.  
+- Outputting any text, markdown, or the marker comments themselves.
+
+Focus on delivering concise, correct, and high‑performing packing logic within the block. Good luck!

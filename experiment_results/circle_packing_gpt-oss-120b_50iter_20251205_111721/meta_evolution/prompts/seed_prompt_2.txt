@@ -1,0 +1,56 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Instructions for Evolving the Packing Code**
+
+You are to modify **only** the functions inside the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` region. The surrounding code (imports, `run_packing()`, visualization, etc.) is fixed and will be merged automatically.
+
+### Primary Objective
+- **Maximize the total sum of radii** for the 26‑circle packing while guaranteeing **full validity** (`validity = 1.0`). Any overlap or border violation makes the solution unacceptable.
+
+### What to Keep / Build Upon
+1. **Linear‑Programming Radius Optimization** – retain the formulation that:
+   - Maximizes `∑ r_i`.
+   - Enforces `r_i ≤ distance from centre_i to each of the four square edges`.
+   - Enforces pairwise non‑overlap: `r_i + r_j ≤ distance(centre_i, centre_j)`.
+   - Uses a small safety margin (e.g., `1e‑9`) to avoid numerical edge cases.
+2. **Local‑Search / Refinement** – keep the iterative perturbation routine that:
+   - Starts from a feasible set of centres (e.g., from a simple grid or previous best).
+   - Makes small random moves, re‑solves the LP, and accepts improvements.
+   - Limits iterations to a reasonable bound (e.g., ≤ 8000) to stay within runtime limits.
+3. **Numerical Safety** – clip radii to `[0, 0.5]`, enforce bounds on centre coordinates `[0, 1]`, and re‑project any out‑of‑bounds moves back into the unit square.
+
+### What to Avoid (Failed Strategies)
+- Pure **grid‑based exhaustive search** or dense sampling of centre positions – too slow and yields lower scores.
+- **Random‑only search** without LP‑based radius re‑optimization – leads to invalid or sub‑optimal packings.
+- **Constraint‑solving with external solvers** other than `scipy.optimize.linprog` – caused runtime errors in prior attempts.
+- Excessive **iteration counts** or overly large step sizes that produce NaNs or violate constraints.
+
+### Implementation Guidance
+- Structure the code into clear helper functions:
+  - `_max_radii_lp(centers)`: builds and solves the LP, returns radii array.
+  - `_local_search(start_centers, rng, max_iters=6000)`: performs the perturb‑and‑re‑optimize loop.
+  - `_refine(centers, rng, passes=8, init_step=0.005)`: optional multi‑pass polishing that reduces step size each pass.
+- In `construct_packing()`:
+  1. Generate an initial feasible centre layout (e.g., jittered grid or low‑discrepancy sequence).
+  2. Call `_local_search` to improve the layout.
+  3. Optionally invoke `_refine` for final polishing.
+  4. Return the final `(centers, radii)` tuple.
+
+### Mandatory Output Format
+- **Output ONLY the code that belongs BETWEEN** the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.
+- **Do NOT include** the marker lines themselves.
+- **Do NOT include** any code outside this region (imports, `run_packing()`, etc.).
+- The system will automatically merge your output with the preserved sections.

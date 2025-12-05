@@ -34,6 +34,7 @@ from openevolve.database import Program
 from openevolve.meta.convergence import ConvergenceAnalyzer, ConvergenceMetrics
 from openevolve.meta.meta_llm import MetaLLM
 from openevolve.meta.seed_prompt import SeedPromptHistory
+from openevolve.meta.code_analyzer import CodeAnalyzer, CodeAnalysisResult
 
 logger = logging.getLogger(__name__)
 
@@ -177,6 +178,9 @@ class MetaEvolutionController:
         
         self.seed_prompt_history = SeedPromptHistory()
         
+        # Code analyzer for understanding what approaches work
+        self.code_analyzer = CodeAnalyzer()
+        
         # Tracking
         self.iteration_results: List[OuterIterationResult] = []
         self.best_convergence_rate = float('inf')
@@ -270,6 +274,17 @@ Focus on making targeted changes that will increase the program's performance me
             
             if convergence_metrics.stuck_patterns:
                 logger.info(f"  Stuck patterns: {convergence_metrics.stuck_patterns[:2]}")
+            
+            # Step 3b: Collect code samples for analysis
+            self._collect_code_samples_from_trace(convergence_trace)
+            
+            # Analyze code to understand what approaches work
+            code_analysis = self.code_analyzer.analyze()
+            
+            if code_analysis.successful_approaches:
+                logger.info(f"  Successful approaches: {code_analysis.successful_approaches}")
+            if code_analysis.recommendations:
+                logger.info(f"  Recommendations: {code_analysis.recommendations[:2]}")
             
             # Step 4: Record result
             outer_result = OuterIterationResult(
@@ -427,6 +442,10 @@ Violating these requirements will cause the program to fail evaluation.
         # Get current best prompt
         current_best_prompt = self.best_seed_prompt or self._original_default_prompt
         
+        # Get code analysis results
+        code_analysis = self.code_analyzer.analyze()
+        code_analysis_text = self.code_analyzer.format_for_prompt(code_analysis)
+        
         # Use MetaLLM to refine the prompt based on convergence feedback
         logger.info(f"Refining seed prompt via MetaLLM (iteration {outer_iter})...")
         
@@ -436,6 +455,7 @@ Violating these requirements will cause the program to fail evaluation.
                 problem_description=problem_description,
                 current_best_prompt=current_best_prompt,
                 best_program_code=best_code,
+                code_analysis=code_analysis_text,  # NEW: Pass actual code analysis
             )
             
             # Prepend format requirements as a safety net
@@ -491,6 +511,9 @@ Violating these requirements will cause the program to fail evaluation.
 {f'''- Final best score: {last_metrics.final_best_score:.4f}
 - Valid: {last_metrics.total_valid_programs}, Invalid: {last_metrics.total_invalid_programs}
 - Failure modes: {last_metrics.failure_modes}''' if last_metrics else '(no previous)'}
+
+## CODE ANALYSIS (What Actually Happened):
+{code_analysis_text}
 
 # ============================================
 # FINAL REFINED PROMPT (seed_prompt_{outer_iter}):
@@ -644,6 +667,55 @@ Violating these requirements will cause the program to fail evaluation.
         
         return trace
     
+    def _collect_code_samples_from_trace(self, convergence_trace: List[Dict[str, Any]]) -> None:
+        """
+        Collect code samples from the database for analysis.
+        
+        This extracts actual code from programs evaluated in this iteration
+        so the MetaLLM can understand what approaches were tried.
+        """
+        # Get programs from the database
+        programs_by_iter = {
+            p.iteration_found: p 
+            for p in self.controller.database.programs.values()
+        }
+        
+        # Sample programs for analysis (don't store all to save memory)
+        # Take: all improvements, some failures, some random
+        for entry in convergence_trace:
+            iteration = entry.get('iteration', 0)
+            score = entry.get('score', 0.0)
+            validity = entry.get('validity', 1.0)
+            
+            # Get the actual program from database
+            program = programs_by_iter.get(iteration)
+            if not program:
+                continue
+            
+            # Decide whether to sample this program
+            should_sample = (
+                entry.get('is_improvement', False) or  # Always sample improvements
+                score == 0.0 or validity == 0.0 or  # Sample failures
+                iteration % 10 == 0  # Sample every 10th for diversity
+            )
+            
+            if should_sample:
+                error_msg = None
+                if program.metrics:
+                    error_msg = program.metrics.get('error')
+                
+                self.code_analyzer.add_sample(
+                    code=program.code,
+                    score=score,
+                    validity=validity,
+                    iteration=iteration,
+                    parent_id=program.parent_id,
+                    error=error_msg,
+                    changes=program.metadata.get('changes'),
+                )
+        
+        logger.debug(f"Collected {len(self.code_analyzer.samples)} code samples for analysis")
+    
     def _should_stop(self, metrics: ConvergenceMetrics) -> bool:
         """Check if we should stop the outer loop early"""
         
@@ -718,17 +790,20 @@ Violating these requirements will cause the program to fail evaluation.
         requirements = []
         
         if has_evolve_block:
-            # New approach: LLM outputs ONLY the evolve block content
-            # The system merges it with preserved pre/post code
+            # LLM outputs the evolve block content - can include imports if needed
             requirements.append("## OUTPUT FORMAT (CRITICAL)")
             requirements.append("- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers")
             requirements.append("- Do NOT include the markers themselves in your output")
-            requirements.append("- Do NOT include any code outside the markers (imports, run_packing, etc.)")
+            requirements.append("- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically")
             requirements.append("- The system will automatically merge your output with the preserved code sections")
             requirements.append("")
+            requirements.append("## IMPORTS")
+            requirements.append("- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)")
+            requirements.append("- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block")
+            requirements.append("")
             requirements.append("## FOCUS")
-            requirements.append("- Improve ONLY the `construct_packing()` function and helper functions within the evolve block")
-            requirements.append("- Functions like `run_packing()` are preserved automatically - do not include them")
+            requirements.append("- Improve ONLY the `construct_packing()` function and helper functions")
+            requirements.append("- You can add new helper functions if needed")
         else:
             requirements.append("- Output the complete improved program")
             requirements.append("- Maintain all existing function signatures and interfaces")

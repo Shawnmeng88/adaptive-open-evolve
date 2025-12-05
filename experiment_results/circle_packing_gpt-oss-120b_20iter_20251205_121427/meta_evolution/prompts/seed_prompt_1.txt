@@ -1,0 +1,70 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution Guidance**
+
+---
+
+### 📌 CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+- **Output ONLY the code that belongs between** `# EVOLVE-BLOCK-START` **and** `# EVOLVE-BLOCK-END`.
+- **Do NOT include** the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` markers themselves.
+- **Do NOT include** calls to `run_packing()` or `visualize()` – those are preserved automatically.
+- The system will merge your output with the surrounding code automatically.
+
+### 📦 IMPORTS
+- You may add additional `import` statements if needed (e.g., `from scipy.optimize import minimize`).
+- `import numpy as np` and `from scipy.optimize import linprog` are already available in the surrounding scope.
+
+### 🎯 FOCUS
+- **Improve only** the `construct_packing()` function and any helper functions it uses.  
+- You may create new helper functions, but they must be called (directly or indirectly) from `construct_packing()`.
+- Do **not** modify `run_packing()` or `visualize()`.
+
+### ✅ WHAT TO BUILD ON (PROVEN SUCCESS)
+1. **Linear Programming (LP) radius optimization** – the best-performing approach so far.  
+2. **Explicit pair‑wise distance constraints** (‖c_i‑c_j‖ ≥ r_i + r_j).  
+3. **Boundary constraints** (r_i ≤ min(x_i, 1‑x_i, y_i, 1‑y_i)).  
+4. **Position perturbation / grid seeding** – start from a regular grid or hexagonal lattice, then slightly jitter points to improve feasibility before solving the LP.  
+5. **Negative guidance** works well: explicitly state constraints that must *not* be violated.
+
+### 🚫 WHAT TO AVOID (FAILED OR INEFFICIENT APPROACHES)
+- Pure **random search** or Monte‑Carlo placement without a deterministic refinement step.  
+- **Brute‑force enumeration** of all possible center permutations.  
+- Heavy **iterative refinement loops** that do not incorporate a convex optimization step (they added runtime without improving the score).  
+- Any approach that **omits explicit boundary or non‑overlap constraints** – the evaluator will reject such solutions.
+
+### 🛠️ RECOMMENDATIONS FOR THE NEXT ITERATION
+- **Keep the LP core** but improve the formulation:
+  * Use a tighter objective, e.g., maximize the sum of radii (`c = -np.ones(n)`) or a weighted combination that rewards larger total area.
+  * Add a small slack variable to allow the solver to relax constraints minimally if needed, then post‑process to enforce feasibility.
+- **Generate a high‑quality initial layout**:
+  * Start with a hexagonal close‑packing pattern scaled to fit the unit square.
+  * Apply a deterministic jitter (e.g., sinusoidal offset) to break symmetry and give the LP more freedom.
+- **Validate before returning**:
+  * After solving, run a quick check that all circles satisfy the boundary and non‑overlap constraints; if any violation is detected, fall back to a simple safe layout (e.g., uniform grid with small radii) to preserve `validity = 1.0`.
+- **Optional helper functions** you may add:
+  * `_hexagonal_grid(n)` – returns `n` centers arranged in a hexagonal lattice within the unit square.
+  * `_solve_radius_lp(centers)` – builds and solves the LP, returning radii or `None` on failure.
+  * `_verify_packing(centers, radii)` – returns `True` if the configuration is valid.
+
+### 📋 SUMMARY OF REQUIRED OUTPUT
+Provide **only** the Python code that will replace the contents between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+Do **not** include any surrounding markers, `run_packing()`, or `visualize()` calls.
+
+---

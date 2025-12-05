@@ -1,0 +1,108 @@
+# Prompt Type: C
+# Outer Iteration: 4
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION INSTRUCTIONS**
+
+---
+
+### 📌 CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+
+1. **Output ONLY the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+2. **Do NOT include the marker lines themselves** (`# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END`).  
+3. **Do NOT output any code outside this region** (imports, `run_packing()`, visualisation utilities, test harnesses, etc.).  
+4. The surrounding framework will automatically merge your output with the preserved sections. Violating any of these rules will cause the evaluation to fail.
+
+---
+
+### 🎯 FOCUS OF THIS EVOLUTION
+
+- **Target functions:** `construct_packing()` and any **helper functions defined inside the evolve block** (e.g., `_hex_grid_positions`, `compute_max_radii_lp`, etc.).  
+- **Goal:**  
+  1. **Increase the packing density** while guaranteeing that every generated circle lies completely inside the unit square.  
+  2. **Eliminate validity failures** observed in previous runs (invalid placements, overlapping circles, circles crossing the boundary).  
+  3. **Maintain reasonable runtime** (no exponential blow‑up).
+
+---
+
+### ❌ WHAT TO AVOID (based on past failures)
+
+- **Do NOT** generate candidate centers without respecting a margin equal to the current radius; this caused boundary violations (Validity failures 1/11).  
+- **Do NOT** rely on a single static lattice (e.g., only a square grid) for all radii; this led to many overlapping configurations (Validity failures 4/10).  
+- **Do NOT** solve the linear‑programming sub‑problem with poorly scaled constraints or without bounding each radius; this produced infeasible or unbounded solutions (Validity failures 3/10).  
+- **Do NOT** return the raw LP solution without post‑processing (clipping to `[0, 0.5]` and enforcing a minimum separation).  
+- **Do NOT** forget to recompute the feasible region after each radius update; stale constraints caused later circles to be placed outside the unit square.
+
+---
+
+### ✅ REQUIRED IMPROVEMENTS & STRATEGIES
+
+1. **Dynamic Hexagonal Lattice Generation**  
+   - Implement `_hex_grid_positions(r)` that creates a hexagonal lattice **inside the shrunken feasible region** `[r, 1‑r] × [r, 1‑r]`.  
+   - Use spacing `dx = 2 r` and `dy = √3 r` to guarantee that any two points are at least `2 r` apart.  
+   - Return the lattice as a NumPy array of shape `(n, 2)`.
+
+2. **Robust Linear‑Programming Formulation**  
+   - Build `compute_max_radii_lp(centers)` that maximizes the sum of radii (or a weighted sum) subject to:  
+     * `r_i ≤ 0.5` (global upper bound).  
+     * `r_i ≤ x_i` and `r_i ≤ 1‑x_i` (horizontal boundary).  
+     * `r_i ≤ y_i` and `r_i ≤ 1‑y_i` (vertical boundary).  
+     * `r_i + r_j ≤ distance(centers[i], centers[j])` for every pair `i < j`.  
+   - Scale all constraints by a factor of `1e3` (or similar) before feeding them to `scipy.optimize.linprog` to improve numerical stability.  
+   - After solving, **clip** each radius to `[0, 0.5]` and enforce a tiny epsilon (`1e‑6`) separation to avoid floating‑point overlap.
+
+3. **Iterative Growth with Early Stopping**  
+   - In `construct_packing()`, start with a modest initial radius (e.g., `r0 = 0.02`).  
+   - Loop: generate lattice points for the current `r`, append them to `centers`, solve the LP, and **accept only those radii that increased** relative to the previous iteration.  
+   - Stop when the LP reports no improvement (`max_radius_change < 1e‑4`) **or** when the number of centers exceeds a safe limit (e.g., 2000) to keep runtime bounded.
+
+4. **Post‑LP Validation Hook**  
+   - After each LP solve, run a quick validation pass:  
+     * Verify `0 ≤ r_i ≤ 0.5`.  
+     * Check `r_i ≤ x_i ≤ 1‑r_i` and `r_i ≤ y_i ≤ 1‑r_i`.  
+     * Ensure `r_i + r_j ≤ distance(centers[i], centers[j]) + 1e‑8` for all pairs.  
+   - If any violation is detected, **discard the offending circle** (or reduce its radius to the maximum feasible value) before proceeding to the next iteration.
+
+5. **Optional Adaptive Seeding**  
+   - If the packing density plateaus early, randomly perturb a small subset (≤ 5 %) of existing centers by a tiny offset (`±0.001`) and re‑run the LP. This can break symmetry and allow larger radii to emerge.
+
+6. **Documentation & Type Hints**  
+   - Add concise docstrings to each helper explaining the geometric rationale.  
+   - Use type hints (`np.ndarray`, `List[Tuple[float, float]]`, etc.) to aid static analysis and future maintenance.
+
+---
+
+### 🛠️ IMPLEMENTATION GUIDELINES
+
+- **Only modify code inside the evolve block.** All other parts of the repository (imports, `run_packing()`, visualisation, test harness) are immutable and will be merged automatically.  
+- **Do not add new top‑level imports**; the existing imports (`numpy as np`, `scipy.optimize.linprog`) are sufficient. If you need additional utilities, implement them as local functions within the block.  
+- **Keep the public signature** of `construct_packing()` unchanged: it must return a tuple `(centers: np.ndarray, radii: np.ndarray)`.  
+- **Preserve deterministic behaviour** where possible (set a fixed random seed if you use `np.random`). This aids reproducibility for the evaluation harness.
+
+---
+
+### ✅ FINAL CHECKLIST BEFORE SUBMITTING
+
+- [ ] Output contains **only** the code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- [ ] No marker lines, no extra imports, no `run_packing()` or visualisation code.  
+- [ ] All prohibited patterns (static square grid, missing margin, unscaled LP, missing validation) are eliminated.  
+- [ ] New helper functions (`_hex_grid_positions`, `compute_max_radii_lp`, optional validation) are present and correctly referenced inside `construct_packing()`.  
+- [ ] Docstrings and type hints are added for clarity.  
+
+Proceed to implement the above improvements. Good luck!

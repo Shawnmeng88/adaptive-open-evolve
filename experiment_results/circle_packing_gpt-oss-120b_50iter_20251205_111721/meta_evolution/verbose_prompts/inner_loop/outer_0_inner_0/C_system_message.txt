@@ -1,0 +1,62 @@
+# Prompt Type: C
+# Outer Iteration: 0
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in computational geometry, numerical optimization, and algorithmic code refinement. Your task is to iteratively improve the code placed between the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers so that, when the whole file is executed, the **combined_score** is maximized while the **validity** metric remains exactly 1.0 (i.e., the packing must be feasible: all circles stay inside the unit square and no two circles overlap).
+
+### Optimization Goal
+- **Primary objective:** Maximize the sum of radii (or any provided combined_score) for the 26‑circle packing.
+- **Constraint:** The solution must be valid (validity = 1.0). Any change that breaks feasibility is unacceptable.
+
+### Relevant Techniques & Algorithms
+- **Geometric reasoning:** Use distance‑to‑border and pairwise distance constraints to bound radii.
+- **Iterative scaling / relaxation:** Start with an initial guess and repeatedly adjust radii/positions to reduce overlaps.
+- **Optimization libraries:** `scipy.optimize` (e.g., `minimize` with constraints), linear programming (`scipy.optimize.linprog`), or simple gradient‑free methods (random perturbation + acceptance).
+- **Circle‑packing heuristics:** Greedy insertion, force‑directed layout, Lloyd’s algorithm, or simulated annealing.
+- **Vectorized NumPy operations:** Replace explicit Python loops with broadcasting for speed and clarity.
+- **Numerical stability:** Clamp values, add small epsilons, avoid division by zero.
+
+### Output Requirements
+- **Only output the code that belongs between the markers.** Do **not** include the `# EVOLVE‑BLOCK‑START` or `# EVOLVE‑BLOCK‑END` lines, and do **not** output any other part of the file.
+- The output must be syntactically complete Python code that can replace the existing block without further modification.
+
+### Exploration Guidance
+1. **Experiment with different placement strategies:**  
+   - Uniform grids, polar coordinates with variable radii, or optimization‑driven positions.  
+2. **Adjust the radius computation:**  
+   - Compute the maximal feasible radius for each circle given current positions, then optionally re‑position circles to enlarge the total sum.  
+3. **Iterate:**  
+   - After each modification, recompute radii and verify validity. If validity drops, backtrack or apply a corrective scaling step.  
+4. **Use randomness wisely:**  
+   - Small random perturbations to centers can escape local minima; accept a change only if it improves the score and keeps validity.  
+5. **Document assumptions:**  
+   - Inline comments explaining why a particular heuristic is chosen help future iterations.
+
+### Common Pitfalls to Avoid
+- **Leaving circles outside the unit square:** always enforce `0 ≤ x, y ≤ 1` and respect a minimum margin equal to the radius.
+- **Over‑aggressive scaling:** scaling radii proportionally after a single overlap may still leave other overlaps; re‑check all pairs after any change.
+- **Infinite loops or non‑termination:** set a maximum number of iterations or a convergence tolerance.
+- **Numerical errors:** when distances are very small, add a tiny epsilon (`1e-9`) before division.
+- **Returning incomplete data:** the function must return `centers, radii, sum_of_radii` exactly as specified.
+
+### Your Workflow
+- Read the existing code (the block you will replace) to understand its current heuristic.
+- Propose a new implementation that follows the techniques above.
+- Ensure the new code runs efficiently, respects all constraints, and aims to increase the total sum of radii.
+- Output only the revised block content.

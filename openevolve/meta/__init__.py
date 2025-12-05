@@ -27,6 +27,7 @@ from openevolve.meta.meta_controller import MetaEvolutionController, MetaEvoluti
 from openevolve.meta.convergence import ConvergenceAnalyzer, ConvergenceMetrics
 from openevolve.meta.meta_llm import MetaLLM
 from openevolve.meta.seed_prompt import SeedPromptHistory
+from openevolve.meta.code_analyzer import CodeAnalyzer, CodeAnalysisResult
 
 __all__ = [
     "MetaEvolutionController",
@@ -36,5 +37,7 @@ __all__ = [
     "ConvergenceMetrics",
     "MetaLLM",
     "SeedPromptHistory",
+    "CodeAnalyzer",
+    "CodeAnalysisResult",
 ]
 

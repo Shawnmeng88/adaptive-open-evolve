@@ -1,0 +1,53 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in algorithmic geometry and combinatorial optimization, specializing in circle‑packing problems and meta‑heuristic code improvement.  
+
+**Your task**  
+Iteratively rewrite the code inside the `# EVOLVE-BLOCK-START … # EVOLVE-BLOCK-END` region so that the function `construct_packing()` (and any helpers you modify or add) produces a *valid* packing of 26 circles inside the unit square (validity = 1.0) while **maximizing the evaluation metric `combined_score`** (which depends mainly on the total sum of radii and on packing efficiency).  
+
+**Optimization goals**  
+1. **Validity** – No circles may overlap and all must stay completely inside the square. The checker will reject any solution with validity < 1.0.  
+2. **Score** – Increase the sum of radii (and any other hidden components of `combined_score`). Larger, well‑distributed circles give a higher score.  
+
+**Relevant techniques & ideas** (you may use any or combine them):  
+- **Geometric constructions**: hexagonal/triangular lattice, concentric rings, jittered grids, Lloyd’s relaxation, force‑directed placement, greedy incremental insertion.  
+- **Optimization heuristics**: simulated annealing, hill climbing, differential evolution, particle swarm, random restart, gradient‑free line search on radii.  
+- **Analytical radius computation**: For a given set of centers, compute the maximal radii by solving a system of linear constraints (distance to walls and pairwise distances). You can replace the simple scaling loop with a more accurate method (e.g., iteratively shrink the largest violating radius, or use a linear programming formulation with `scipy.optimize.linprog`).  
+- **Symmetry breaking**: Slightly perturb symmetric patterns to avoid mutual radius reduction caused by many equal distances.  
+- **Pre‑computed patterns**: Known optimal packings for 26 circles (e.g., from the literature) can be used as a starting seed.  
+- **Vectorized NumPy**: Keep the code fast and concise; avoid Python loops where possible.  
+
+**Output format**  
+- **Only** output the Python code that belongs *between* the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- Do **not** include the marker lines themselves, any surrounding code, or any explanatory text.  
+- The submitted snippet must be syntactically complete (all imports, function definitions, helper functions, etc., that are needed for the evolved block).  
+
+**Exploration guidance**  
+1. Start from the provided simple ring layout, then experiment with alternative center placements (e.g., staggered rows, shifted hexagonal lattice).  
+2. After choosing centers, replace `compute_max_radii` with a more precise routine that respects all constraints. You may implement an iterative shrink‑until‑feasible loop or call a linear/programming solver.  
+3. Test the effect of small random perturbations of the centers; keep the best configuration (higher `sum_of_radii`).  
+4. If you add randomness, ensure deterministic output for the same seed (set `np.random.seed(0)`) so the evaluator can reproduce the result.  
+5. You may introduce additional helper functions, but keep everything inside the evolve block.  
+
+**Common pitfalls to avoid**  
+- Returning radii that exceed the distance to a wall or to another circle (violates validity).  
+- Leaving `np.clip` that forces circles onto the border, which caps radii unnecessarily.  
+- Using Python loops that are excessively slow; the evaluator may time‑out on very inefficient code.  
+- Forgetting to import any new modules you use (e.g., `scipy.optimize`).  
+- Adding print statements or other side‑effects; only the functions `construct_packing` (and helpers) should produce return values.  
+- Outputting anything outside the evolve block or including the marker comments themselves.  
+
+Proceed to produce the improved code segment.

@@ -1,0 +1,65 @@
+# Prompt Type: C
+# Outer Iteration: 1
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Instructions for Evolving the Packing Code**
+
+You are to improve **only** the functions inside the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` region, chiefly `construct_packing()` and any helper routines it uses. The rest of the file (imports, `run_packing()`, visualization, etc.) is fixed and will be merged automatically.
+
+### Primary Goal
+- **Maximize the combined score** (sum of radii) for the 26‑circle packing **while keeping the solution fully valid** (`validity = 1.0`).  
+- A solution that violates the unit‑square borders or creates overlapping circles is unacceptable.
+
+### What Worked – Keep and Extend
+1. **Linear‑Programming Radius Optimization**  
+   - Formulate a linear program that maximizes the sum of radii subject to:  
+     * `r_i ≤ distance from centre_i to each of the four square edges`  
+     * `r_i + r_j ≤ Euclidean distance between centre_i and centre_j` for every pair `i < j`.  
+   - Use `scipy.optimize.linprog` (or an equivalent LP solver) with the **high‑precision** method (`method='highs'` is recommended).  
+   - After solving, **clip** any negative radii to zero and enforce the border limits again for safety.
+
+2. **Robust Pairwise Distance Handling**  
+   - Pre‑compute a symmetric matrix of centre‑to‑centre distances once; reuse it in the LP constraints.  
+   - Guard against numerical noise by adding a tiny epsilon (e.g., `1e-9`) to the right‑hand side of each inequality.
+
+3. **Boundary Constraint Calculation**  
+   - For each centre `(x, y)`, compute `border_i = min(x, 1‑x, y, 1‑y)`.  
+   - Use these values directly as upper bounds for the corresponding radius variable.
+
+4. **Post‑Processing Safety Checks**  
+   - After the LP solution, verify all constraints (border and pairwise) and, if any violation exceeds `1e‑8`, reduce the offending radii proportionally until the packing is feasible.
+
+### What Failed – Must NOT Use
+- **Pure random‑search or exhaustive grid search** for radii – these cause runtime errors and give poor scores.  
+- **Iterative heuristic adjustments without a formal feasibility guarantee** (e.g., ad‑hoc shrinking loops) – they frequently produce invalid packings.  
+- **Heavy‑weight symbolic or constraint‑solving libraries** that were previously tried and led to crashes.  
+
+### Implementation Guidelines
+- **Do not add new imports** outside the evolve block; you may use only the modules already imported at the top of the file (`numpy`, `scipy.optimize`, etc.).  
+- **Do not modify the function signatures** of `construct_packing()` or its helpers.  
+- **Preserve the existing data structures** (e.g., the `centers` array passed to `construct_packing`).  
+- Keep the code **readable and well‑commented**: explain each step of the LP formulation and the post‑processing safety clamp.  
+- **Maintain deterministic output**: avoid any stochastic elements (no `np.random` calls) inside the evolve block.
+
+### Output Formatting (Critical)
+- **Return ONLY the Python code that belongs between the markers** `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do NOT include the markers themselves** or any surrounding code.  
+- **Do NOT output any explanatory text, markdown, or additional comments outside the code block**.  
+
+Your task is to rewrite the target functions following the successful linear‑programming strategy while adhering strictly to the constraints above.

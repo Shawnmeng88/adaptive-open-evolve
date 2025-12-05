@@ -1,0 +1,91 @@
+# Prompt Type: C
+# Outer Iteration: 3
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION INSTRUCTIONS**
+
+---
+
+### 📏 CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+
+1. **OUTPUT ONLY the Python code that belongs *between* the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+2. **DO NOT** include the marker lines themselves (`# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END`).  
+3. **DO NOT** output any code outside this region (imports, `run_packing()`, visualisation utilities, test harnesses, etc.).  
+4. The surrounding framework will automatically merge your output with the preserved sections. Any deviation will cause the evaluation to fail.
+
+---
+
+### 🎯 FOCUS OF THIS EVOLUTION
+
+- **Target functions:** `construct_packing()` and any **helper functions defined inside the evolve block** (e.g., `_hex_grid_positions`, `compute_max_radii_lp`, etc.).  
+- **Goal:** Produce a packing of circles inside the unit square that **maximises the minimum radius** while guaranteeing **geometric validity** (no overlaps, all circles fully inside the square).
+
+---
+
+### 🚫 WHAT MUST BE AVOIDED (FAILED APPROACHES)
+
+1. **Missing boundary constraints** – circles whose centres are placed too close to the square edges, causing part of a circle to lie outside.  
+2. **Insufficient non‑overlap constraints** – allowing any pair of circles to be closer than the sum of their radii.  
+3. **Using a fixed radius for all circles without optimisation** – leads to unnecessary validity failures (≈9 % of attempts).  
+4. **Relying solely on a naive grid placement without subsequent radius optimisation** – produces many invalid packings (≈30 % of attempts).  
+
+**Never** re‑introduce any of the above patterns.
+
+---
+
+### 🛠️ SPECIFIC STRATEGIES TO TRY
+
+1. **Robust Hexagonal Lattice Generation**  
+   - Compute the maximal step `dx = 2 * r_guess` and vertical step `dy = np.sqrt(3) * r_guess`.  
+   - Offset every other row by `dx/2` to create a true hex pattern.  
+   - Clip points that would place a centre closer than `r_guess` to any edge of the unit square.
+
+2. **Two‑Stage Linear‑Programming Optimisation**  
+   - **Stage 1:** Use a generous initial radius `r0` to generate candidate centres via the hex lattice.  
+   - **Stage 2:** Formulate a linear program that **maximises the common radius `r`** subject to:  
+     * `x_i >= r` and `x_i <= 1 - r` (and similarly for `y_i`).  
+     * For every pair `(i, j)`, `|x_i - x_j| + |y_i - y_j| >= 2r * sin(π/3)` (or directly ` (x_i - x_j)^2 + (y_i - y_j)^2 >= (2r)^2`).  
+   - Use `scipy.optimize.linprog` with the *dual* formulation to keep the problem linear (replace quadratic distance constraints with Manhattan approximations that are safe lower bounds).
+
+3. **Iterative Radius Refinement**  
+   - After solving the LP, **verify** all Euclidean distances.  
+   - If any violation is found (due to the Manhattan approximation), **shrink `r`** by a small factor (e.g., 0.98) and re‑solve.  
+   - Stop when the verification passes or when the shrink factor falls below a tolerance (`1e‑4`).
+
+4. **Early‑Exit Feasibility Check**  
+   - Before launching the LP, compute the theoretical upper bound `r_max = 0.5 / (1 + np.sqrt(3)/2 * (n_rows-1))` for the given grid size.  
+   - If the current guess exceeds `r_max`, immediately reduce it to `r_max` to avoid infeasible LP solves.
+
+5. **Return Structure**  
+   - `construct_packing()` must return a tuple `(centers, radii)`, where `centers` is an `(N, 2)` NumPy array and `radii` is a 1‑D NumPy array of length `N` (all equal to the final `r`).  
+   - Ensure the function never returns `None` or an empty array; if no feasible packing exists for the requested density, fall back to a single central circle of radius `0.5`.
+
+---
+
+### 📌 IMPLEMENTATION GUIDELINES
+
+- Keep all helper functions **inside** the evolve block; they will be merged automatically.  
+- Use **only** the standard library, NumPy, and SciPy (already imported in the outer file).  
+- Add **clear docstrings** for each helper explaining its purpose and the constraints it enforces.  
+- Avoid any side effects (e.g., printing, plotting) inside `construct_packing()`; those are handled elsewhere.  
+- Ensure the code is **deterministic** (set a fixed random seed if any stochastic element is introduced).  
+
+---
+
+**Remember:** The only output you may produce is the updated Python code for the functions inside the evolve block. No markers, no extra text, no imports, no test harnesses. Follow the strategies above, respect the constraints, and produce a valid, high‑quality packing implementation.

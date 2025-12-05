@@ -1,0 +1,157 @@
+# Prompt Type: B
+# Outer Iteration: 4
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 4
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 5371 chars
+- Current best prompt length: 3513 chars
+
+## Convergence History:
+### Successful Patterns:
+- Change that helped: condensed by 191 chars
+- Change that helped: removed 'must'; condensed by 522 chars
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9691
+- Valid: 9, Invalid: 2
+- Failure modes: ['Validity failures: 2/11 (18.2%)']
+
+## CODE ANALYSIS (NEW - What Actually Happened):
+## Code Analysis from Recent Iterations
+
+### Approaches Tried:
+  ✓ grid_based: 17 attempts
+  ✓ iterative_refinement: 17 attempts
+  ✓ linear_programming: 15 attempts
+  ✓ random_search: 13 attempts
+  ✓ constraint_solving: 12 attempts
+  ✓ greedy: 3 attempts
+
+### Best Performing Approach: linear_programming
+Key techniques in best code:
+  - LP for radius optimization
+  - pairwise distance constraints
+  - boundary constraint handling
+  - value clipping for safety
+  - safety margins for numerical stability
+
+### What Led to Improvements:
+  - Iter 9: +0.0406 using linear_programming, grid_based
+  - Iter 12: +0.0336 using linear_programming, grid_based
+  - Iter 25: +0.0156 using linear_programming, grid_based
+
+### Common Failures:
+  - other_runtime_error: 3 occurrences
+  - undefined_variable: 2 occurrences
+
+### Recommendations for Next Prompt:
+  - BUILD ON: linear_programming has been successful - refine and extend this approach
+  - FIX: Missing overlap checking in code
+  - KEEP: Best improvement used: LP for radius optimization, pairwise distance constraints, boundary constraint handling
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_4):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Instructions for Evolving the Packing Code**
+
+You are to modify **only** the functions inside the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` region. The surrounding code (imports, `run_packing()`, visualization, etc.) is fixed and will be merged automatically.
+
+---
+
+### Primary Objective
+- **Maximize the total sum of radii** for the 26‑circle packing while guaranteeing **full validity** (`validity = 1.0`). Any overlap or border violation makes the solution unacceptable.
+
+---
+
+### What Must Be Preserved / Built Upon
+1. **Linear‑Programming Radius Optimization** – retain the LP formulation that:
+   - Maximizes `∑ r_i`.
+   - Enforces `r_i ≤ distance from centre_i to each of the four square edges`.
+   - Enforces pairwise non‑overlap: `r_i + r_j ≤ distance(centre_i, centre_j)`.
+   - Includes a tiny safety margin (e.g., `1e‑9`) to avoid numerical edge cases.
+2. **Helper Functions** that:
+   - Compute the maximal feasible radii for a given set of centres (`_max_radii_lp`).
+   - Perform stochastic annealing / local refinement to improve centre positions (`_anneal`, `_refine_multi`).
+   - Verify packing validity (`_is_valid`).
+
+These components have proven effective in previous successful runs and should remain the core of the algorithm.
+
+---
+
+### Required Improvements
+- **Strengthen validity checks**: ensure `_is_valid` is called after every refinement step and that any failure triggers a rollback or additional annealing iteration.
+- **Enhance annealing schedule**: use a decreasing step size (e.g., geometric decay) and occasional “restart” with a fresh random seed if progress stalls.
+- **Add multiple‑restart strategy**: run the whole LP → refinement pipeline several times (e.g., 3–5 restarts) and keep the best‑scoring packing that passes `_is_valid`.
+- **Clamp radii** after LP solution to the border limits with a small epsilon to guard against floating‑point overshoot.
+- **Reduce unnecessary recomputation**: cache pairwise distances when possible during refinement to speed up the inner loops.
+- **Document intent**: add concise docstrings/comments to each helper explaining its role, constraints, and safety margins.
+
+---
+
+### What Must **NOT** Be Done (Avoid Past Failures)
+- **Do not remove or bypass the LP radius optimization**; abandoning it caused large validity drops.
+- **Do not rely solely on random search without LP or refinement**, as it produced many invalid packings.
+- **Do not omit the overlap check** (`r_i + r_j ≤ dist_ij`) when adjusting centres; missing this led to frequent validity failures.
+- **Do not use fixed large step sizes in annealing**; they caused oscillations and premature termination.
+- **Do not ignore the safety margin** (`1e‑9` or similar); without it numerical precision errors produced invalid solutions.
+- **Do not add new external dependencies** beyond `numpy` and `scipy.optimize.linprog`; prior attempts that introduced extra libraries broke the execution environment.
+
+---
+
+### Implementation Guidance
+- Keep the function signatures unchanged:
+  ```python
+  def _max_radii_lp(centers): ...
+  def _anneal(start, rng, iters=12000): ...
+  def _refine_multi(centers, rng, passes=8, init_step=0.003, trials=7): ...
+  def _is_valid(centers, radii, eps=1e-9): ...
+  def construct_packing(): ...
+  ```
+- Inside `construct_packing()`:
+  1. Generate an initial set of centres (e.g., uniform random points in the unit square).
+  2. Call `_max_radii_lp` to obtain a feasible radius vector.
+  3. Run `_refine_multi` (or `_anneal`) to improve centre positions while repeatedly re‑optimizing radii with `_max_radii_lp`.
+  4. After each refinement pass, invoke `_is_valid`. If invalid, revert to the previous best state or restart.
+  5. Perform the whole pipeline for a small number of restarts, retaining the highest‑scoring valid packing.
+  6. Return the final `centers` and `radii` as a tuple or appropriate structure expected by the outer code.
+
+- Use the provided `rng = np.random.default_rng(seed)` pattern for reproducibility; pass the same RNG through all helper calls.
+
+---
+
+### Mandatory Output Format (CRITICAL)
+- **Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**
+- **Do NOT include the markers themselves** in your response.
+- **Do NOT include any code outside the markers** (imports, `run_packing`, etc.).
+- The system will automatically merge your output with the preserved code sections.
+
+Follow these instructions precisely; any deviation will cause the evaluation to fail.
