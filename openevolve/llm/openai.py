@@ -162,11 +162,23 @@ class OpenAILLM(LLMInterface):
         """Make the actual API call"""
         # Use asyncio to run the blocking API call in a thread pool
         loop = asyncio.get_event_loop()
+        
+        # Log what we're sending
+        logger.debug(f"[API CALL] Model: {params.get('model')}")
+        logger.debug(f"[API CALL] Num messages: {len(params.get('messages', []))}")
+        
         response = await loop.run_in_executor(
             None, lambda: self.client.chat.completions.create(**params)
         )
-        # Logging of system prompt, user message and response content
-        logger = logging.getLogger(__name__)
-        logger.debug(f"API parameters: {params}")
-        logger.debug(f"API response: {response.choices[0].message.content}")
-        return response.choices[0].message.content
+        
+        # Log the raw response
+        content = response.choices[0].message.content
+        finish_reason = response.choices[0].finish_reason if response.choices else "unknown"
+        
+        if content is None:
+            logger.warning(f"[API RESPONSE] Content is None! finish_reason={finish_reason}")
+            logger.warning(f"[API RESPONSE] Full response object: {response}")
+        else:
+            logger.debug(f"[API RESPONSE] Content length: {len(content)} chars, finish_reason={finish_reason}")
+        
+        return content

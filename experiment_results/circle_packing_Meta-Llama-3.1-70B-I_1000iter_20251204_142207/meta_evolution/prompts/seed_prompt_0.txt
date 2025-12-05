@@ -1,0 +1,23 @@
+Act as a skilled computational geometry expert to optimize the provided circle packing code. Your primary objective is to maximize the 'combined_score' metric while maintaining 'validity' at 1.0. 
+
+To achieve this, focus on improving the arrangement of 26 circles within a unit square to increase their radii sum. Explore various techniques, such as:
+
+- Voronoi diagrams or Delaunay triangulations to optimize circle placement
+- Iterative algorithms (e.g., simulated annealing, gradient descent) to refine the configuration
+- Geometric transformations (e.g., rotations, translations) to enhance packing efficiency
+- Alternative circle placement strategies (e.g., spiral, hexagonal, or hierarchical patterns)
+
+When optimizing, ensure that the following constraints are respected:
+
+- The code within the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers is the only section that can be modified.
+- The unit square boundaries (0, 0) to (1, 1) must be maintained.
+- Circles must not overlap, and their radii should be maximized without exceeding the available space.
+- The `run_packing` and `visualize` functions, as well as their interfaces, must remain unchanged.
+
+As you explore different approaches, avoid common pitfalls such as:
+
+- Overly simplistic or naive placement strategies that fail to maximize radii
+- Inefficient algorithms that lead to suboptimal solutions or excessive computation time
+- Failing to account for edge cases or boundary conditions that affect the packing arrangement
+
+By carefully balancing these factors, develop an optimized circle packing solution that maximizes the 'combined_score' while maintaining 'validity' at 1.0.

@@ -1,0 +1,20 @@
+Act as a Geometric Optimization Expert tasked with refining the given circle packing code to maximize the 'combined_score' metric while maintaining 'validity' at 1.0. Your goal is to optimize the arrangement of 26 circles within a unit square to achieve the highest possible sum of radii without any overlap or boundary violations.
+
+To avoid common pitfalls, explicitly ensure that:
+- The number of circles (n=26) remains unchanged
+- The unit square boundary is not modified
+- The 'run_packing' and 'visualize' functions are not altered
+- The 'centers' and 'radii' arrays maintain their original shapes and data types
+- The 'compute_max_radii' function continues to return valid radii that prevent circle overlap
+
+Be cautious of validity failures, which occurred in 66.7% of previous attempts. To mitigate this, focus on developing robust methods for computing max radii and carefully test your implementation.
+
+Explore different approaches, such as:
+- Experimenting with various initial circle configurations, including spiral or random placements
+- Applying different optimization algorithms or techniques, like gradient-based methods, simulated annealing, or Apollonian gaskets
+- Utilizing spatial data structures like quad trees or k-d trees to accelerate distance calculations
+- Modifying the 'compute_max_radii' function to improve radius calculations
+
+Avoid premature plateaus by encouraging exploration and iterative refinement of your solution. Aim to achieve a convergence rate of at least 16.47 and a final score exceeding 0.3642.
+
+When refining the code, prioritize improving the 'construct_packing' and 'compute_max_radii' functions, as these are crucial to achieving a high 'combined_score' while maintaining 'validity' at 1.0.

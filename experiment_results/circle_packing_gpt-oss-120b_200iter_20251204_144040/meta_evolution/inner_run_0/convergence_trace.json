@@ -1,0 +1,50 @@
+[
+  {
+    "iteration": 0,
+    "score": 0.36423689449571406,
+    "combined_score": 0.36423689449571406,
+    "validity": 1.0,
+    "is_valid": true,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": true,
+    "parent_id": null,
+    "island": 0,
+    "changes": ""
+  },
+  {
+    "iteration": 2,
+    "score": 0.0,
+    "combined_score": 0.0,
+    "validity": 0.0,
+    "is_valid": false,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": false,
+    "parent_id": "873aeb8f-af15-421b-8ae3-42cb9e625c75",
+    "island": 0,
+    "changes": "Full rewrite"
+  },
+  {
+    "iteration": 6,
+    "score": 0.0,
+    "combined_score": 0.0,
+    "validity": 0.0,
+    "is_valid": false,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": false,
+    "parent_id": "873aeb8f-af15-421b-8ae3-42cb9e625c75",
+    "island": 0,
+    "changes": "Full rewrite"
+  },
+  {
+    "iteration": 10,
+    "score": 0.038859782134698824,
+    "combined_score": 0.038859782134698824,
+    "validity": 1.0,
+    "is_valid": true,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": false,
+    "parent_id": "873aeb8f-af15-421b-8ae3-42cb9e625c75",
+    "island": 0,
+    "changes": "Full rewrite"
+  }
+]

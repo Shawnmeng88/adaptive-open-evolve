@@ -1,0 +1,26 @@
+[
+  {
+    "iteration": 0,
+    "score": 0.36423689449571406,
+    "combined_score": 0.36423689449571406,
+    "validity": 1.0,
+    "is_valid": true,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": true,
+    "parent_id": null,
+    "island": 0,
+    "changes": ""
+  },
+  {
+    "iteration": 8,
+    "score": 1.0167520408444234e-05,
+    "combined_score": 1.0167520408444234e-05,
+    "validity": 1.0,
+    "is_valid": true,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": false,
+    "parent_id": "68f9ee77-dd49-4021-8265-4f29f46a6af6",
+    "island": 0,
+    "changes": "Full rewrite"
+  }
+]

@@ -1,5 +1,27 @@
 # OpenEvolve Island-Based Evolution Configuration
-# This configuration demonstrates the proper use of island-based evolution
+# Configured for ALCF Sophia endpoints
+#
+# ============================================================================
+# ALCF Sophia Setup
+# ============================================================================
+# 1. Copy inference_auth_token.py to this configs/ folder
+# 2. Authenticate: python3 configs/inference_auth_token.py authenticate
+# 3. Set API key: export OPENAI_API_KEY="$(python3 configs/inference_auth_token.py get_access_token)"
+# 4. Check available models: python3 configs/model_status.py (if copied)
+#
+# Example runs:
+#   # Function Minimization
+#   python3 openevolve-run.py examples/function_minimization/initial_program.py \
+#     examples/function_minimization/evaluator.py \
+#     --config configs/island_config_example.yaml \
+#     --iterations 50
+#
+#   # Circle Packing
+#   python3 openevolve-run.py examples/circle_packing/initial_program.py \
+#     examples/circle_packing/evaluator.py \
+#     --config configs/island_config_example.yaml \
+#     --iterations 30
+# ============================================================================
 
 # General settings
 max_iterations: 1000
@@ -8,39 +30,67 @@ log_level: "INFO"
 
 # LLM configuration
 llm:
-  primary_model: "gemini-2.0-flash-lite"
+  # Use ALCF OpenAI-compatible endpoint
+  api_base: "https://inference-api.alcf.anl.gov/resource_server/sophia/vllm/v1"
+  
+  # Llama ensemble (70B + 8B)
+  # Check available models: python3 configs/model_status.py
+  primary_model: "meta-llama/Meta-Llama-3.1-70B-Instruct"
   primary_model_weight: 0.8
-  secondary_model: "gemini-2.0-flash"
+  secondary_model: "meta-llama/Meta-Llama-3.1-8B-Instruct"
   secondary_model_weight: 0.2
+  
   temperature: 0.7
   top_p: 0.95
   max_tokens: 4096
+  
+  # Increased timeout for Sophia (can be slow under load)
+  timeout: 180
+  retries: 3
+  retry_delay: 10
 
 # Database configuration with proper island settings
 database:
   population_size: 500
   archive_size: 100
   
-  # Island-based evolution settings
+  # ============================================================================
+  # Island-Based Evolution Explained
+  # ============================================================================
+  # Islands are separate, isolated populations that evolve independently.
+  # This prevents premature convergence by maintaining diversity:
+  #
+  # - Each island has its OWN MAP-Elites grid (quality-diversity archive)
+  # - Programs sampled from one island stay in that island (children inherit parent's island)
+  # - Periodically, top programs "migrate" to neighboring islands (ring topology)
+  #
+  # Think of it like evolution on separate islands in nature:
+  # - Each island develops its own solutions independently
+  # - Occasional migration spreads good ideas without homogenizing everything
+  #
+  # Parameters:
+  # - num_islands: How many separate populations (more = more diversity, slower convergence)
+  # - migration_interval: How often to share solutions between islands (in generations)
+  # - migration_rate: What fraction of top programs migrate (0.1 = top 10%)
+  # ============================================================================
+  
   num_islands: 5                    # Number of separate populations
   migration_interval: 50            # Migrate every 50 generations
   migration_rate: 0.1               # Migrate 10% of top programs
   
   # Selection parameters
+  # - exploration_ratio: Probability of sampling randomly (explores new areas)
+  # - exploitation_ratio: Probability of sampling from elite archive (refines best solutions)
+  # - The remainder goes to fitness-weighted sampling
   elite_selection_ratio: 0.1
   exploration_ratio: 0.3
   exploitation_ratio: 0.7
-  # Note: diversity_metric fixed to "edit_distance"
   
   # Feature map dimensions for MAP-Elites
-  # Default if not specified: ["complexity", "diversity"]
-  # Comment out the line below to use the defaults
+  # These define the diversity dimensions (NOT fitness - fitness is separate)
+  # Default: ["complexity", "diversity"] - keeps programs of different sizes/structures
   # feature_dimensions: ["complexity", "diversity"]
   feature_bins: 10
-  # Can also use per-dimension bins:
-  # feature_bins:
-  #   performance: 20
-  #   correctness: 10
 
 # Prompt configuration
 prompt:
@@ -50,10 +100,13 @@ prompt:
 
 # Evaluator configuration
 evaluator:
-  timeout: 300
+  # Increased timeout for complex problems like circle packing
+  # If you see timeouts, increase this value
+  timeout: 600                       # 10 minutes for complex evaluations
   max_retries: 3
   cascade_evaluation: true
-  parallel_evaluations: 4
+  cascade_thresholds: [0.5, 0.75]
+  parallel_evaluations: 2            # Reduced to avoid overwhelming Sophia
 
 # Evolution settings
 diff_based_evolution: true

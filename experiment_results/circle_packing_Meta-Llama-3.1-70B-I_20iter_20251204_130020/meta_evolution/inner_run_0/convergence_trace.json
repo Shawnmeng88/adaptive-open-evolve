@@ -1,0 +1,74 @@
+[
+  {
+    "iteration": 0,
+    "score": 0.36423689449571406,
+    "combined_score": 0.36423689449571406,
+    "validity": 1.0,
+    "is_valid": true,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": true,
+    "parent_id": null,
+    "island": 0,
+    "changes": ""
+  },
+  {
+    "iteration": 1,
+    "score": 0.0,
+    "combined_score": 0.0,
+    "validity": 0.0,
+    "is_valid": false,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": false,
+    "parent_id": "a666f1c3-e42b-479c-840e-531c3cd00f76",
+    "island": 0,
+    "changes": "Full rewrite"
+  },
+  {
+    "iteration": 2,
+    "score": 0.0,
+    "combined_score": 0.0,
+    "validity": 0.0,
+    "is_valid": false,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": false,
+    "parent_id": "a666f1c3-e42b-479c-840e-531c3cd00f76",
+    "island": 0,
+    "changes": "Full rewrite"
+  },
+  {
+    "iteration": 3,
+    "score": 0.0,
+    "combined_score": 0.0,
+    "validity": 0.0,
+    "is_valid": false,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": false,
+    "parent_id": "a666f1c3-e42b-479c-840e-531c3cd00f76",
+    "island": 0,
+    "changes": "Full rewrite"
+  },
+  {
+    "iteration": 4,
+    "score": 0.29513089744428295,
+    "combined_score": 0.29513089744428295,
+    "validity": 1.0,
+    "is_valid": true,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": false,
+    "parent_id": "a666f1c3-e42b-479c-840e-531c3cd00f76",
+    "island": 0,
+    "changes": "Full rewrite"
+  },
+  {
+    "iteration": 5,
+    "score": 0.0,
+    "combined_score": 0.0,
+    "validity": 0.0,
+    "is_valid": false,
+    "best_so_far": 0.36423689449571406,
+    "is_improvement": false,
+    "parent_id": "a666f1c3-e42b-479c-840e-531c3cd00f76",
+    "island": 0,
+    "changes": "Full rewrite"
+  }
+]

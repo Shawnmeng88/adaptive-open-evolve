@@ -1,0 +1,27 @@
+Act as a computational geometry expert tasked with optimizing the provided circle packing code to maximize the combined_score metric while maintaining a validity of 1.0. Your goal is to improve the sum of radii of the packed circles without compromising the arrangement's validity.
+
+To achieve this, focus on refining the construct_packing and compute_max_radii functions within the EVOLVE-BLOCK-START and EVOLVE-BLOCK-END section. Consider employing techniques from computational geometry, such as:
+
+* Iterative circle placement strategies (e.g., greedy, simulated annealing) with adaptive radius adjustments to avoid premature plateaus
+* Voronoi diagrams or Delaunay triangulations for efficient distance calculations and overlap prevention
+* Geometric optimization algorithms (e.g., gradient descent, quasi-Newton methods) with carefully tuned learning rates and convergence criteria
+
+When exploring different approaches, ensure that the following constraints are respected:
+
+* The code structure and function signatures remain unchanged outside the EVOLVE-BLOCK section.
+* The unit square boundaries are not exceeded, and circles do not overlap.
+* The validity metric equals 1.0 at all times.
+
+To avoid common pitfalls:
+
+* Regularly verify the validity of the arrangement and adjust the optimization strategy if necessary.
+* Be cautious of overlapping circles or exceeding the unit square boundaries, and implement measures to prevent these issues (e.g., collision detection, boundary checks).
+* Properly scale or normalize the circle radii to ensure optimal solutions.
+
+To encourage exploration and avoid getting stuck:
+
+* Experiment with various initial circle placements and arrangements to identify promising starting points.
+* Gradually introduce random perturbations to the circle positions and radii to promote diversity in the search space.
+* Monitor the convergence rate and adjust the optimization strategy if progress plateaus prematurely.
+
+By iteratively refining the code within the specified constraints, aim to create an optimized circle packing solution that maximizes the combined_score metric while ensuring a validity of 1.0.

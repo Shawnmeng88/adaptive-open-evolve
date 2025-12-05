@@ -183,6 +183,14 @@ def _run_iteration_worker(
 
         iteration_start = time.time()
 
+        # Log the prompt being sent (for debugging None responses)
+        system_preview = prompt["system"][:500] + "..." if len(prompt["system"]) > 500 else prompt["system"]
+        user_preview = prompt["user"][:500] + "..." if len(prompt["user"]) > 500 else prompt["user"]
+        logger.debug(f"[Iter {iteration}] SENDING TO LLM:")
+        logger.debug(f"[Iter {iteration}] System prompt length: {len(prompt['system'])} chars")
+        logger.debug(f"[Iter {iteration}] System preview: {system_preview}")
+        logger.debug(f"[Iter {iteration}] User prompt length: {len(prompt['user'])} chars")
+
         # Generate code modification (sync wrapper for async)
         try:
             llm_response = asyncio.run(
@@ -192,12 +200,21 @@ def _run_iteration_worker(
                 )
             )
         except Exception as e:
-            logger.error(f"LLM generation failed: {e}")
+            logger.error(f"[Iter {iteration}] LLM generation EXCEPTION: {e}")
+            logger.error(f"[Iter {iteration}] System prompt was: {system_preview}")
             return SerializableResult(error=f"LLM generation failed: {str(e)}", iteration=iteration)
 
-        # Check for None response
+        # Check for None response - log details
         if llm_response is None:
+            logger.error(f"[Iter {iteration}] LLM returned None!")
+            logger.error(f"[Iter {iteration}] System prompt ({len(prompt['system'])} chars): {system_preview}")
+            logger.error(f"[Iter {iteration}] User prompt ({len(prompt['user'])} chars): {user_preview}")
             return SerializableResult(error="LLM returned None response", iteration=iteration)
+        
+        # Log successful response
+        response_preview = llm_response[:300] + "..." if len(llm_response) > 300 else llm_response
+        logger.debug(f"[Iter {iteration}] LLM SUCCESS - Response length: {len(llm_response)} chars")
+        logger.debug(f"[Iter {iteration}] Response preview: {response_preview}")
 
         # Parse response based on evolution mode
         if _worker_config.diff_based_evolution:

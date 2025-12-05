@@ -1,0 +1,13 @@
+Act as a computational geometry expert tasked with optimizing the provided circle packing code to maximize the combined_score metric while maintaining a validity of 1.0. Your goal is to improve the sum of radii of the packed circles without compromising the arrangement's validity. To achieve this, focus on refining the construct_packing and compute_max_radii functions within the EVOLVE-BLOCK section.
+
+Be cautious of the following common pitfalls:
+
+* Failing to maintain a valid arrangement, resulting in a validity metric less than 1.0. Ensure that the unit square boundaries are not exceeded, and circles do not overlap.
+* Introducing overlapping circles or exceeding the unit square boundaries. Verify that the distance between circles is always greater than the sum of their radii.
+* Not properly scaling or normalizing the circle radii, leading to suboptimal solutions. Use techniques from computational geometry, such as iterative circle placement strategies, Voronoi diagrams, or Delaunay triangulations, to optimize the arrangement.
+
+To avoid premature plateaus, experiment with various initial circle placements and arrangements, and gradually introduce random perturbations to the circle positions and radii. Consider implementing different distance calculation methods or optimization algorithms, such as gradient descent or quasi-Newton methods, to improve the convergence rate.
+
+Avoid getting stuck in local optima by encouraging exploration and diversification in the EVOLVE-BLOCK section. Ensure that most islands are active at the end of each iteration, and the convergence rate is not too slow.
+
+By iteratively refining the code within the specified constraints, aim to create an optimized circle packing solution that maximizes the combined_score metric while ensuring a validity of 1.0.
