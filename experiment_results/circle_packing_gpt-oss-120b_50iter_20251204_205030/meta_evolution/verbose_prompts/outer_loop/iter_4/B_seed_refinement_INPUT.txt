@@ -1,0 +1,113 @@
+# Prompt Type: B
+# Outer Iteration: 4
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT - ITERATION 4
+# ============================================
+
+## Convergence Feedback Used:
+
+### Successful Patterns (from history):
+- Explicit constraint mentions helped
+- Change that helped: added 'avoid'
+- Change that helped: minor changes
+- Negative guidance (what to avoid) helped
+
+### Stuck Patterns (from history):
+- Iteration 1: High invalidity rate - prompt may be too aggressive or unclear about constraints
+- Iteration 1: Repeated failures: 5 consecutive invalid programs
+- Iteration 1: High invalidity rate: 6/10 programs invalid
+- Iteration 2: High invalidity rate - prompt may be too aggressive or unclear about constraints
+- Iteration 2: Repeated failures: 5 consecutive invalid programs
+- Iteration 2: High invalidity rate: 9/10 programs invalid
+- Iteration 3: High invalidity rate - prompt may be too aggressive or unclear about constraints
+- Iteration 3: High invalidity rate: 7/10 programs invalid
+
+### Last Iteration Metrics:
+- Iterations to plateau: 10
+- Final best score: 0.9645
+- Convergence rate: 10.3682
+- Valid programs: 3
+- Invalid programs: 7
+- Failure modes: ['Validity failures: 7/10 (70.0%)']
+- Stuck patterns from analyzer: ['High invalidity rate: 7/10 programs invalid']
+- Successful strategies: ['Made 2 improvements', 'Iteration 2: +0.9645 (changes: unknown)', 'Iteration 4: +0.0000 (changes: unknown)']
+
+### Current Best Score: 0.9645
+
+# ============================================
+## Components:
+
+### Original Default Prompt:
+system_message
+
+### Format Requirements:
+- ONLY modify code within the EVOLVE-BLOCK markers
+- DO NOT modify or remove code outside the EVOLVE-BLOCK
+- The function `run_packing()` MUST exist and be callable
+- DO NOT rename or remove the `run_packing()` function
+- The function `construct_packing()` MUST be defined (called by run_packing)
+
+### Refinement Section:
+
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+- ONLY modify code within the EVOLVE-BLOCK markers
+- DO NOT modify or remove code outside the EVOLVE-BLOCK
+- The function `run_packing()` MUST exist and be callable
+- DO NOT rename or remove the `run_packing()` function
+- The function `construct_packing()` MUST be defined (called by run_packing)
+
+Violating these requirements will cause the program to fail evaluation.
+
+## Current Best Score: 0.9645
+
+## What's Working
+- Explicit constraint mentions helped
+- Change that helped: added 'avoid'
+- Change that helped: minor changes
+
+## Avoid These Approaches
+- DO NOT: Iteration 1: High invalidity rate - prompt may be too aggressive or unclear about constraints
+- DO NOT: Iteration 1: Repeated failures: 5 consecutive invalid programs
+- DO NOT: Iteration 1: High invalidity rate: 6/10 programs invalid
+
+## Tips
+- Try a different algorithmic approach to improve the score
+- Focus on the algorithm inside the EVOLVE-BLOCK markers
+- Ensure all constraints are satisfied
+
+
+# ============================================
+# FINAL CONSTRUCTED PROMPT (seed_prompt_4):
+# ============================================
+
+system_message
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+- ONLY modify code within the EVOLVE-BLOCK markers
+- DO NOT modify or remove code outside the EVOLVE-BLOCK
+- The function `run_packing()` MUST exist and be callable
+- DO NOT rename or remove the `run_packing()` function
+- The function `construct_packing()` MUST be defined (called by run_packing)
+
+Violating these requirements will cause the program to fail evaluation.
+
+## Current Best Score: 0.9645
+
+## What's Working
+- Explicit constraint mentions helped
+- Change that helped: added 'avoid'
+- Change that helped: minor changes
+
+## Avoid These Approaches
+- DO NOT: Iteration 1: High invalidity rate - prompt may be too aggressive or unclear about constraints
+- DO NOT: Iteration 1: Repeated failures: 5 consecutive invalid programs
+- DO NOT: Iteration 1: High invalidity rate: 6/10 programs invalid
+
+## Tips
+- Try a different algorithmic approach to improve the score
+- Focus on the algorithm inside the EVOLVE-BLOCK markers
+- Ensure all constraints are satisfied
+

@@ -14,14 +14,19 @@
 ```
 
 # Task
-Rewrite the program to improve its FITNESS SCORE.
+Improve the code to maximize FITNESS SCORE.
 The system maintains diversity across these dimensions: {feature_dimensions}
-Different solutions with similar fitness but different features are valuable.
-Provide the complete new program code.
 
-IMPORTANT: Make sure your rewritten program maintains the same inputs and outputs
-as the original program, but with improved internal implementation.
+## CRITICAL INSTRUCTIONS
+If the code contains `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers:
+- Output ONLY the code that goes BETWEEN these markers
+- Do NOT include the markers themselves
+- Do NOT include code outside the markers (like `run_packing()`)
+- The system will automatically merge your output with the preserved sections
+
+If there are NO EVOLVE-BLOCK markers:
+- Output the complete rewritten program
 
 ```{language}
-# Your rewritten program here
+# Your improved code here (ONLY the evolve block content if markers exist)
 ```

@@ -1,0 +1,35 @@
+# Prompt Type: C
+# Outer Iteration: 1
+# Inner Iteration: 0
+# ======================================================================
+
+system_message
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+- ONLY modify code within the EVOLVE-BLOCK markers
+- DO NOT modify or remove code outside the EVOLVE-BLOCK
+- The function `run_packing()` MUST exist and be callable
+- DO NOT rename or remove the `run_packing()` function
+- The function `construct_packing()` MUST be defined (called by run_packing)
+
+Violating these requirements will cause the program to fail evaluation.
+
+## Current Best Score: 0.7048
+
+## Last Iteration Performance
+- Valid programs: 7/13 (54% success rate)
+- Best score achieved: 0.7048
+- Iterations to improvement: 13
+
+## What Worked (from actual code evolution)
+- Made 3 improvements
+- Iteration 0: +0.3642 (changes: unknown)
+- Iteration 1: +0.1747 (changes: unknown)
+
+## CRITICAL: Actual Failure Modes (fix these!)
+- Validity failures: 6/13 (46.2%)
+
+## Tips
+- Try a different algorithmic approach to improve the score
+- Focus on the algorithm inside the EVOLVE-BLOCK markers
+- Ensure all constraints are satisfied

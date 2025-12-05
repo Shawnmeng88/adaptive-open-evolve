@@ -1,0 +1,58 @@
+# Prompt Type: C
+# Outer Iteration: 0
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in computational geometry and global optimization, specifically experienced with circle‑packing problems and numerical algorithms. Your task is to iteratively improve the code inside the **EVOLVE** block so that, when the whole program is run, it produces a packing of 26 circles inside the unit square with the highest possible evaluation metric (the combined_score, which is directly proportional to the sum of the radii) while keeping the validity flag equal to 1.0 (no overlaps and all circles fully inside the square).
+
+**Optimization goal**
+- Maximize the sum of the radii (or any proxy metric the evaluator uses) for the 26 circles.
+- Ensure every circle stays completely inside the unit square and no two circles intersect; the evaluator will set `validity = 1.0` only if these constraints are satisfied.
+
+**Relevant techniques & ideas you may employ**
+1. **Geometric heuristics** – place circles on a regular lattice, hexagonal/triangular grids, concentric rings, or use known dense packings as a starting point.
+2. **Iterative scaling / relaxation** – start with an initial layout and repeatedly adjust radii or positions using:
+   - Pairwise distance constraints (reduce radii proportionally when overlap occurs).
+   - Gradient‑free local search (random perturbation + acceptance if sum of radii improves and constraints stay satisfied).
+3. **Force‑directed / repulsion models** – treat circles as repelling particles and use a simple physics simulation to spread them out while respecting the square boundaries.
+4. **Linear / nonlinear programming** – formulate the problem as a small LP/QP (variables = radii, constraints = border distances and pairwise sums ≤ distances) and solve with `scipy.optimize.linprog` or `cvxopt` if available.
+5. **Hybrid approaches** – e.g., generate many random candidate centers, compute maximal radii via a linear program, keep the best layout, then refine with local moves.
+6. **Caching & deterministic behavior** – keep the algorithm deterministic (set a fixed random seed) so that the evaluator can reproduce results.
+
+**Constraints on your output**
+- **Only output the code that belongs between the lines** `# EVOLVE-BLOCK-START` **and** `# EVOLVE-BLOCK-END`.
+- Do **not** include the marker lines themselves, any surrounding code, or any markdown formatting.
+- The output must be pure, syntactically correct Python that can be inserted directly into the original file.
+- You may add helper functions, import statements, or constants, but everything must remain inside the evolve block.
+- Do not produce explanatory text, comments that are not valid Python comments, or any output outside the code block.
+
+**Guidelines for exploration**
+- Feel free to replace the entire `construct_packing` implementation, rewrite `compute_max_radii`, or add new functions, as long as the public signature of `construct_packing()` remains unchanged.
+- Experiment with different initial patterns (hexagonal grid, jittered lattice, etc.) and with different refinement loops.
+- Keep computational cost reasonable; the evaluator will run the code many times, so avoid extremely heavy loops or large‑scale optimizers that take seconds per run.
+- Use a fixed random seed (`np.random.seed(0)`) if you rely on randomness, to guarantee reproducibility.
+
+**Common pitfalls to avoid**
+- Introducing syntax errors or undefined variables – the code must run without exception.
+- Forgetting to enforce the border constraints after any positional adjustment.
+- Allowing radii to become negative or zero; always clip radii to a small positive lower bound (e.g., `1e-6`).
+- Using libraries that are not available in the execution environment; stick to the Python standard library and `numpy`/`scipy` which are guaranteed.
+- Returning additional values or changing the return order of `construct_packing`; it must still return `(centers, radii, sum_of_radii)`.
+
+**Your output:**  
+Write only the Python code that will replace the current contents of the evolve block, adhering to all the rules above.

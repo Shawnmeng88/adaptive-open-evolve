@@ -351,44 +351,61 @@ Focus on making targeted changes that will increase the program's performance me
         return result
     
     async def _generate_initial_seed_prompt(self, outer_iter: int = 0) -> str:
-        """Generate the initial seed prompt using meta-LLM"""
-        # Use the ORIGINAL default prompt - never the modified one
-        default_prompt = self._original_default_prompt
-        
+        """Generate the initial seed prompt using MetaLLM"""
         format_requirements = self._extract_format_requirements()
+        problem_description = self._extract_problem_description()
+        evaluation_criteria = self._extract_evaluation_criteria()
         
-        # APPEND optimization hints to the working default, don't replace it
-        optimization_hints = f"""
-
-## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+        # Use MetaLLM to generate a detailed, domain-specific prompt
+        # This creates prompts like the detailed 47-line circle packing prompt
+        logger.info("Generating initial seed prompt via MetaLLM...")
+        
+        try:
+            creative_prompt = await self.meta_llm.generate_initial_seed_prompt(
+                problem_description=problem_description,
+                initial_code=self.initial_code,
+                evaluation_criteria=evaluation_criteria,
+            )
+            
+            # Prepend format requirements as a safety net
+            format_preamble = f"""## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
 {format_requirements}
 
 Violating these requirements will cause the program to fail evaluation.
 
+---
+
+"""
+            final_prompt = format_preamble + creative_prompt
+            logger.info(f"MetaLLM generated prompt ({len(creative_prompt)} chars)")
+            
+        except Exception as e:
+            logger.warning(f"MetaLLM failed: {e}. Using fallback prompt.")
+            final_prompt = self._original_default_prompt + f"""
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+{format_requirements}
+
 ## Optimization Tips
 - Focus on the algorithm inside the EVOLVE-BLOCK markers
 - Maximize the 'combined_score' metric while keeping 'validity' = 1.0
-- Try different mathematical approaches (linear programming, geometric optimization)
-- Ensure all constraints are satisfied before returning
 """
-        final_prompt = default_prompt + optimization_hints
         
-        # Save verbose prompt (the components that went into building it)
+        # Save verbose prompt
         if self.meta_config.verbose_prompts:
-            components = f"""# PROMPT CONSTRUCTION COMPONENTS
+            components = f"""# INITIAL SEED PROMPT GENERATION
 # ================================
 
-## Component 1: Original Default Prompt
-{default_prompt}
+## Input to MetaLLM:
+- Problem: {problem_description[:200]}...
+- Code length: {len(self.initial_code)} chars
+- Evaluation: {evaluation_criteria}
 
-## Component 2: Format Requirements
+## Format Requirements Added:
 {format_requirements}
 
-## Component 3: Optimization Hints
-{optimization_hints}
-
 # ================================
-# FINAL CONSTRUCTED PROMPT (seed_prompt_0):
+# FINAL PROMPT (seed_prompt_0):
 # ================================
 
 {final_prompt}
@@ -398,96 +415,85 @@ Violating these requirements will cause the program to fail evaluation.
         return final_prompt
     
     async def _refine_seed_prompt(self, outer_iter: int) -> str:
-        """Refine the seed prompt based on convergence feedback"""
-        # ALWAYS start fresh from the ORIGINAL default prompt
-        # This prevents accumulation of repeated blocks
-        default_prompt = self._original_default_prompt
-        
+        """Refine the seed prompt using MetaLLM based on convergence feedback"""
         format_requirements = self._extract_format_requirements()
+        problem_description = self._extract_problem_description()
         
-        # Get convergence feedback to add as hints
-        stuck_patterns = self.seed_prompt_history.get_stuck_patterns() if self.seed_prompt_history.entries else []
-        successful_patterns = self.seed_prompt_history.get_successful_patterns() if self.seed_prompt_history.entries else []
+        # Get best program code for context
+        best_code = ""
+        if self.best_program:
+            best_code = self.best_program.code
         
-        # Build concise hints based on what worked and what didn't
-        hints = []
+        # Get current best prompt
+        current_best_prompt = self.best_seed_prompt or self._original_default_prompt
         
-        if successful_patterns:
-            hints.append("## What's Working")
-            hints.extend([f"- {p[:100]}" for p in successful_patterns[:3]])
+        # Use MetaLLM to refine the prompt based on convergence feedback
+        logger.info(f"Refining seed prompt via MetaLLM (iteration {outer_iter})...")
         
-        if stuck_patterns:
-            hints.append("\n## Avoid These Approaches")
-            hints.extend([f"- DO NOT: {p[:100]}" for p in stuck_patterns[:3]])
-        
-        best_score = 0.0
-        if self.best_program and self.best_program.metrics:
-            best_score = self.best_program.metrics.get('combined_score', 0.0)
-        
-        # APPEND refinement hints to the working default
-        refinement_section = f"""
-
-## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+        try:
+            refined_prompt = await self.meta_llm.refine_seed_prompt(
+                seed_prompt_history=self.seed_prompt_history,
+                problem_description=problem_description,
+                current_best_prompt=current_best_prompt,
+                best_program_code=best_code,
+            )
+            
+            # Prepend format requirements as a safety net
+            format_preamble = f"""## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
 {format_requirements}
 
 Violating these requirements will cause the program to fail evaluation.
 
-## Current Best Score: {best_score:.4f}
+---
 
-{chr(10).join(hints) if hints else ""}
-
-## Tips
-- Try a different algorithmic approach to improve the score
-- Focus on the algorithm inside the EVOLVE-BLOCK markers
-- Ensure all constraints are satisfied
 """
-        final_prompt = default_prompt + refinement_section
+            final_prompt = format_preamble + refined_prompt
+            logger.info(f"MetaLLM refined prompt ({len(refined_prompt)} chars)")
+            
+        except Exception as e:
+            logger.warning(f"MetaLLM refinement failed: {e}. Using previous best prompt.")
+            # Fall back to previous best with updated score
+            best_score = 0.0
+            if self.best_program and self.best_program.metrics:
+                best_score = self.best_program.metrics.get('combined_score', 0.0)
+            
+            final_prompt = current_best_prompt + f"""
+
+## Update: Current Best Score: {best_score:.4f}
+- Keep trying different approaches to improve the score
+"""
         
-        # Save verbose prompt with all convergence feedback
+        # Save verbose prompt with convergence feedback
         if self.meta_config.verbose_prompts:
-            # Get detailed convergence info from last iteration
+            # Get history info for verbose logging
+            stuck_patterns = self.seed_prompt_history.get_stuck_patterns() if self.seed_prompt_history.entries else []
+            successful_patterns = self.seed_prompt_history.get_successful_patterns() if self.seed_prompt_history.entries else []
             last_metrics = None
             if self.iteration_results:
-                last_result = self.iteration_results[-1]
-                last_metrics = last_result.convergence_metrics
+                last_metrics = self.iteration_results[-1].convergence_metrics
             
-            components = f"""# PROMPT REFINEMENT - ITERATION {outer_iter}
+            components = f"""# PROMPT REFINEMENT VIA METALLM - ITERATION {outer_iter}
 # ============================================
 
-## Convergence Feedback Used:
+## Input to MetaLLM:
+- Problem: {problem_description[:200]}...
+- Best code length: {len(best_code)} chars
+- Current best prompt length: {len(current_best_prompt)} chars
 
-### Successful Patterns (from history):
-{chr(10).join(f'- {p}' for p in successful_patterns) if successful_patterns else '(none detected)'}
+## Convergence History:
+### Successful Patterns:
+{chr(10).join(f'- {p}' for p in successful_patterns) if successful_patterns else '(none)'}
 
-### Stuck Patterns (from history):
-{chr(10).join(f'- {p}' for p in stuck_patterns) if stuck_patterns else '(none detected)'}
+### Stuck Patterns:
+{chr(10).join(f'- {p}' for p in stuck_patterns) if stuck_patterns else '(none)'}
 
 ### Last Iteration Metrics:
-{f'''- Iterations to plateau: {last_metrics.iterations_to_plateau}
-- Final best score: {last_metrics.final_best_score:.4f}
-- Convergence rate: {last_metrics.convergence_rate:.4f}
-- Valid programs: {last_metrics.total_valid_programs}
-- Invalid programs: {last_metrics.total_invalid_programs}
-- Failure modes: {last_metrics.failure_modes}
-- Stuck patterns from analyzer: {last_metrics.stuck_patterns}
-- Successful strategies: {last_metrics.successful_strategies}''' if last_metrics else '(no previous iteration)'}
-
-### Current Best Score: {best_score:.4f}
+{f'''- Final best score: {last_metrics.final_best_score:.4f}
+- Valid: {last_metrics.total_valid_programs}, Invalid: {last_metrics.total_invalid_programs}
+- Failure modes: {last_metrics.failure_modes}''' if last_metrics else '(no previous)'}
 
 # ============================================
-## Components:
-
-### Original Default Prompt:
-{default_prompt}
-
-### Format Requirements:
-{format_requirements}
-
-### Refinement Section:
-{refinement_section}
-
-# ============================================
-# FINAL CONSTRUCTED PROMPT (seed_prompt_{outer_iter}):
+# FINAL REFINED PROMPT (seed_prompt_{outer_iter}):
 # ============================================
 
 {final_prompt}
@@ -705,54 +711,29 @@ Violating these requirements will cause the program to fail evaluation.
         Extract critical format requirements from the initial code.
         These requirements MUST be preserved by the generated prompts.
         """
-        # Analyze initial code to find required function names
-        required_functions = []
-        for line in self.initial_code.split('\n'):
-            stripped = line.strip()
-            if stripped.startswith('def ') and 'EVOLVE-BLOCK' not in line:
-                # Function defined outside EVOLVE-BLOCK - must be preserved
-                func_name = stripped[4:].split('(')[0]
-                if func_name not in ['__init__', '__str__', '__repr__']:
-                    required_functions.append(func_name)
-        
         # Check for EVOLVE-BLOCK pattern
         has_evolve_block = 'EVOLVE-BLOCK-START' in self.initial_code
-        
-        # Find the main function that's called by external code
-        # Usually it's the one that calls the evolved function
-        main_function = None
-        for line in self.initial_code.split('\n'):
-            if 'def run_' in line:
-                main_function = line.strip()[4:].split('(')[0]
-                break
         
         # Build format requirements string
         requirements = []
         
         if has_evolve_block:
-            requirements.append("- ONLY modify code within the EVOLVE-BLOCK markers")
-            requirements.append("- DO NOT modify or remove code outside the EVOLVE-BLOCK")
+            # New approach: LLM outputs ONLY the evolve block content
+            # The system merges it with preserved pre/post code
+            requirements.append("## OUTPUT FORMAT (CRITICAL)")
+            requirements.append("- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers")
+            requirements.append("- Do NOT include the markers themselves in your output")
+            requirements.append("- Do NOT include any code outside the markers (imports, run_packing, etc.)")
+            requirements.append("- The system will automatically merge your output with the preserved code sections")
+            requirements.append("")
+            requirements.append("## FOCUS")
+            requirements.append("- Improve ONLY the `construct_packing()` function and helper functions within the evolve block")
+            requirements.append("- Functions like `run_packing()` are preserved automatically - do not include them")
+        else:
+            requirements.append("- Output the complete improved program")
+            requirements.append("- Maintain all existing function signatures and interfaces")
         
-        if main_function:
-            requirements.append(f"- The function `{main_function}()` MUST exist and be callable")
-            requirements.append(f"- DO NOT rename or remove the `{main_function}()` function")
-        
-        # Detect function calls in the main function to identify required evolved functions
-        in_main = False
-        for line in self.initial_code.split('\n'):
-            if main_function and f'def {main_function}' in line:
-                in_main = True
-            elif in_main and line.strip().startswith('def '):
-                in_main = False
-            elif in_main and '(' in line:
-                # Look for function calls
-                for word in line.replace('(', ' ').replace(')', ' ').split():
-                    if word.isidentifier() and word not in ['return', 'if', 'for', 'while', 'def']:
-                        if any(f'def {word}' in self.initial_code for _ in [1]):
-                            requirements.append(f"- The function `{word}()` MUST be defined (called by {main_function})")
-                            break
-        
-        return "\n".join(requirements) if requirements else "Follow the existing code structure"
+        return "\n".join(requirements)
     
     def _save_prompt(self, prompt: str, outer_iter: int) -> None:
         """Save a seed prompt to file"""

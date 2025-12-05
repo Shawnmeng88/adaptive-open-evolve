@@ -32,13 +32,22 @@ INITIAL_SEED_PROMPT_TEMPLATE = """You are a meta-prompt engineer. Your task is t
 ## Evaluation Criteria
 {evaluation_criteria}
 
+## CRITICAL OUTPUT FORMAT
+The code has EVOLVE-BLOCK markers. The LLM you are prompting must:
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- NOT include the markers themselves in output
+- NOT output any code outside the markers (like `run_packing()` - those are preserved automatically)
+- The system merges the LLM output with preserved code sections
+
+Include this instruction clearly in the system message you create.
+
 ## Your Task
 Create a comprehensive system message that will help an LLM generate increasingly better code solutions. The system message should:
 
 1. **Define the role clearly**: What kind of expert should the LLM act as?
 2. **Explain the optimization goal**: What metrics should be improved?
 3. **Provide domain knowledge**: What techniques, algorithms, or approaches might be relevant?
-4. **Set constraints clearly**: What must NOT be changed? What invariants must be maintained?
+4. **Set output format**: Tell the LLM to output ONLY the evolve block content
 5. **Guide exploration**: Encourage trying different approaches while respecting constraints
 6. **Warn about common pitfalls**: What mistakes should the LLM avoid?
 
@@ -67,12 +76,19 @@ Key approach in best code:
 ## Current Best Prompt (to improve upon)
 {current_best_prompt}
 
+## MANDATORY OUTPUT FORMAT INSTRUCTION
+The system message MUST tell the LLM to:
+- Output ONLY the code between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- NOT include the markers or any code outside them
+- The outer code (like `run_packing()`) is preserved automatically by the system
+
 ## Your Task
 Write an improved system message that:
 1. Builds on the successful approach described above
 2. EXPLICITLY FORBIDS the failed approaches listed above
-3. Suggests specific alternative strategies to try
-4. Is concrete and domain-specific (not generic advice)
+3. INCLUDES the mandatory output format instruction above
+4. Suggests specific alternative strategies to try
+5. Is concrete and domain-specific (not generic advice)
 
 Output ONLY the improved system message:"""
 

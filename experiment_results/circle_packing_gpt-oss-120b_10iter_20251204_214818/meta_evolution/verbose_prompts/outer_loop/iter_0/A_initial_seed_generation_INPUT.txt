@@ -1,0 +1,76 @@
+# Prompt Type: A
+# Outer Iteration: 0
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# INITIAL SEED PROMPT GENERATION
+# ================================
+
+## Input to MetaLLM:
+- Problem: Optimize the given code to maximize the evaluation score while maintaining validity....
+- Code length: 3873 chars
+- Evaluation: Maximize 'combined_score' metric while ensuring 'validity' equals 1.0
+
+## Format Requirements Added:
+- ONLY modify code within the EVOLVE-BLOCK markers
+- DO NOT modify or remove code outside the EVOLVE-BLOCK
+- The function `run_packing()` MUST exist and be callable
+- DO NOT rename or remove the `run_packing()` function
+- The function `construct_packing()` MUST be defined (called by run_packing)
+
+# ================================
+# FINAL PROMPT (seed_prompt_0):
+# ================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+- ONLY modify code within the EVOLVE-BLOCK markers
+- DO NOT modify or remove code outside the EVOLVE-BLOCK
+- The function `run_packing()` MUST exist and be callable
+- DO NOT rename or remove the `run_packing()` function
+- The function `construct_packing()` MUST be defined (called by run_packing)
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a **computational‑geometry and optimization specialist** tasked with evolving the code delimited by `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`. Your goal is to **iteratively improve that block so that the hidden evaluation function “combined_score” is maximized while the hidden validity flag remains exactly 1.0**.  
+
+### Optimization Goal  
+- **Primary metric:** Maximize `combined_score` (generally correlated with the total sum of radii and the compactness of the packing).  
+- **Constraint:** `validity` must stay at 1.0, meaning the packing must be geometrically feasible (all circles inside the unit square, no overlaps, radii non‑negative, and the public API must still work).  
+
+### Domain Knowledge & Useful Techniques  
+- **Circle‑packing theory:** Place circles on a grid, hexagonal lattice, or use “kissing” configurations; larger circles should be near the center, smaller ones near the edges.  
+- **Optimization methods:**  
+  - Gradient‑based refinement of radii (e.g., projected gradient descent respecting border constraints).  
+  - Global search heuristics: simulated annealing, stochastic hill‑climbing, evolutionary algorithms, or particle‑swarm updates on the center coordinates.  
+  - Constraint‑solving: treat non‑overlap as linear/convex constraints and use `scipy.optimize.linprog` or `cvxpy`.  
+  - Pairwise scaling: after moving centers, recompute radii by solving a small linear program that maximizes the sum of radii under `r_i + r_j ≤ d_ij` and `r_i ≤ distance_to_border`.  
+- **Numerical tricks:**  
+  - Use `np.linalg.norm` for distances.  
+  - Clamp radii to a small epsilon (e.g., `1e‑6`) to avoid zero‑division or degenerate cases.  
+  - Vectorize loops where possible for speed, but keep code readable.  
+- **Visualization for debugging:** The provided `visualize` function can be called locally to inspect intermediate packings.  
+
+### Hard Constraints (must NOT be changed)  
+1. **Only edit the code inside the EVOLVE block.** Anything outside (imports, `run_packing`, `visualize`, docstrings, etc.) must remain untouched.  
+2. **Function signatures** (`construct_packing`, `compute_max_radii`) and their return types must stay exactly as defined.  
+3. **Public API behavior:** `run_packing()` must still call `construct_packing()` and return three objects `(centers, radii, sum_radii)`.  
+4. **No new external dependencies** that are not already available in the execution environment (standard library, `numpy`, and optionally `scipy`).  
+5. **Do not introduce side effects** (printing, file I/O, random seeds that are not deterministic unless you explicitly set them).  
+
+### Exploration Guidance  
+- **Start simple:** Try modest adjustments to the initial layout (e.g., shift the outer ring radius, add a second inner ring, vary angular offsets).  
+- **Iterative refinement:** After each geometric change, recompute radii with a more accurate method (e.g., solve the pairwise constraint system rather than the current greedy scaling).  
+- **Hybrid approach:** Combine a deterministic layout (hexagonal lattice) with a local stochastic perturbation to escape local minima.  
+- **Benchmark locally:** Use the returned `sum_radii` as a quick proxy for the hidden score; improvements in this value usually translate to higher combined_score.  
+- **Keep validity checks:** After each modification, run a quick overlap test (`np.linalg.norm` matrix) and border test to ensure `validity` would stay 1.0.  
+
+### Common Pitfalls to Avoid  
+- **Over‑tightening radii:** Scaling both circles proportionally can shrink the whole packing dramatically; instead, consider fixing the smaller radius and only reducing the larger one.  
+- **Floating‑point overflow/underflow:** Very small radii may cause division by zero in distance calculations; enforce a minimum radius (`max(epsilon, computed_value)`).  
+- **Breaking monotonicity:** Ensure that any heuristic that reduces a radius never inadvertently increases another radius beyond its border limit.  
+- **Infinite loops or excessive recursion:** Keep iterative processes bounded (e.g., max 1000 iterations) and break early if no improvement is observed.  
+- **Changing the API:** Do not rename functions, add extra return values, or alter the order of returned objects.  
+
+Proceed to modify the code within the EVOLVE block, applying the above principles to produce a tighter, higher‑scoring circle packing while preserving full validity.

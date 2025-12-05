@@ -213,15 +213,39 @@ def _run_iteration_worker(
             changes_summary = format_diff_summary(diff_blocks)
         else:
             from openevolve.utils.code_utils import parse_full_rewrite
+            from openevolve.utils.code_merger import split_code, merge_code, extract_evolve_block_from_response
 
-            new_code = parse_full_rewrite(llm_response, _worker_config.language)
-            if not new_code:
-                return SerializableResult(
-                    error=f"No valid code found in response", iteration=iteration
+            # Split parent code into pre/evolve/post sections
+            parent_sections = split_code(parent.code)
+            
+            if parent_sections.has_markers:
+                # Extract just the evolve block content from LLM response
+                new_evolve_block = extract_evolve_block_from_response(
+                    llm_response, _worker_config.language
                 )
-
-            child_code = new_code
-            changes_summary = "Full rewrite"
+                
+                if not new_evolve_block:
+                    # Fallback: try parsing as full rewrite
+                    new_evolve_block = parse_full_rewrite(llm_response, _worker_config.language)
+                
+                if not new_evolve_block:
+                    return SerializableResult(
+                        error=f"No valid code found in response", iteration=iteration
+                    )
+                
+                # Merge: pre_block + new_evolve_block + post_block
+                # This preserves run_packing() and other code outside EVOLVE-BLOCK
+                child_code = merge_code(parent_sections, new_evolve_block)
+                changes_summary = "Evolve block rewrite (preserved external code)"
+            else:
+                # No EVOLVE-BLOCK markers - use traditional full rewrite
+                new_code = parse_full_rewrite(llm_response, _worker_config.language)
+                if not new_code:
+                    return SerializableResult(
+                        error=f"No valid code found in response", iteration=iteration
+                    )
+                child_code = new_code
+                changes_summary = "Full rewrite"
 
         # Check code length
         if len(child_code) > _worker_config.max_code_length:

@@ -1,0 +1,115 @@
+{
+  "entries": [
+    {
+      "seed_prompt": "system_message\n\n## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)\n- ONLY modify code within the EVOLVE-BLOCK markers\n- DO NOT modify or remove code outside the EVOLVE-BLOCK\n- The function `run_packing()` MUST exist and be callable\n- DO NOT rename or remove the `run_packing()` function\n- The function `construct_packing()` MUST be defined (called by run_packing)\n\nViolating these requirements will cause the program to fail evaluation.\n\n## Optimization Tips\n- Focus on the algorithm inside the EVOLVE-BLOCK markers\n- Maximize the 'combined_score' metric while keeping 'validity' = 1.0\n- Try different mathematical approaches (linear programming, geometric optimization)\n- Ensure all constraints are satisfied before returning\n",
+      "outer_iteration": 0,
+      "timestamp": "2025-12-04T20:59:30.149700",
+      "was_improvement": true,
+      "key_changes": null,
+      "metrics": {
+        "convergence_rate": 13.864431923726412,
+        "final_best_score": 0.937651111240476,
+        "iterations_to_plateau": 13,
+        "total_valid": 10,
+        "total_invalid": 3,
+        "stuck_patterns": [],
+        "successful_strategies": [
+          "Made 3 improvements",
+          "Iteration 2: +0.5575 (changes: unknown)",
+          "Iteration 0: +0.3642 (changes: unknown)",
+          "Iteration 10: +0.0159 (changes: unknown)"
+        ]
+      }
+    },
+    {
+      "seed_prompt": "system_message\n\n## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)\n- ONLY modify code within the EVOLVE-BLOCK markers\n- DO NOT modify or remove code outside the EVOLVE-BLOCK\n- The function `run_packing()` MUST exist and be callable\n- DO NOT rename or remove the `run_packing()` function\n- The function `construct_packing()` MUST be defined (called by run_packing)\n\nViolating these requirements will cause the program to fail evaluation.\n\n## Current Best Score: 0.9377\n\n## What's Working\n- Explicit constraint mentions helped\n- Negative guidance (what to avoid) helped\n\n## Tips\n- Try a different algorithmic approach to improve the score\n- Focus on the algorithm inside the EVOLVE-BLOCK markers\n- Ensure all constraints are satisfied\n",
+      "outer_iteration": 1,
+      "timestamp": "2025-12-04T21:01:05.758320",
+      "was_improvement": true,
+      "key_changes": "added 'avoid'",
+      "metrics": {
+        "convergence_rate": 10.400218594351939,
+        "final_best_score": 0.9615182516866245,
+        "iterations_to_plateau": 10,
+        "total_valid": 4,
+        "total_invalid": 6,
+        "stuck_patterns": [
+          "Repeated failures: 5 consecutive invalid programs",
+          "High invalidity rate: 6/10 programs invalid"
+        ],
+        "successful_strategies": [
+          "Made 2 improvements",
+          "Iteration 0: +0.9377 (changes: unknown)",
+          "Iteration 1: +0.0239 (changes: unknown)"
+        ]
+      }
+    },
+    {
+      "seed_prompt": "system_message\n\n## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)\n- ONLY modify code within the EVOLVE-BLOCK markers\n- DO NOT modify or remove code outside the EVOLVE-BLOCK\n- The function `run_packing()` MUST exist and be callable\n- DO NOT rename or remove the `run_packing()` function\n- The function `construct_packing()` MUST be defined (called by run_packing)\n\nViolating these requirements will cause the program to fail evaluation.\n\n## Current Best Score: 0.9615\n\n## What's Working\n- Explicit constraint mentions helped\n- Change that helped: added 'avoid'\n- Negative guidance (what to avoid) helped\n\n## Avoid These Approaches\n- DO NOT: Iteration 1: High invalidity rate - prompt may be too aggressive or unclear about constraints\n- DO NOT: Iteration 1: Repeated failures: 5 consecutive invalid programs\n- DO NOT: Iteration 1: High invalidity rate: 6/10 programs invalid\n\n## Tips\n- Try a different algorithmic approach to improve the score\n- Focus on the algorithm inside the EVOLVE-BLOCK markers\n- Ensure all constraints are satisfied\n",
+      "outer_iteration": 2,
+      "timestamp": "2025-12-04T21:02:35.176941",
+      "was_improvement": false,
+      "key_changes": "expanded by 307 chars",
+      "metrics": {
+        "convergence_rate": 10.400218594351939,
+        "final_best_score": 0.9615182516866245,
+        "iterations_to_plateau": 10,
+        "total_valid": 1,
+        "total_invalid": 9,
+        "stuck_patterns": [
+          "Repeated failures: 5 consecutive invalid programs",
+          "High invalidity rate: 9/10 programs invalid"
+        ],
+        "successful_strategies": [
+          "Made 1 improvements",
+          "Iteration 5: +0.9377 (changes: unknown)"
+        ]
+      }
+    },
+    {
+      "seed_prompt": "system_message\n\n## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)\n- ONLY modify code within the EVOLVE-BLOCK markers\n- DO NOT modify or remove code outside the EVOLVE-BLOCK\n- The function `run_packing()` MUST exist and be callable\n- DO NOT rename or remove the `run_packing()` function\n- The function `construct_packing()` MUST be defined (called by run_packing)\n\nViolating these requirements will cause the program to fail evaluation.\n\n## Current Best Score: 0.9615\n\n## What's Working\n- Explicit constraint mentions helped\n- Change that helped: added 'avoid'\n- Negative guidance (what to avoid) helped\n\n## Avoid These Approaches\n- DO NOT: Iteration 1: High invalidity rate - prompt may be too aggressive or unclear about constraints\n- DO NOT: Iteration 1: Repeated failures: 5 consecutive invalid programs\n- DO NOT: Iteration 1: High invalidity rate: 6/10 programs invalid\n\n## Tips\n- Try a different algorithmic approach to improve the score\n- Focus on the algorithm inside the EVOLVE-BLOCK markers\n- Ensure all constraints are satisfied\n",
+      "outer_iteration": 3,
+      "timestamp": "2025-12-04T21:04:07.016056",
+      "was_improvement": true,
+      "key_changes": "minor changes",
+      "metrics": {
+        "convergence_rate": 10.368213808910607,
+        "final_best_score": 0.9644862832020152,
+        "iterations_to_plateau": 10,
+        "total_valid": 3,
+        "total_invalid": 7,
+        "stuck_patterns": [
+          "High invalidity rate: 7/10 programs invalid"
+        ],
+        "successful_strategies": [
+          "Made 2 improvements",
+          "Iteration 2: +0.9645 (changes: unknown)",
+          "Iteration 4: +0.0000 (changes: unknown)"
+        ]
+      }
+    },
+    {
+      "seed_prompt": "system_message\n\n## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)\n- ONLY modify code within the EVOLVE-BLOCK markers\n- DO NOT modify or remove code outside the EVOLVE-BLOCK\n- The function `run_packing()` MUST exist and be callable\n- DO NOT rename or remove the `run_packing()` function\n- The function `construct_packing()` MUST be defined (called by run_packing)\n\nViolating these requirements will cause the program to fail evaluation.\n\n## Current Best Score: 0.9645\n\n## What's Working\n- Explicit constraint mentions helped\n- Change that helped: added 'avoid'\n- Change that helped: minor changes\n\n## Avoid These Approaches\n- DO NOT: Iteration 1: High invalidity rate - prompt may be too aggressive or unclear about constraints\n- DO NOT: Iteration 1: Repeated failures: 5 consecutive invalid programs\n- DO NOT: Iteration 1: High invalidity rate: 6/10 programs invalid\n\n## Tips\n- Try a different algorithmic approach to improve the score\n- Focus on the algorithm inside the EVOLVE-BLOCK markers\n- Ensure all constraints are satisfied\n",
+      "outer_iteration": 4,
+      "timestamp": "2025-12-04T21:05:38.773014",
+      "was_improvement": false,
+      "key_changes": "minor changes",
+      "metrics": {
+        "convergence_rate": 11.405035189801668,
+        "final_best_score": 0.9644862832020152,
+        "iterations_to_plateau": 11,
+        "total_valid": 5,
+        "total_invalid": 6,
+        "stuck_patterns": [
+          "High invalidity rate: 6/11 programs invalid"
+        ],
+        "successful_strategies": [
+          "Made 1 improvements",
+          "Iteration 0: +0.9645 (changes: unknown)"
+        ]
+      }
+    }
+  ],
+  "best_convergence_rate": 10.368213808910607,
+  "best_prompt_index": 3
+}

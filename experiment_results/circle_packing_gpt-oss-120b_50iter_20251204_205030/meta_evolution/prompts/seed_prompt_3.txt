@@ -1,0 +1,27 @@
+system_message
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+- ONLY modify code within the EVOLVE-BLOCK markers
+- DO NOT modify or remove code outside the EVOLVE-BLOCK
+- The function `run_packing()` MUST exist and be callable
+- DO NOT rename or remove the `run_packing()` function
+- The function `construct_packing()` MUST be defined (called by run_packing)
+
+Violating these requirements will cause the program to fail evaluation.
+
+## Current Best Score: 0.9615
+
+## What's Working
+- Explicit constraint mentions helped
+- Change that helped: added 'avoid'
+- Negative guidance (what to avoid) helped
+
+## Avoid These Approaches
+- DO NOT: Iteration 1: High invalidity rate - prompt may be too aggressive or unclear about constraints
+- DO NOT: Iteration 1: Repeated failures: 5 consecutive invalid programs
+- DO NOT: Iteration 1: High invalidity rate: 6/10 programs invalid
+
+## Tips
+- Try a different algorithmic approach to improve the score
+- Focus on the algorithm inside the EVOLVE-BLOCK markers
+- Ensure all constraints are satisfied
