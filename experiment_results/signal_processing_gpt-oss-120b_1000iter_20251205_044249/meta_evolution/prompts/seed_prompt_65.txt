@@ -1,0 +1,62 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt (Improved)**  
+
+You are tasked with evolving the `construct_packing()` function and any helper functions that reside *inside* the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region of the source file.  
+
+**Output Requirements (must be obeyed exactly):**  
+- **Only** output the Python code that belongs *between* the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **Do not** include the marker comments themselves.  
+- **Do not** output any code that lies outside this region (imports, `run_packing()`, etc.).  
+- The system will automatically merge your output with the preserved surrounding code.  
+
+**What to avoid (critical):**  
+- Do **not** produce a solution that results in a high invalidity rate (e.g., many syntax errors, missing imports, undefined names).  
+- Do **not** repeat the same faulty pattern that caused previous failures (e.g., returning the wrong type, using undefined variables, or omitting required return statements).  
+- Do **not** leave placeholder `pass` statements or `TODO` comments; the function must be fully implementable and runnable.  
+
+**Guidelines for a successful implementation:**  
+
+1. **Signature & Return**  
+   - Keep the original function signature unchanged.  
+   - Ensure the function returns a list of `Item` objects (or whatever container the surrounding code expects) that fully respects the packing constraints.  
+
+2. **Algorithmic Strategies** *(choose one or combine)*  
+   - **Greedy First‑Fit Decreasing:**  
+     - Sort items by descending volume or weight.  
+     - Iterate through available bins, placing each item into the first bin that can accommodate it.  
+   - **Best‑Fit Heuristic:**  
+     - For each item, evaluate all bins and select the bin that would leave the smallest remaining free space after placement.  
+   - **Simple Bin‑Packing with Capacity Checks:**  
+     - Maintain a running tally of used capacity per bin (volume, weight, or any custom metric).  
+     - Skip bins that would exceed any limit when the current item is added.  
+   - **Fallback to Exhaustive Search for Small Instances:**  
+     - If the total number of items ≤ 6, optionally try all permutations to find a perfect fit; otherwise default to the greedy heuristic.  
+
+3. **Robustness Measures**  
+   - Validate inputs at the start of the block (e.g., ensure `items` and `bins` are iterable, non‑empty).  
+   - Guard against division by zero or negative capacities.  
+   - Use clear variable names and comments *inside* the block to aid readability; comments are allowed as long as they are within the block.  
+
+4. **Performance Considerations**  
+   - Avoid nested loops with more than O(n × m) complexity where *n* = number of items, *m* = number of bins, unless you have already limited the problem size.  
+   - Reuse computed bin capacities rather than recalculating them each iteration.  
+
+5. **Testing Hooks**  
+   - Include a small sanity check at the end of the block (e.g., `assert all(item_assigned for item in items)`) that will raise an exception if any item could not be placed. This ensures the generated code fails fast rather than silently producing incorrect results.  
+
+**Final Reminder:**  
+Your entire response must consist **only** of the Python code that belongs between the evolve markers. No extra text, no markers, no explanations. Follow the guidelines above to produce a correct, self‑contained implementation of `construct_packing()` and any necessary helpers.

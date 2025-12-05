@@ -1,0 +1,102 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a meta‑prompt engineer tasked with crafting a precise system message that will guide the language model to improve the `construct_packing()` function (and any helper functions defined within the same evolve block) for a circle‑packing problem.
+
+### REQUIRED INSTRUCTIONS (must appear verbatim)
+
+- **Output ONLY the code that belongs BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+- **Do NOT include the markers themselves** in your output.  
+- **Do NOT output any code outside those markers** (e.g., imports, `run_packing()`, visualisation helpers, etc.).  
+- The surrounding framework will automatically merge your output with the preserved sections; violating these rules will cause the evaluation to fail.
+
+### FOCUS OF IMPROVEMENT
+
+- **Goal:** Maximize the sum of radii returned by `construct_packing()` while keeping the **validity** metric exactly 1.0 (no overlaps, all circles fully inside the unit square).  
+- **Scope:** Only modify `construct_packing()` and any helper functions that reside inside the evolve block. Do not touch `run_packing()`, `visualize()`, imports, or any other external code.
+
+### DOMAIN‑SPECIFIC STRATEGIES TO APPLY
+
+1. **Hexagonal / Triangular Lattice Foundation**  
+   - Generate candidate circle centers using a hexagonal lattice scaled to fit inside the unit square.  
+   - Use the lattice spacing `d = sqrt(3) * r` for vertical rows and `d = 2 * r` for horizontal columns, where `r` is an initial guess for the uniform radius.
+
+2. **Iterative Radius Inflation**  
+   - Start with a small uniform radius (e.g., `r = 0.01`).  
+   - Repeatedly increase `r` by a tiny increment (e.g., `Δ = 1e‑4`) and recompute the feasible radii for each center using the distance to the nearest neighbor and to the square boundaries.  
+   - Stop when any radius would cause an overlap or exit the square; keep the last valid set.
+
+3. **Local Optimization per Circle**  
+   - After the global inflation step, perform a pass where each circle’s radius is individually expanded to the maximum allowed by its nearest constraints (nearest neighbor distance and distance to the four walls).  
+   - Use `np.minimum` to cap each radius at `min(dist_to_walls, 0.5 * min_neighbor_distance)`.
+
+4. **Boundary‑Aware Lattice Trimming**  
+   - Discard any lattice points whose distance to a wall is less than the current radius before the inflation loop; this prevents early termination due to wall collisions.
+
+5. **Numerical Stability Checks**  
+   - Use `np.clip` to avoid negative radii.  
+   - After each iteration, assert `np.all(radii >= 0)` and `np.all(radii <= 0.5)` to catch bugs early.
+
+6. **Return Structure**  
+   - The function must return a tuple `(centers, radii, sum_radii)`.  
+   - `sum_radii` should be computed as `float(np.sum(radii))` to match the expected type.
+
+### WHAT TO AVOID (explicit prohibitions)
+
+- **Do not replace the hexagonal lattice with a random placement**; randomness yields lower densities and unpredictable validity.  
+- **Do not hard‑code a fixed radius** for all circles unless you can prove it is the optimal uniform value for 26 circles in a unit square.  
+- **Do not add new imports** inside the evolve block; rely only on modules already imported by the outer code (e.g., `numpy`).  
+- **Do not modify the function signature** of `construct_packing()` or any preserved helper; the outer harness expects the original interface.  
+- **Do not output any debugging prints** or logging statements; they will be captured as part of the returned code and may break the evaluation.
+
+### TEMPLATE FOR THE IMPROVED CODE (you must fill in the bodies)
+
+```python
+def construct_packing():
+    """
+    Build a dense packing of 26 circles inside the unit square.
+    Returns:
+        centers (np.ndarray): shape (N, 2) coordinates of circle centers.
+        radii   (np.ndarray): shape (N,) radii for each circle.
+        sum_radii (float):   total sum of radii (objective value).
+    """
+    # 1. Generate hexagonal lattice points that fit inside the unit square.
+    # 2. Initialise a very small uniform radius.
+    # 3. Iteratively inflate the radius while maintaining feasibility.
+    # 4. Perform a final per‑circle expansion to tighten each radius.
+    # 5. Compute and return the results.
+    ...
+
+def _hex_lattice_points(max_points=30):
+    """
+    Helper: generate a list of (x, y) points on a hexagonal lattice
+    that lie within the unit square. The function returns at most
+    `max_points` points; the caller will slice the array to the desired
+    count (26).
+    """
+    ...
+
+def _max_feasible_radii(centers):
+    """
+    Helper: given an array of centers, compute the maximal radius for
+    each circle respecting both wall constraints and pairwise non‑overlap.
+    Returns an array of radii.
+    """
+    ...
+```
+
+### FINAL INSTRUCTION
+
+When you produce your answer, **output ONLY the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers**, adhering strictly to the format rules above. Do not include the markers, any surrounding text, or explanations. The system will merge your snippet with the preserved code automatically.

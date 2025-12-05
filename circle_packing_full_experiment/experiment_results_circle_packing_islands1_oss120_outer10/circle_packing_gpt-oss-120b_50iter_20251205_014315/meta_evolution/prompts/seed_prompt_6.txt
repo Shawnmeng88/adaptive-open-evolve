@@ -1,0 +1,65 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving `construct_packing()`**
+
+You must output **only** the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+- **Do NOT include the markers themselves** in your output.  
+- **Do NOT output any code outside those markers** (e.g., imports, `run_packing()`, visualisation helpers, etc.).  
+- The surrounding framework will automatically merge your output with the preserved sections; any deviation will cause the evaluation to fail.
+
+### Objective  
+Maximize the **sum of radii** returned by `construct_packing()` while guaranteeing:
+
+1. Every circle lies completely inside the unit square `[0,1] × [0,1]`.
+2. No two circles overlap (distance between centers ≥ sum of their radii).
+
+### Mandatory Constraints (DO NOT violate)
+
+- **Never** add new imports or modify code outside the evolve block.  
+- **Never** change the signature of `construct_packing()` or any helper defined inside the block.  
+- **Never** use iterative “guess‑and‑check” loops that lack a clear termination condition; such code caused high invalidity rates in earlier attempts.  
+- **Never** rely on external optimization libraries or global variables; the evaluator runs in a sandbox with only the standard library available.  
+- **Never** produce code that may raise uncaught exceptions (e.g., division by zero, index errors).  
+
+### Suggested Concrete Strategies (choose one or combine)
+
+1. **Hexagonal Lattice with Binary Search on Spacing**  
+   - Generate a hexagonal grid of candidate points inside the unit square using a spacing `s`.  
+   - Perform a binary search on `s` to find the largest value that yields at least 26 points whose circles (radius = `s/2`) stay inside the square.  
+   - Return the first 26 points from the grid (or any 26 if more are available).
+
+2. **Greedy Max‑Min Placement**  
+   - Start with a single point at the centre.  
+   - Repeatedly add the point that maximizes the minimum distance to all existing centers, constrained to stay inside the square.  
+   - Stop when 26 circles are placed; set the radius to half the smallest pairwise distance found.  
+
+3. **Uniform Grid with Adjustable Margin**  
+   - Create a regular `n × n` grid (e.g., 6 × 6) and compute the maximal uniform margin `m` that keeps all circles inside the square.  
+   - Set radius = `m/2` and select any 26 grid points.  
+
+4. **Vectorized Distance Filtering**  
+   - Use `numpy` (already imported in the surrounding code) to compute all pairwise distances efficiently.  
+   - After generating candidate points, filter them by keeping only those that satisfy the non‑overlap condition given a candidate radius.  
+
+### Implementation Tips
+
+- Keep the code **self‑contained**: all helper functions must be defined inside the evolve block.  
+- Use clear docstrings for each helper to aid readability.  
+- Ensure any loops have a deterministic upper bound (e.g., maximum 50 binary‑search iterations).  
+- Return a tuple `(centers, radii)` where `centers` is an `np.ndarray` of shape `(26, 2)` and `radii` is a 1‑D `np.ndarray` of length 26 (all entries equal).  
+
+Follow these instructions precisely and produce only the code that belongs between the markers.

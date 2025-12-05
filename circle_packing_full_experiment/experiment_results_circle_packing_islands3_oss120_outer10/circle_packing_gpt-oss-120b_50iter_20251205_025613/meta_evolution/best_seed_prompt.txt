@@ -1,0 +1,85 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for Evolving the Packing Code**
+
+---
+
+### Core Objective
+Create a `construct_packing()` implementation (and any helper functions defined inside the evolve block) that **maximises the total sum of circle radii** while keeping **validity = 1.0**: no two circles may overlap and every circle must lie completely inside the unit‑square [0, 1] × [0, 1].
+
+---
+
+### Mandatory Output‑Format Rules (do **not** break these)
+
+1. **Output ONLY** the Python code that belongs **between** the markers  
+   `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+2. **Do not** include the markers themselves, any surrounding imports, or any other functions (e.g., `run_packing()`).  
+3. The output must be **pure code**—no explanatory text, markdown, or comments outside the evolve block.
+
+---
+
+### What **must NOT** be done (avoid the failures that caused low scores)
+
+- **Do not** write code that ignores the border‑clearance constraint (circles touching or crossing the unit‑square edges).  
+- **Do not** generate overlapping circles; any pair whose centre distance is less than the sum of their radii invalidates the solution.  
+- **Do not** rely on a single static lattice spacing for all instances; this caused many invalid programs in earlier iterations.  
+- **Do not** produce code that crashes or raises exceptions for typical inputs (e.g., division by zero, index errors).  
+- **Do not** leave placeholder `pass` statements or unfinished helper functions.  
+- **Do not** over‑constrain the search (e.g., hard‑coding a tiny maximum number of circles) because it caps the achievable score.  
+- **Do not** use overly aggressive random sampling without any feasibility checks; this leads to high invalidity rates.  
+
+---
+
+### Suggested Concrete Strategies (feel free to combine them)
+
+1. **Hexagonal Lattice Seed**  
+   - Implement a helper `_hex_lattice_points(spacing, required)` that yields points on a hexagonal lattice, shifted so that every point stays at least `spacing/2` away from the unit‑square borders.  
+   - Start with a relatively large spacing (e.g., `0.15`) and generate enough points to exceed the expected number of circles.
+
+2. **Adaptive Spacing Reduction**  
+   - After placing the initial lattice, iteratively **reduce the spacing** (e.g., multiply by `0.9`) and attempt to insert additional circles in the newly created gaps.  
+   - Keep the previous circles; only add new ones that satisfy the non‑overlap and border constraints.
+
+3. **Greedy Radius Assignment**  
+   - For each candidate centre, compute the maximum feasible radius: the minimum of the distances to the four square edges and half the distance to the nearest already‑placed centre.  
+   - Accept the centre only if the resulting radius is larger than a small threshold (e.g., `0.005`) to avoid cluttering the solution with negligible contributions.
+
+4. **Local Random Perturbation**  
+   - After a full pass of lattice‑based insertion, randomly pick a subset of circles and jitter their centres by a tiny amount (e.g., `±0.005`).  
+   - Re‑evaluate the radius for the perturbed circle; keep the change only if it **increases** its radius **and** does not break any constraints.
+
+5. **Post‑process Pruning**  
+   - Scan the list of circles from smallest radius to largest; temporarily remove a circle and recompute the radius of its neighbours.  
+   - If removal allows neighbours to grow enough to increase the total sum of radii, keep the circle removed; otherwise restore it. This step can rescue score lost to overly dense placements.
+
+6. **Bounding‑Box Early Exit**  
+   - If at any iteration the remaining free area (estimated by subtracting the union of existing circles from 1) falls below the area of a circle with the current minimal radius, break the loop early. This prevents wasted attempts that cannot improve the score.
+
+7. **Deterministic Seeding for Reproducibility**  
+   - Set `np.random.seed(0)` (or another fixed value) at the start of `construct_packing()` so that the same run yields identical results, aiding debugging and evaluation.
+
+---
+
+### Implementation Checklist (inside the evolve block)
+
+- [ ] Define any needed helpers (e.g., `_hex_lattice_points`, `_max_radius_at_point`).  
+- [ ] Initialise a deterministic random state.  
+- [ ] Generate an initial lattice of candidate centres.  
+- [ ] Loop: compute radii, accept feasible circles, adapt spacing, optionally perturb, and prune.  
+- [ ] Return two NumPy arrays: `centers` of shape `(N, 2)` and `radii` of shape `(N,)`.  
+- [ ] Ensure no `print` statements or side effects; the function must be pure.  
+
+Remember: **validity = 1.0 is mandatory**; only after that can the total radius be optimised. Follow the output‑format rules exactly, and avoid any of the prohibited patterns listed above. Good luck!

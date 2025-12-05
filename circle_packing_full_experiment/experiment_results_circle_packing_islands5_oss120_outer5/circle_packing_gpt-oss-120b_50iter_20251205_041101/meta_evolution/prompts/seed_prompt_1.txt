@@ -1,0 +1,88 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for Evolving the Packing Algorithm**
+
+You are tasked with improving only the functions inside the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` region of the provided script. The rest of the file (imports, `run_packing()`, visualization, etc.) is frozen and will be merged automatically.
+
+### Mandatory Output Rules  
+- **Output ONLY the Python code that belongs between the markers.**  
+- **Do NOT include the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` comments themselves.**  
+- **Do NOT output any code outside that region** (no imports, no `run_packing()`, no helper functions that are already outside the block).  
+- The system will splice your answer into the original file; any extra text or markers will cause a runtime error.
+
+### Goal  
+For `n = 26` circles inside the unit square, produce a *valid* packing (`validity = 1.0`) that maximizes the evaluator’s `combined_score`. Validity means:
+
+1. Every circle lies completely within `[0,1] × [0,1]`.  
+2. No two circles overlap (distance between centers ≥ sum of radii).  
+3. The returned `centers`, `radii`, and `sum_of_radii` are internally consistent.
+
+### What to Keep (successful ideas)  
+- Use NumPy for vectorised distance calculations.  
+- Compute a safe maximal radius for each circle as the minimum of:  
+  * distance to the nearest square edge, and  
+  * half the distance to the nearest other center.  
+- Return `centers`, `radii`, and `sum_of_radii = radii.sum()`.
+
+### What to Avoid (failed approaches)  
+- **Random placement without post‑processing** – leads to many validity violations.  
+- **Greedy inflation that ignores pairwise constraints** – produces overlaps.  
+- **Hard‑coded coordinates that do not scale** – fragile for different `n`.  
+- **Excessive use of loops over Python lists** – slows down the optimizer and may cause timeouts.
+
+### Suggested Concrete Strategies (you may combine them)  
+
+1. **Iterative Relaxation**  
+   - Start with a uniform grid of `n` points (e.g., jittered lattice).  
+   - Compute initial radii using the safe‑radius rule.  
+   - Re‑evaluate distances after each iteration; if any pair violates the non‑overlap condition, shrink both radii proportionally (e.g., `r_i *= 0.99`).  
+   - Stop when no violations remain or after a fixed number of passes.
+
+2. **Force‑Based Optimization**  
+   - Treat each circle as a repulsive particle.  
+   - Define a simple “energy” = sum of inverse distances between overlapping circles.  
+   - Perform a few gradient‑descent steps (using NumPy) to push centers apart while clamping them to the unit square.  
+   - After motion, recompute radii with the safe‑radius rule.
+
+3. **Local Max‑Radius Adjustment**  
+   - For each circle, compute `r_edge = min(x, 1‑x, y, 1‑y)`.  
+   - Compute `r_neighbor = 0.5 * min_j≠i dist(i,j)`.  
+   - Set `r_i = min(r_edge, r_neighbor)`.  
+   - Then run a **single pass** that checks all pairs; if any `dist(i,j) < r_i + r_j`, replace both radii by `0.5 * (dist(i,j) - epsilon)` where `epsilon` is a tiny safety margin (e.g., `1e-6`).  
+
+4. **Hybrid Grid + Random Perturbation**  
+   - Place points on a regular `sqrt(n) × sqrt(n)` lattice, then add a small random offset (≤ 0.02).  
+   - Apply the safe‑radius computation, followed by the local max‑radius adjustment from (3).  
+   - This often yields a dense, valid configuration with minimal overlap risk.
+
+5. **Return Consistency**  
+   - Ensure `centers` is an `(n,2)` NumPy array of `float64`.  
+   - Ensure `radii` is a 1‑D NumPy array of length `n`.  
+   - Compute `sum_of_radii = float(radii.sum())` and return it as a plain Python `float`.
+
+### Implementation Checklist (inside the evolve block)
+
+- Define or update **`compute_max_radii(centers)`** to implement the safe‑radius rule efficiently with NumPy broadcasting.  
+- Refactor **`construct_packing(n)`** to:
+  1. Generate an initial layout (grid + jitter or lattice).  
+  2. Call `compute_max_radii`.  
+  3. Perform the chosen relaxation/adjustment loop (max ≈ 10 iterations).  
+  4. Return `centers, radii, sum_of_radii`.  
+- **Do not** introduce new external dependencies; only use NumPy (already imported).  
+- Keep the function signatures unchanged; the surrounding code expects exactly those names.
+
+### Final Reminder  
+Your answer must be **only** the Python code that belongs inside the evolve block—no comments outside the block, no markdown, no extra text. Follow the output rules strictly, or the evaluation will fail. Good luck!

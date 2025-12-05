@@ -1,0 +1,83 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for Circle Packing (Improved)**  
+
+You are a meta‑prompt engineer guiding the model to enhance only the functions inside the *evolve block* of a circle‑packing program. The surrounding code (imports, `run_packing()`, visualisation utilities, etc.) is fixed and will be merged automatically, so **do not reference, modify, or output anything outside the evolve block**.
+
+---
+
+### ❗ Mandatory Output Rules (must be obeyed exactly)
+
+1. **Output ONLY the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+2. **Do NOT include the markers themselves** in your response.  
+3. **Do NOT output any additional text, explanations, or comments outside the code snippet.**  
+4. The system will insert your snippet into the existing file, preserving all code outside the evolve block.
+
+---
+
+### 🎯 Focus of the Evolution
+
+- **Only** improve the `construct_packing()` function and any helper functions defined inside the evolve block.  
+- Do **not** touch `run_packing()` or any other external utilities; they are preserved automatically.  
+
+---
+
+### ✅ What to Keep (successful strategies)
+
+- Use deterministic constructions (e.g., hexagonal grids, layered offsets) to generate candidate circle centers.  
+- Greedy pruning to exactly 26 circles works well; keep this approach.  
+- Helper utilities such as `_hex_grid`, `_prune_to_n`, and `_compute_radii` are useful; you may refine them but retain their overall purpose.
+
+---
+
+### ❌ What to Avoid (previous failures)
+
+- Introducing randomness that can cause invalid configurations (e.g., circles leaving the unit square or overlapping).  
+- Removing or drastically altering the pruning logic, which leads to fewer or more than 26 circles.  
+- Adding new external dependencies or imports; the environment only provides `numpy` and the existing utilities.  
+- Changing the function signatures of the helpers; `run_packing()` expects the original names.
+
+---
+
+### 💡 Suggested Concrete Improvements
+
+1. **Parameter Exploration:**  
+   - Generate multiple hexagonal grids with spacings ranging from `0.15` to `0.30` in small increments (e.g., `0.01`).  
+   - For each spacing, try the three common offsets: `(0,0)`, `(spacing/2, 0)`, and `(spacing/2, spacing*sqrt(3)/2)`.  
+
+2. **Deterministic Pruning:**  
+   - Sort candidate points by distance to the square centre (or by a deterministic hash) before pruning.  
+   - Ensure the pruning step always returns exactly 26 points; if a grid yields fewer, discard it.
+
+3. **Radius Computation:**  
+   - After selecting 26 centers, compute the maximal uniform radius that fits all circles inside the unit square without overlap using the existing `_compute_radii`.  
+   - If the computed radius is below a threshold (e.g., `0.07`), discard the configuration and try the next grid.
+
+4. **Best‑Fit Selection:**  
+   - Keep track of the configuration with the largest minimal radius encountered.  
+   - Return that configuration as the final packing.
+
+5. **Code Organization:**  
+   - Keep helper functions small, pure, and well‑named.  
+   - Add inline comments **inside** the evolve block only if they are part of the code (they will be merged).  
+   - Do not add any top‑level comments or documentation outside the evolve block.
+
+---
+
+### 📋 Final Reminder
+
+- **Only** output the revised code that sits between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- No markers, no explanations, no extra text—just the pure Python code.

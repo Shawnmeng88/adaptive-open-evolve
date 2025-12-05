@@ -1,0 +1,95 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving `construct_packing()`**
+
+You must generate **only** the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+- **Output ONLY the code that belongs BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+- **Do NOT include the markers themselves** in your output.  
+- **Do NOT output any code outside those markers** (e.g., imports, `run_packing()`, visualisation helpers, etc.).  
+
+The surrounding framework will automatically merge your output with the preserved sections; violating these rules will cause the evaluation to fail.
+
+---
+
+### Objective  
+Maximize the **sum of radii** returned by `construct_packing()` while satisfying **all** constraints:
+
+1. Every circle must lie completely inside the unit square `[0, 1] × [0, 1]`.  
+2. No two circles may overlap (distance between centers ≥ sum of radii).  
+3. The function must return two parallel lists: `centers` (list of `(x, y)` tuples) and `radii` (list of floats).  
+
+The evaluation will reject any solution that:
+- Produces overlapping circles or circles extending outside the unit square.  
+- Returns fewer circles than required by the test suite (the exact number is hidden).  
+- Generates code that does not conform to the output‑format rules above.  
+
+---
+
+### What **must NOT** be done (avoid these patterns that caused high invalidity rates)
+
+- **Do not** use vague “must/should” language without concrete implementation details.  
+- **Do not** introduce external iterative loops that rely on undefined global variables (e.g., a stray `step` variable).  
+- **Do not** embed unused constraint placeholders or empty `pass` statements that leave the algorithm incomplete.  
+- **Do not** write code that attempts to “optimize” without a deterministic, reproducible method (e.g., random search without a fixed seed).  
+- **Do not** leave any `TODO`, `FIXME`, or commented‑out sections that affect the function’s return values.  
+
+---
+
+### Recommended Concrete Strategies  
+
+1. **Hexagonal (triangular) lattice generation**  
+   - Compute a lattice spacing `s` that yields at least the required number of points when placed on a hexagonal grid inside the unit square.  
+   - Use a binary‑search (or analytical) approach to find the largest `s` such that `N_points(s) ≥ target`.  
+   - For a hex grid, the vertical step is `s * sqrt(3)/2`; alternate rows are offset by `s/2`.  
+
+2. **Radius determination**  
+   - Set each circle’s radius to `r = s/2` (the limiting distance to the nearest neighbor in a perfect hex grid).  
+   - Apply a small safety margin (e.g., `r *= 0.99`) to guard against floating‑point rounding errors.  
+
+3. **Edge handling**  
+   - After generating lattice points, discard any point whose distance to the nearest square edge is **less than** `r`.  
+   - This guarantees all circles stay fully inside the unit square.  
+
+4. **Validation helper**  
+   - Implement a private `_validate(centers, radii)` that asserts the non‑overlap and containment constraints; raise an informative `ValueError` if violated.  
+   - Call this helper before returning; it will catch accidental regressions during evolution.  
+
+5. **Deterministic output**  
+   - Do not rely on randomness. All calculations must be deterministic given the same code.  
+
+6. **Performance**  
+   - Keep the algorithm O(N) where N is the number of generated points; avoid nested loops that scale quadratically beyond the validation step.  
+
+---
+
+### Expected Function Skeleton (you may modify internals but keep the signature)
+
+```python
+def construct_packing():
+    """
+    Returns:
+        centers (list[tuple[float, float]]): coordinates of circle centers.
+        radii   (list[float]): radius for each circle (all equal in this strategy).
+    """
+    # 1. Determine the required number of circles (the hidden test will call this function;
+    #    you can assume a reasonable lower bound like 20‑30 for exploration).
+    # 2. Perform a binary search on spacing `s` to maximise `r = s/2` while still getting enough points.
+    # 3. Generate the hexagonal lattice points, trim edge‑violating points, and compute radii.
+    # 4. Validate and return.
+```
+
+Implement the full logic inside the evolve block, respecting all the rules above. Remember: **only the code between the markers will be kept**—do not add imports, `if __name__ == "__main__":` blocks, or any external scaffolding.

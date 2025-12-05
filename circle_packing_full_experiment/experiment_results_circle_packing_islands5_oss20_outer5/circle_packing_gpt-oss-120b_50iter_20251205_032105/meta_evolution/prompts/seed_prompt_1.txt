@@ -1,0 +1,63 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidelines**
+
+You are to **modify only the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`**.  
+Your response **must contain exactly the Python statements that replace the existing code inside that region** – **do not include** the marker lines themselves, any imports, or any surrounding functions such as `run_packing`. The evaluation harness will insert your output back into the original file automatically.
+
+### Mandatory Output Rules (must be obeyed)
+- **Only** output the code that belongs *inside* the evolve block.  
+- **Do not** output the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines.  
+- **Do not** add extra whitespace lines before or after the block, nor any explanatory text.  
+- The submitted snippet will be merged into the existing file; any deviation will cause a runtime error.
+
+### Focus of the Evolution
+Improve the **`construct_packing()`** function and any helper functions defined inside the evolve block. The goal is to raise the `combined_score` while keeping the packing **valid** (`validity == 1.0`).  
+
+### What to Keep (successful ideas from the best solution)
+1. **Hexagonal lattice seed** – start from a dense hex‑grid of points inside the unit square.  
+2. **`_max_radius_for_center`** – compute the maximal radius for a candidate point given existing circles and the square boundaries.  
+3. **Vectorised NumPy operations** – keep the implementation fast and numerically stable.  
+4. **Iterative refinement** – repeatedly adjust radii or reorder insertion to improve total area.
+
+### What to Avoid (failed approaches)
+- Adding new global imports or redefining `run_packing`.  
+- Changing the function signatures of the public API (`construct_packing`, helper names).  
+- Introducing nondeterministic side‑effects that break reproducibility (e.g., random seeds not set).  
+- Using exhaustive search over all permutations of points – it explodes combinatorially and never finishes within the time limit.
+
+### Suggested Advanced Strategies (you may incorporate any of them)
+- **Greedy‑plus‑local‑swap**: after the initial greedy insertion, try swapping the order of a few recent circles if it yields a larger total radius.  
+- **Radius scaling loop**: once all circles have a feasible radius, uniformly increase all radii by a factor `α < 1` until the first overlap or boundary violation occurs; then back‑track to the last valid state.  
+- **Force‑directed relaxation**: treat each circle as a repulsive particle and perform a few gradient‑descent steps on the radii while keeping centers fixed, clipping to the boundary limits.  
+- **Multi‑restart with jitter**: generate a few slightly perturbed hex‑grid seeds (random offset ≤ 0.01) and keep the best result; ensure the random generator is seeded (`np.random.seed(0)`) for reproducibility.  
+- **Dynamic ordering**: sort candidate centers by their distance to the nearest wall (farther first) or by the current maximal feasible radius, then insert in that order.  
+
+### Implementation Tips
+- Keep all heavy loops vectorised; use `np.linalg.norm` or broadcasting for distance checks.  
+- When checking overlaps, compute squared distances to avoid costly `sqrt`.  
+- Return a dictionary exactly matching the original API:
+  ```python
+  return {
+      "centers": centers_array,   # shape (n,2)
+      "radii": radii_array,       # shape (n,)
+      "validity": 1.0
+  }
+  ```
+- Preserve the existing helper names (`_max_radius_for_center`, `_compute_max_radii`, `_hex_grid`, `_optimal_uniform_radius`) unless you replace them entirely with improved versions that keep the same public contract.
+
+### Your Task
+Write the new implementation of `construct_packing()` and any supporting helpers **inside the evolve block**, adhering strictly to the output rules above. Aim for a higher `combined_score` while guaranteeing `validity == 1.0`.

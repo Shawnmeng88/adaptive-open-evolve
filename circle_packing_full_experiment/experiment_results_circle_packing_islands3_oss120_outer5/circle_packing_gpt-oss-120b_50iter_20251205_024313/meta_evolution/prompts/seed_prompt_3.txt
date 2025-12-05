@@ -1,0 +1,90 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are to modify **only** the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not output the marker lines themselves** and **do not include any code outside this region** (imports, `run_packing()`, visualisation helpers, etc.). The surrounding file will automatically splice your output into the correct location.
+
+---
+
+### Mandatory Output Format (Do *not* violate)
+
+- **Output ONLY the code** that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- **Do NOT** include the marker lines.
+- **Do NOT** include any other code (imports, helper functions defined elsewhere, `run_packing()`, etc.).
+- The system will merge your output with the preserved sections automatically.
+
+---
+
+### Primary Objective  
+
+Maximize the `combined_score` of the packing while guaranteeing **full validity** (no overlapping circles, all circles stay inside the container, radii are non‑negative, and the solution respects all linear constraints).
+
+---
+
+### What to Keep (successful strategies)
+
+1. **Linear‑programming core** – building the LP matrices (`_build_lp_matrices`) and solving with `scipy.optimize.linprog` works well.
+2. **Iterative refinement** – the constants `_MAX_ITER_GLOBAL`, `_GLOBAL_STEP`, `_REFINE_ITER`, `_REFINE_STEP` provide a good balance between speed and quality.
+3. **Explicit constraint handling** – clearly separating “container” and “pairwise” constraints helps the solver stay feasible.
+4. **Helper validation** – `_validate_solution` that checks feasibility after each iteration is essential.
+
+---
+
+### What Must Be Avoided (previous failures)
+
+- **Generating infeasible packings** – do NOT return a solution that violates any distance constraint, even by a tiny epsilon.  
+- **Negative radii** – any radius ≤ 0 should be rejected immediately.  
+- **Duplicate or near‑duplicate centers** – avoid placing two centers closer than the sum of their radii plus a safety margin (`_EPS`).  
+- **Excessive reliance on a single LP solution** – if the LP is infeasible, do NOT fall back to returning the last infeasible solution; instead invoke a recovery strategy.
+
+---
+
+### Suggested Concrete Strategies
+
+1. **Robust LP Construction**  
+   - Add a small slack variable (`_SLACK = 1e-7`) to each inequality to give the solver a numerical buffer.  
+   - Scale the objective coefficients so that radius terms dominate the linear term, reducing the chance of a degenerate optimum.
+
+2. **Fallback Heuristic**  
+   - If `linprog` reports infeasibility, run a quick **greedy placement**: sequentially add circles using the current best radius, checking feasibility with `_validate_solution`.  
+   - Limit the greedy attempts to `_MAX_ITER_GLOBAL // 2` to keep runtime bounded.
+
+3. **Random Restarts with Seeding**  
+   - Introduce a deterministic seed (`np.random.seed(base_seed + iter)`) before each global step to explore alternative center configurations without nondeterministic chaos.  
+   - Keep the best feasible packing across all restarts.
+
+4. **Post‑solve Refinement Loop**  
+   - After a feasible LP solution, perform a short local optimization: for each center, nudge it by a random vector of magnitude ≤ `_REFINE_STEP` and re‑validate. Accept the move only if the score improves.  
+   - Run this loop for `_REFINE_ITER` cycles.
+
+5. **Constraint Tightening on the Fly**  
+   - When a particular pairwise constraint is repeatedly close to violation, temporarily increase its margin by `0.5 * _EPS` to steer the solver away from the boundary.
+
+6. **Early Termination on Convergence**  
+   - Track the best `combined_score`. If the improvement between two consecutive global iterations is < `1e-5`, break out of the outer loop early to save time.
+
+---
+
+### Implementation Notes
+
+- All new constants (`_SLACK`, safety margins, etc.) should be defined **inside** the evolve block so they are scoped to the modified functions.
+- Keep the public signature of `construct_packing()` unchanged; only its internal logic and any helper functions it calls may be altered.
+- Preserve existing docstrings and type hints; add comments only where they clarify the new strategies.
+- Ensure that any new helper you introduce is **also placed** within the evolve block.
+
+---
+
+**Remember:** The only output you may produce is the **pure Python code** that will replace the content between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. No markers, no extra text, no explanations.

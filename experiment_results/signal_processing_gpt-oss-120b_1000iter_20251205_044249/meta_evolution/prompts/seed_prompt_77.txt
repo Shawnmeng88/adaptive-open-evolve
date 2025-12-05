@@ -1,0 +1,110 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are to generate **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. Do **not** output the markers themselves, any import statements, the surrounding `run_packing()` wrapper, or any other code outside that block. The system will automatically merge your snippet with the preserved surrounding code.
+
+### Task
+Improve the `construct_packing()` function and any helper functions defined inside the evolve block so that it correctly builds a feasible packing plan for the given items and containers.
+
+### Strict Prohibitions (must NOT be violated)
+- Do **not** write code that references undefined variables or functions outside the evolve block.  
+- Do **not** use overly aggressive shortcuts such as “magic” one‑liners that hide essential logic; the evaluator has previously rejected programs with high invalidity rates for this reason.  
+- Do **not** produce code that may raise runtime errors (e.g., index out of range, division by zero, type mismatches).  
+- Do **not** repeat the same logical mistakes that caused consecutive invalid programs in earlier iterations (e.g., missing edge‑case handling, returning the wrong data structure).  
+
+### Required Output Format
+```
+<your code here, exactly the contents that belong between the markers>
+```
+No extra text, no markers, no surrounding code.
+
+### Suggested Concrete Strategies
+1. **Input Validation** – Begin by checking that `items` and `containers` are non‑empty lists of dictionaries with the expected keys (`'weight'`, `'volume'`, `'capacity'`, etc.). Return an empty packing list early if validation fails.
+
+2. **Deterministic Greedy Algorithm** –  
+   - Sort items by decreasing size (e.g., weight + volume) to place the largest items first.  
+   - Iterate over containers, keeping track of remaining capacity and volume.  
+   - Place an item into the first container that can accommodate both its weight and volume.  
+   - Record the placement as a tuple `(item_id, container_id)` or the required structure defined by the surrounding code.
+
+3. **Helper Functions** – Implement small, pure helpers inside the block:
+   - `fits(item, container_state)` → `bool`  
+   - `update_state(container_state, item)` → new state dictionary  
+   - `select_container(item, container_states)` → index or `None`
+
+   Keep each helper short, well‑named, and free of side effects.
+
+4. **Edge‑Case Handling** –  
+   - If an item cannot fit any container, skip it and continue (or collect it in an `unpacked` list if the surrounding code expects it).  
+   - Ensure that after each placement the remaining capacity never becomes negative.
+
+5. **Return Value** – Return the exact data structure expected by `run_packing()` (e.g., a list of placement records). Verify that the type matches the caller’s expectations.
+
+6. **No External Dependencies** – Use only built‑in types and functions; do not import modules inside the evolve block.
+
+### Example Skeleton (you must fill in the logic)
+```python
+def construct_packing(items, containers):
+    # Validate inputs
+    if not isinstance(items, list) or not isinstance(containers, list):
+        return []
+
+    # Prepare container states
+    container_states = [
+        {
+            "id": c.get("id"),
+            "remaining_weight": c.get("capacity_weight", 0),
+            "remaining_volume": c.get("capacity_volume", 0)
+        }
+        for c in containers
+    ]
+
+    # Sort items by descending size metric
+    sorted_items = sorted(
+        items,
+        key=lambda i: i.get("weight", 0) + i.get("volume", 0),
+        reverse=True,
+    )
+
+    packing = []
+
+    for item in sorted_items:
+        placed = False
+        for state in container_states:
+            if fits(item, state):
+                packing.append((item.get("id"), state["id"]))
+                update_state(state, item)
+                placed = True
+                break
+        if not placed:
+            # optional: handle unpacked items
+            continue
+
+    return packing
+
+
+def fits(item, state):
+    return (
+        item.get("weight", 0) <= state["remaining_weight"]
+        and item.get("volume", 0) <= state["remaining_volume"]
+    )
+
+
+def update_state(state, item):
+    state["remaining_weight"] -= item.get("weight", 0)
+    state["remaining_volume"] -= item.get("volume", 0)
+```
+
+Replace the placeholders with robust, error‑free logic that satisfies the constraints above. Remember: **output ONLY the code inside the evolve block, nothing else.**

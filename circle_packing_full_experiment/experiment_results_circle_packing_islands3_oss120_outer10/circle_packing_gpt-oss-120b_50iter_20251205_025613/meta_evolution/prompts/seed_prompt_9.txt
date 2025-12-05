@@ -1,0 +1,85 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+System Prompt – Instructions for Evolving the Packing Code
+
+---
+
+### Core Objective
+Design a **`construct_packing()`** implementation (and any helper functions defined inside the evolve block) that **maximises the total sum of circle radii** while maintaining **validity = 1.0**:  
+- No two circles may overlap.  
+- Every circle must lie completely inside the unit‑square [0, 1] × [0, 1].
+
+---
+
+### Mandatory Output‑Format Rules (do **not** break these)
+
+1. **Output ONLY** the Python code that belongs **between** the markers  
+   `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+2. **Do NOT** include the markers themselves, any surrounding imports, or any other functions (e.g., `run_packing()`).  
+3. The output must be **pure code**—no explanatory text, markdown, or comments outside the evolve block.
+
+---
+
+### What **must NOT** be done (avoid these failed approaches)
+
+- Do **not** generate code that causes a high invalidity rate (e.g., “iteration 0: high invalidity rate”, “5 consecutive invalid programs”).  
+- Do **not** produce overly aggressive constraints that make the optimizer stall or produce low scores.  
+- Do **not** repeat the same strategy without variation; the system expects exploration, not plateauing.  
+- Do **not** include placeholder `pass` statements or incomplete helper functions.  
+- Do **not** modify or reference code outside the evolve block (imports, `run_packing`, visualization, etc.).
+
+---
+
+### Suggested Strategies (concrete, domain‑specific)
+
+1. **Hexagonal Lattice Seed**  
+   - Generate a dense hexagonal lattice of candidate centers using a spacing parameter derived from the current average radius.  
+   - Keep only points whose full circle (with a provisional radius) stays inside the unit square.
+
+2. **Iterative Radius Refinement**  
+   - Start with an initial uniform radius (e.g., `0.5 / sqrt(N)`).  
+   - Apply a few iterations of a simple gradient‑free optimizer: for each circle, increase its radius until it contacts either the square boundary or a neighbor, then back‑off by a small epsilon.  
+   - Limit iterations (e.g., `max_iter=150`) to keep runtime low.
+
+3. **Local Conflict Resolution**  
+   - After the refinement loop, detect any overlapping pairs.  
+   - For each conflict, shrink the larger‑radius circle by a fraction of the overlap distance, then re‑run a short local refinement on the affected circles only.
+
+4. **Dynamic Spacing Adjustment**  
+   - If the number of generated lattice points is insufficient, reduce the spacing slightly and regenerate points.  
+   - Conversely, if many points are discarded due to boundary violations, increase spacing to avoid excessive clipping.
+
+5. **Deterministic Tie‑Breaking**  
+   - When two circles have identical radii during conflict resolution, always shrink the one with the higher index. This ensures reproducibility and prevents infinite loops.
+
+6. **Safety Checks**  
+   - At the end of `construct_packing()`, assert that every circle satisfies:  
+     ```python
+     0 <= x - r and x + r <= 1 and 0 <= y - r and y + r <= 1
+     ```  
+   - And that for all pairs `(i, j)`: `dist(i, j) >= ri + rj - 1e-9`.  
+   - If any check fails, fall back to a conservative uniform radius (`min(0.5/ sqrt(N), 0.05)`) for all circles.
+
+---
+
+### Implementation Guidance
+
+- Keep all helper functions **inside** the evolve block; they will be merged automatically with the surrounding code.  
+- Use only the standard library and `numpy` (already imported in the outer file).  
+- Write clear, short functions: e.g., `_hex_lattice_points(spacing, required)`, `_refine_radii(centers, init_radii, max_iter)`, `_resolve_overlaps(centers, radii)`.  
+- Return two NumPy arrays from `construct_packing()`: `centers` shape `(N,2)` and `radii` shape `(N,)`.  
+
+Remember: **validity = 1.0** is mandatory; the scoring system will reward larger total radii only when the packing is completely valid. Follow the output‑format rules exactly, and avoid any of the prohibited failure patterns.

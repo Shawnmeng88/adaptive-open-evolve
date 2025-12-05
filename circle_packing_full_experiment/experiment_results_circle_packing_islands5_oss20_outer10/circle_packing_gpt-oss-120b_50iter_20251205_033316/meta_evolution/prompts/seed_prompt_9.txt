@@ -1,0 +1,99 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – GUIDELINES FOR EVOLUTION BLOCK**
+
+You may edit **only** the code that appears between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...
+# EVOLVE-BLOCK-END
+```  
+
+When you respond, **output ONLY the Python code that belongs inside those markers** – do **not** include the markers themselves, any import statements, or any other surrounding code. The surrounding framework (imports, `run_packing()`, etc.) will be merged automatically.
+
+---
+
+### CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+
+- **OUTPUT ONLY** the code that goes **between** `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- **DO NOT** include the markers themselves.
+- **DO NOT** add any code outside the evolve block (e.g., imports, `run_packing`, or helper definitions that are already outside the block).
+- The system will automatically merge your output with the preserved sections.
+
+---
+
+### PRIMARY OBJECTIVE
+
+Improve the **`construct_packing()`** function (and any helper functions defined inside the evolve block such as `_assert_valid`, `compute_max_radii`, `_generate_hex_lattice`, `_hill_climb`, etc.) so that a packing of **26 circles inside the unit square** achieves:
+
+1. **Validity = 1.0** – every centre `(x, y)` satisfies `0 ≤ x ≤ 1` and `0 ≤ y ≤ 1`; all radii are **non‑negative** and respect the non‑overlap constraint.
+2. **Maximized minimal radius** – the smallest radius among the 26 circles should be as large as possible (aim for the known optimal value ≈ 0.0589).
+3. **Robustness** – the algorithm should reliably produce a valid packing across multiple runs without manual tuning.
+
+---
+
+### WHAT TO AVOID (based on previous failures)
+
+- **Do NOT** leave any centre or radius slightly outside the `[0, 1]` interval (even by 1e‑12).  
+- **Do NOT** allow radii to become negative or NaN at any point.  
+- **Do NOT** rely on a single deterministic seed; introduce controlled randomness or multiple restart attempts to escape local minima.  
+- **Do NOT** use a fixed step size in hill‑climbing that can overshoot constraints; instead adapt the step size based on feasibility checks.  
+- **Do NOT** skip the final validation step (`_assert_valid`) before returning the result.
+
+---
+
+### SUGGESTED STRATEGIES (concrete, domain‑specific)
+
+1. **Hexagonal Lattice Initialization**  
+   - Implement `_generate_hex_lattice(n)` that creates a dense hexagonal grid covering the unit square, then selects the first `n` points and scales them to stay inside the boundaries with a small margin.  
+   - This provides a high‑quality starting configuration that is already close to optimal for many `n`.
+
+2. **Iterative Radius Equalization**  
+   - After placing centres, compute the maximal feasible radius for each centre using `compute_max_radii`.  
+   - Replace the radii with the **minimum** of these values (the bottleneck radius).  
+   - Perform a few iterations where you slightly perturb centres (e.g., jitter within ±0.005) and recompute radii, keeping changes only if the bottleneck radius improves.
+
+3. **Adaptive Hill‑Climbing (`_hill_climb`)**  
+   - Use a decreasing step size schedule: start with `step = 0.05`, halve it each time no improvement is observed, and stop when `step < 1e‑4`.  
+   - For each iteration, randomly pick a centre, propose a move within a circle of radius `step`, and accept it **only if** the new minimal radius (`min(compute_max_radii)`) is not smaller than the current one.  
+   - Keep track of the best packing seen so far and return it after a fixed budget of iterations (e.g., 10 000).
+
+4. **Multiple Restarts with Best‑of‑K**  
+   - In `construct_packing()`, run the whole initialization + hill‑climbing pipeline `K` times (e.g., `K = 5`).  
+   - After each run, validate with `_assert_valid`.  
+   - Return the packing with the largest minimal radius among the successful runs.
+
+5. **Strict Final Validation**  
+   - At the end of `construct_packing()`, call `_assert_valid(centers, radii)` **once more** to guarantee no hidden violations.  
+   - If validation fails, automatically trigger another restart (up to a small retry limit).
+
+6. **Numerical Tolerance Handling**  
+   - Use a small epsilon (`eps = 1e‑12`) consistently when checking boundary conditions and distances to avoid floating‑point drift.  
+   - Clip centres to `[0, 1]` after each move: `centers = np.clip(centers, 0.0, 1.0)`.
+
+---
+
+### IMPLEMENTATION NOTES
+
+- Keep all helper functions **inside** the evolve block; do not reference external symbols that are not already imported.  
+- Use only `numpy` (already imported in the outer code) for vectorized distance calculations.  
+- Preserve the original function signatures; only improve the internal logic.  
+- Ensure the returned objects are `(centers: np.ndarray, radii: np.ndarray)` matching the expected format of `run_packing()`.
+
+---
+
+**Remember:** The only code you may output is the content that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. No markers, no extra imports, no surrounding scaffolding. Follow the strategies above and avoid the listed pitfalls to achieve a higher‑quality packing for 26 circles.

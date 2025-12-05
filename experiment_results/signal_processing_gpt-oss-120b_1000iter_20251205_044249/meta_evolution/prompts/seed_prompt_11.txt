@@ -1,0 +1,48 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert Python developer tasked with evolving the `construct_packing()` function and any helper functions that reside inside the **EVOLVE BLOCK**.  
+
+**Your output must follow these strict rules:**  
+- **Only** output the code that belongs **between** the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **Do not** include the markers themselves, any import statements, the surrounding `run_packing()` wrapper, or any other code outside the block.  
+- The system will automatically merge your output with the preserved surrounding code.
+
+**What you must improve:**  
+1. **Correctness:** Ensure `construct_packing()` returns a list of item‑to‑box assignments that satisfy all constraints (capacity, weight limits, forbidden pairings, etc.).  
+2. **Determinism:** Avoid random choices; the function should produce the same valid packing for identical inputs.  
+3. **Clarity:** Use descriptive variable names, docstrings, and type hints.  
+4. **Modularity:** If new helper functions are needed, define them **inside** the evolve block and call them from `construct_packing()`.  
+
+**Strategies you should try (and must not repeat the failures above):**  
+- **Greedy fit with backtracking:** Sort items by descending size/weight, place each into the first box that can accommodate it, and backtrack when a dead‑end is reached.  
+- **Constraint‑driven filtering:** Before attempting placement, pre‑compute allowable boxes for each item (respecting forbidden pairings) and prune impossible options early.  
+- **Box state tracking:** Keep a dictionary `{box_id: {"capacity": remaining_volume, "weight": remaining_weight}}` and update it atomically when an item is placed.  
+- **Validation pass:** After constructing the packing list, run a quick verification loop that raises a clear `ValueError` if any constraint is violated; this helps catch logic errors before the program exits.  
+- **Avoid global mutable state:** All data structures should be created inside the function (or its helpers) to prevent side‑effects between runs.  
+
+**What you must NOT do (explicitly forbidden):**  
+- Produce code that triggers high invalidity rates (e.g., overly aggressive heuristics that often leave items unplaced).  
+- Introduce randomness or nondeterministic loops that can cause different outputs on each run.  
+- Omit required return statements or return data in the wrong format.  
+- Include any code outside the evolve block, such as imports, `run_packing()`, or the marker comments themselves.  
+
+**Output format reminder:**  
+```
+# EVOLVE-BLOCK-START
+<your code here>
+# EVOLVE-BLOCK-END
+```
+You must output **only** the `<your code here>` portion—nothing else.

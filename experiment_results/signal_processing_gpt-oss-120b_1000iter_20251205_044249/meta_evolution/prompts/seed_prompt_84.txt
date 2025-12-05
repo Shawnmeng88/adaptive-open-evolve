@@ -1,0 +1,52 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code‑Evolution Block**
+
+You are to modify only the code that lies **between** the markers `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`.  
+**Do NOT** output the markers themselves, any imports, the surrounding `run_packing()` wrapper, or any other code outside that region.  
+Your entire response must be **exactly** the updated source code that will replace the existing block.
+
+### Scope
+- Focus exclusively on the `construct_packing()` function and any helper functions defined inside the evolve block.
+- Do **not** add new top‑level functions outside the block, nor alter global constants that are defined elsewhere.
+
+### What to Avoid (explicitly prohibited)
+- Writing overly aggressive or vague prompts that lead to syntax errors or missing definitions.  
+- Re‑using strategies that previously caused many invalid programs (e.g., unconditional `while True` loops without break conditions, deep recursion without base cases, or returning undefined variables).  
+- Introducing external library imports that are not already available in the execution environment.  
+- Changing the function signatures of `construct_packing()` or its internal helpers.
+
+### Desired Improvements (concrete, domain‑specific suggestions)
+1. **Input Validation** – Add explicit checks for the expected shape of the `items` list (e.g., each item must be a tuple `(width, height, quantity)`), and raise a clear `ValueError` if the format is incorrect.
+2. **Deterministic Packing Order** – Sort items by decreasing area (`width * height`) before packing to improve space utilization and make the algorithm’s behavior reproducible.
+3. **Greedy Bin‑First Fit** – Implement a simple first‑fit decreasing (FFD) strategy:
+   - Iterate over sorted items.
+   - For each copy of an item, try to place it in the first existing bin that has enough free space (track free rectangles per bin).
+   - If no bin fits, create a new bin with the predefined `bin_width` and `bin_height`.
+4. **Free‑Space Management** – Maintain a list of free rectangles for each bin. When an item is placed:
+   - Choose the free rectangle with the smallest area that can accommodate the item (Best‑Fit).
+   - Split the free rectangle into up to two new rectangles (right and top residual spaces) and remove the used rectangle.
+   - Merge or discard any zero‑area rectangles.
+5. **Return Structure** – Ensure the function returns a list of bins, where each bin is a list of placed items in the form `(item_id, x, y, width, height)`. The outer list order must correspond to the order bins were created.
+6. **Performance Guard** – Add a hard limit (e.g., `max_bins = 1000`) to prevent infinite bin creation; raise an exception if the limit is exceeded.
+7. **Documentation** – Include concise docstrings for `construct_packing()` and any new helper (e.g., `_find_fit`, `_split_free_rect`) describing parameters, return values, and edge‑case handling.
+
+### Formatting Rules
+- Preserve existing indentation and Python syntax conventions.
+- Do not add any top‑level `print` statements or debugging output.
+- Keep the code self‑contained; rely only on built‑in types and functions.
+
+**Remember:** Your entire output is the revised code block that will be inserted between the existing `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers. No additional text, markers, or explanations are allowed.

@@ -1,0 +1,69 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for Circle Packing (Improved)**  
+
+You are a meta‑prompt engineer tasked with refining only the functions inside the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region of the provided Python file. **Do not edit, reference, or assume any code outside this block** (imports, `run_packing()`, visualisation, etc.). The surrounding code will be merged automatically.
+
+### Mandatory Output Rules  
+- **Output ONLY the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+- **Do NOT include the markers themselves** in your response.  
+- **Do NOT output any additional text, explanations, or code outside those boundaries.**  
+- The system will insert your snippet into the existing file, preserving all other sections.
+
+### Focus of Improvement  
+- Enhance `construct_packing()` and any helper functions it calls.  
+- The goal is a **deterministic arrangement of exactly 26 non‑overlapping circles** inside the unit square `[0,1]×[0,1]` with maximal minimum pairwise distance (i.e., a high‑quality packing).  
+
+### What to Keep (successful elements)  
+- Use of NumPy for vectorised geometry is encouraged.  
+- A hexagonal lattice backbone works well; you may keep the existing `_hex_grid` helper if present.  
+- Computing radii from distances to nearest neighbours (`_compute_radii`) is a solid approach.  
+
+### What to Avoid (failed approaches)  
+- **Do NOT** produce arrangements that violate the unit‑square boundary or cause circles to overlap (these caused validity failures in prior attempts).  
+- **Do NOT** rely on random sampling without a deterministic seed; randomness leads to nondeterministic results and lower scores.  
+- **Do NOT** return more or fewer than 26 circles, or return circles with zero/negative radius.  
+
+### Specific Strategies to Try  
+1. **Optimise Hexagonal Spacing:**  
+   - Generate a dense hexagonal grid covering the unit square.  
+   - Filter points to keep exactly 26 that maximise the minimal pairwise distance.  
+   - Consider multiple candidate spacings (e.g., `spacing = 0.18, 0.19, 0.20`) and select the best layout.  
+
+2. **Iterative Greedy Selection:**  
+   - Start with the centre point.  
+   - Repeatedly add the grid point that is farthest from all already‑selected points.  
+   - Stop when 26 points are selected.  
+
+3. **Deterministic Local Adjustment:**  
+   - After selecting 26 points, perform a few deterministic “push‑away” iterations: for each point, move it slightly in the direction that increases its minimum distance to neighbours while staying inside the unit square.  
+   - Use a fixed step size and a bounded number of iterations (e.g., 5) to keep the process deterministic.  
+
+4. **Radius Assignment:**  
+   - Compute the Euclidean distance from each centre to its nearest neighbour.  
+   - Set the radius of each circle to half of that distance, capped at `0.5` to respect the square boundaries.  
+   - Ensure that after any local adjustments, radii are recomputed.  
+
+5. **Boundary Handling:**  
+   - Clamp any centre that would move outside `[0,1]` back to the nearest edge before recomputing radii.  
+   - Verify that `center ± radius` stays within `[0,1]` for both axes.  
+
+### Expected Return Value  
+`construct_packing()` must return a tuple `(centers, radii)` where:  
+- `centers` is an `(26, 2)` NumPy array of `float64` coordinates in `[0,1]`.  
+- `radii` is a length‑26 NumPy 1‑D array of positive `float64` radii satisfying the non‑overlap and boundary constraints.  
+
+Implement the above ideas **only inside the evolve block** and adhere strictly to the output format. Good luck!

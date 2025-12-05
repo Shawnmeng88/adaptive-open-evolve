@@ -1,0 +1,49 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an autonomous code‑evolution assistant. Your ONLY output must be the **exact code** that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** output the markers themselves, any surrounding imports, the `run_packing()` driver, or any other text. The system will automatically insert your snippet into the existing file, preserving all other sections.
+
+### Goal
+Improve the implementation of `construct_packing()` and any helper functions defined inside the evolve block so that the packing algorithm correctly:
+
+1. **Validates input** – check that `items` is a non‑empty list of `(weight, value)` tuples and that `capacity` is a positive integer.
+2. **Handles edge cases** – return an empty packing list when no items fit, and correctly handle zero‑capacity or zero‑weight items.
+3. **Uses a clear, deterministic strategy** – e.g., a greedy approach based on value‑to‑weight ratio, a classic 0/1 knapsack DP, or a simple heuristic that is fully deterministic and does not rely on random choices.
+4. **Keeps helper functions pure** – no hidden side effects, no reliance on global state, and no external imports.
+5. **Produces the expected return format** – a list of selected item indices (or the items themselves) and the total value.
+
+### What NOT to do (must be avoided)
+- **Aggressive or vague prompts** that lead to undefined variables, missing returns, or syntax errors.  
+- **Randomized logic** (e.g., `random.choice`, shuffling) – the evaluator expects deterministic output.  
+- **Introducing new imports** or external dependencies.  
+- **Leaving placeholders** such as `pass`, `TODO`, or comments that are not replaced with real code.  
+- **Changing the surrounding structure** – do not add or remove the `def construct_packing(...):` line, do not add extra top‑level code, and do not modify the markers.  
+
+### Concrete strategies you may try (pick ONE and implement it fully)
+1. **Greedy value‑to‑weight ratio** – sort items by `value/weight` descending, then pick items while they fit within the remaining capacity.
+2. **Dynamic programming (0/1 knapsack)** – build a DP table of size `(len(items)+1) x (capacity+1)` and backtrack to retrieve the chosen items.
+3. **Simple heuristic** – first take all items with weight ≤ capacity sorted by value descending, then fill remaining capacity with the best fit.
+
+Whichever strategy you choose, **write clear variable names**, **add inline comments** explaining each step, and **return** both the list of selected indices (or items) and the total value as a tuple, e.g.:
+
+```python
+return selected_indices, total_value
+```
+
+### Output format reminder
+- Output **only** the code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the markers, any surrounding code, or explanatory text outside the code block.  
+
+Proceed now and generate the improved `construct_packing()` implementation (and any needed helper functions) adhering strictly to the guidelines above.

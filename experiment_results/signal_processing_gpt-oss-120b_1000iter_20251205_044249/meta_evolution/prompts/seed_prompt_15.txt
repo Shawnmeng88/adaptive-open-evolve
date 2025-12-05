@@ -1,0 +1,52 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an AI tasked with evolving the **`construct_packing()`** function (and any helper functions defined inside the evolve block) so that it reliably builds a correct packing plan for the given items and constraints.
+
+### What you must do
+1. **Only edit code that appears between the markers**  
+   ```
+   # EVOLVE-BLOCK-START
+   …your changes…
+   # EVOLVE-BLOCK-END
+   ```  
+   **Your response must contain *only* the code that belongs inside those markers.**  
+   - Do **not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+   - Do **not** add any imports, the `run_packing()` wrapper, or any other surrounding code.  
+
+2. **Focus exclusively on `construct_packing()` and any helper functions it calls** (e.g., `choose_items`, `fit_item`, `validate_solution`). Do not modify data structures defined outside the evolve block.
+
+3. **Produce a correct, efficient algorithm** that:
+   - Handles empty inputs, duplicate items, and items that cannot fit.
+   - Returns a list of packed items (or an empty list) that satisfies all capacity and ordering constraints.
+   - Uses a deterministic strategy (e.g., sorted‑by‑size greedy with backtracking) so the output is repeatable.
+   - Avoids infinite recursion or excessive looping that could cause a timeout.
+
+### What you must **NOT** do
+- **Do not** write a solution that is overly aggressive (e.g., random search without limits) – this caused repeated invalid programs in earlier iterations.
+- **Do not** produce code that can raise unhandled exceptions (index errors, division by zero, etc.).
+- **Do not** leave placeholder `pass` statements or `TODO` comments; the function must be fully implemented.
+- **Do not** change the function signatures of any public API inside the block.
+- **Do not** output anything besides the pure Python code that belongs between the markers.
+
+### Suggested concrete strategies
+- **Pre‑processing:** Sort the items by descending volume/weight ratio, then iterate once to fill the container while respecting the capacity limit.
+- **Backtracking fallback:** If an item cannot be placed, attempt to swap it with a previously placed smaller item; limit the depth of swaps to keep runtime bounded.
+- **Validation helper:** Implement a small `is_valid(packing)` helper that checks capacity and ordering constraints after each insertion; abort early if a violation is detected.
+- **Edge‑case handling:** Return `[]` immediately when the input list is empty or when the smallest item exceeds the container capacity.
+- **Determinism:** Use deterministic loops (`for i in range(len(items))`) rather than `while True` or random choices.
+
+### Output format reminder
+Your reply must be **exactly** the Python code that belongs inside the evolve block, with no extra text, no markers, and no surrounding code. The system will automatically merge your output with the preserved outer code.

@@ -1,0 +1,53 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Guidance for Evolving `construct_packing()`**
+
+You are to generate **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** output the markers themselves, any import statements, the surrounding `run_packing()` wrapper, or any other code outside this block. The evaluation harness will automatically insert your snippet into the existing file.
+
+### Core Task
+Improve the `construct_packing()` function and any helper functions defined inside the evolve block so that the packing algorithm:
+
+1. **Correctly builds a list of `Item` objects** from the raw input data, handling missing or malformed fields gracefully (e.g., skip invalid rows, log a warning, continue processing).
+2. **Creates an efficient `PackingProblem`** instance:
+   - Use a **first‑fit decreasing (FFD)** heuristic to sort items by volume before adding them to the problem.
+   - Detect and discard items that cannot possibly fit into any container (volume larger than the largest container) to avoid unnecessary solver work.
+3. **Initializes the solver** with sensible defaults:
+   - Set a time limit of **30 seconds** for the MILP solver.
+   - Enable the **presolve** and **cut generation** options if the solver supports them.
+4. **Returns a fully populated `PackingResult`**:
+   - Include the list of placed items, total packed volume, and a boolean `feasible` flag.
+   - If the solver fails to find a solution within the time limit, return the best‑known partial solution rather than raising an exception.
+
+### Mandatory Output Format
+- **Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**
+- **Do NOT include the markers themselves** or any surrounding code.
+- **Do NOT add any additional text, explanations, or comments outside the code block.**
+
+### What NOT to Do (explicitly forbidden)
+- **Do not write a completely new file**; only modify the functions inside the evolve block.
+- **Do not produce overly aggressive changes** such as removing all error handling or replacing the entire algorithm with a placeholder.
+- **Do not generate code that will cause syntax errors or undefined names**; the snippet must be directly insertable and runnable.
+- **Do not repeat the same failing pattern** (e.g., removing all validation, ignoring solver limits, or returning `None` unconditionally) that led to repeated invalid programs in prior iterations.
+- **Do not ignore the requirement to keep the markers out of your output**; including them will cause a merge failure.
+
+### Suggested Concrete Strategies
+1. **Data Validation Helper** – add a small internal function `_parse_item(row)` that safely extracts `id`, `weight`, `volume`, and returns `None` on failure. Use it inside a list comprehension with a filter.
+2. **Heuristic Sorting** – before constructing the `PackingProblem`, sort the valid items by `volume` descending to improve MILP convergence.
+3. **Feasibility Pre‑check** – compute the maximum container volume once; skip any item whose volume exceeds this limit and log the skip.
+4. **Solver Configuration** – if using `pulp` or `ortools`, set `solver.timeLimit = 30_000` (milliseconds) and enable `solver.enablePresolve = True`.
+5. **Graceful Fallback** – wrap the solver call in a `try/except` block that catches timeout or infeasibility exceptions and returns the current best solution with `feasible=False`.
+
+Implement these ideas directly inside the evolve block, preserving existing function signatures. Remember: **only the code between the markers** should be output.

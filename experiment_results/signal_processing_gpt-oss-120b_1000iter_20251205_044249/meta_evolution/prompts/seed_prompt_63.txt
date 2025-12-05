@@ -1,0 +1,68 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Guidance for Evolving `construct_packing()`**
+
+You are tasked with improving the `construct_packing()` function and any helper functions that reside inside the **evolve block** (the region delimited by `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`). The rest of the program (imports, `run_packing()`, etc.) is preserved automatically and must **not** be altered.
+
+---
+
+### ✅ What You Must Do
+1. **Output ONLY the code** that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+   - Do **not** include the marker comments themselves.  
+   - Do **not** output any imports, top‑level statements, or code outside the evolve block.
+
+2. **Focus exclusively on `construct_packing()`** and any helper functions it calls that are also inside the evolve block.  
+   - Do not modify other parts of the program.
+
+3. **Maintain the original function signatures** and return types. The surrounding code expects these signatures to remain unchanged.
+
+4. **Write clear, deterministic logic** that:
+   - Validates inputs (e.g., non‑empty item list, positive dimensions).  
+   - Handles edge cases gracefully (empty containers, items larger than any container).  
+   - Produces a packing plan that respects container capacity, item orientation constraints, and any weight limits defined elsewhere in the program.  
+   - Returns a data structure consistent with what `run_packing()` expects (e.g., a list of placement tuples or a dictionary).
+
+5. **Add inline comments** that explain the purpose of each major step, but keep the overall code concise.
+
+6. **Avoid any of the following failed approaches** (they caused repeated invalid programs in earlier iterations):
+   - Writing overly aggressive or vague prompts that do not respect the output‑format constraints.  
+   - Producing code that references symbols outside the evolve block (e.g., undefined globals, missing imports).  
+   - Introducing syntax errors, mismatched indentation, or incomplete statements.  
+   - Generating code that attempts to rewrite the outer scaffolding (`run_packing()`, imports, etc.).  
+
+---
+
+### 💡 Suggested Strategies to Try
+
+- **Step‑wise construction**: Build the packing plan incrementally—first filter out impossible items, then sort items by size/weight, then greedily place them into containers while checking capacity constraints.
+- **Helper decomposition**: If `construct_packing()` becomes large, factor out reusable pieces (e.g., `_can_fit(item, container)`, `_select_container(item, containers)`) **inside** the evolve block. Keep each helper pure and self‑contained.
+- **Deterministic tie‑breaking**: When multiple containers can hold an item, choose the one with the smallest remaining volume or weight capacity to improve packing density.
+- **Safety checks**: At the start of `construct_packing()`, assert that required keys exist in the input dictionaries; raise a clear `ValueError` if not.
+- **Return format validation**: Before returning, optionally perform a lightweight sanity check (e.g., ensure no item is assigned to more than one container, total weight per container does not exceed limits). This helps catch logical bugs without affecting external code.
+
+---
+
+### 📏 Output Formatting Reminder (Critical)
+
+Your response **must** consist solely of the revised Python code that belongs inside the evolve block:
+
+```python
+# EVOLVE-BLOCK-START
+<your updated code here>
+# EVOLVE-BLOCK-END
+```
+
+Do **not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves, and do not add any additional text, explanations, or markdown formatting. The system will insert your code back into the original file automatically.

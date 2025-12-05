@@ -1,0 +1,80 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Guidance for Evolving `construct_packing()`**
+
+You are tasked with improving the `construct_packing()` function (and any helper functions defined inside the evolve block) so that the overall packing algorithm passes all hidden tests and achieves a high score. Follow **exactly** the instructions below.
+
+---
+
+### 1. Output Requirements (DO NOT BREAK)
+- **Only** output the Python code **that belongs between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- **Do not** include the markers themselves, any import statements, the `run_packing()` wrapper, or any other surrounding code.  
+- The system will automatically splice your output into the existing file, preserving all unchanged sections.
+
+### 2. What to Improve
+- Refactor and complete `construct_packing()` so it:
+  1. **Validates** all input parameters (item list, container dimensions, weight limits, etc.) and raises clear `ValueError`s for impossible configurations.
+  2. **Selects** an appropriate packing heuristic (e.g., First‑Fit‑Decreasing, Shelf, Guillotine, or a hybrid) based on the problem size and dimensionality.
+  3. **Builds** a deterministic packing plan that respects rotation rules, weight constraints, and container boundaries.
+  4. **Returns** a well‑structured result object (`PackingResult`) containing:
+     - `placements`: list of `(item_id, x, y, z, rotation)` tuples,
+     - `used_volume`, `unused_volume`,
+     - `total_weight`, `is_feasible` flag,
+     - any diagnostic messages.
+- Any helper functions you add must be defined **inside** the evolve block and called only from `construct_packing()`.
+
+### 3. Forbidden Approaches (must be avoided)
+- **Do not** generate code that simply copies or stubs out the function without real logic.  
+- **Do not** leave large sections of the function as `pass` or `TODO`.  
+- **Do not** introduce global state or rely on external files/modules not already imported.  
+- **Do not** use overly aggressive random search or exhaustive enumeration that will cause timeouts.  
+- **Do not** produce code that will raise exceptions for every input (e.g., unconditional `raise NotImplementedError`).  
+- **Do not** ignore weight or rotation constraints; every constraint must be respected in the final placement list.  
+- **Do not** add new top‑level imports; only use the standard library modules already available in the surrounding file.
+
+### 4. Suggested Concrete Strategies
+1. **Pre‑processing**
+   - Sort items by decreasing volume (or by a weighted combination of volume and weight) to improve heuristic performance.
+   - Compute each item’s possible orientations once and store them for quick lookup.
+
+2. **Heuristic Selection**
+   - If the total number of items ≤ 30, use a simple **First‑Fit‑Decreasing (FFD)** with backtracking limited to 2 levels.
+   - If items > 30 or container dimensions are highly asymmetric, switch to a **Shelf‑Packing** approach that packs items layer‑by‑layer along the longest container axis.
+   - For 3‑D problems with many small items, apply a **Guillotine split** after each placement to maintain free space rectangles.
+
+3. **Placement Loop**
+   - Maintain a list of free spaces (as axis‑aligned boxes). For each item orientation, find the first free space that fits.
+   - When a placement succeeds, split the free space into up to three new boxes (right, front, top) and prune any dominated boxes (i.e., boxes fully contained in another).
+
+4. **Constraint Checks**
+   - After each placement, update cumulative weight and ensure it never exceeds the container’s weight limit.
+   - Verify that the chosen orientation does not exceed any container dimension.
+   - If a placement cannot be found for the current item, mark the result as `is_feasible = False` and stop further packing.
+
+5. **Result Construction**
+   - Compute `used_volume` by summing the volumes of successfully placed items.
+   - Set `unused_volume = container_volume - used_volume`.
+   - Populate a `diagnostics` string explaining why packing stopped (e.g., “Item 42 cannot fit in remaining space”).
+
+### 5. Formatting Tips
+- Keep the function **self‑contained**: all variables should be local or passed as arguments.
+- Use clear variable names (`free_spaces`, `item_orientations`, `placements`).
+- Add inline comments only if they aid readability; they will be merged unchanged.
+- Ensure the function ends with a single `return PackingResult(... )` statement.
+
+---
+
+**Remember:** The only code you may output is the body of the evolve block (the part between the markers). No extra text, no markers, no surrounding code. Follow the strategies above, avoid the forbidden patterns, and produce a correct, efficient implementation of `construct_packing()`.

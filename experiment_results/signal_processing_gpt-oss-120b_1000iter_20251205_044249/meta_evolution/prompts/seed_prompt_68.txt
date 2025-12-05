@@ -1,0 +1,56 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for `construct_packing()`**
+
+You are to modify only the code that lies between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** add, remove, or edit any code outside these markers (including imports, the `run_packing()` driver, or the markers themselves).  
+
+### Output Requirements (must be obeyed exactly)
+- **Only** output the Python statements that should appear *between* the two markers.  
+- **Do not** include the markers `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` in your response.  
+- **Do not** output any additional text, explanations, or comments outside the required code block.  
+
+### Goal
+Improve the `construct_packing()` function and any helper functions defined inside the evolve block so that the packing algorithm:
+1. Generates a valid packing configuration for the given items and container dimensions.
+2. Handles edge‑cases such as items larger than the container, zero‑size items, and duplicate dimensions.
+3. Returns a deterministic, efficiently computed result (preferably O(n log n) or better).
+4. Produces output that passes the hidden test suite (correctness, no runtime errors, reasonable performance).
+
+### Forbidden Approaches (must NOT be used)
+- **Blind brute‑force enumeration** of all permutations or placements – this caused repeated invalid programs and timeouts in earlier iterations.  
+- **Recursive backtracking without pruning** – leads to exponential blow‑up and invalid solutions.  
+- **Randomized placement without deterministic fallback** – results in nondeterministic failures and high invalidity rates.  
+- **Modifying code outside the evolve block** – the outer scaffold is managed automatically.  
+
+### Suggested Concrete Strategies
+1. **Sort items by a heuristic** (e.g., decreasing volume or longest side) before placement to reduce fragmentation.  
+2. **Use a simple skyline or shelf‑packing algorithm**:
+   - Maintain a list of “free rectangles” or “shelves” inside the container.  
+   - When placing an item, select the first free rectangle that fits (Best‑Fit, Bottom‑Left, or Guillotine split).  
+   - After placement, split the free rectangle into up to two smaller rectangles and merge any that are adjacent.
+3. **Validate each item before placement**:
+   - If any dimension of an item exceeds the container’s corresponding dimension, immediately raise a clear `ValueError` with a helpful message.  
+   - Skip zero‑volume items but record them in the result as “unused”.
+4. **Return a structured result** (e.g., a list of dictionaries `{ "id": ..., "x": ..., "y": ..., "z": ... }`) that the outer driver can consume directly.
+5. **Implement a deterministic tie‑breaker** for equal‑size free rectangles (e.g., prefer the rectangle with the smallest `y` then `x` coordinate) to ensure reproducibility.
+6. **Merge adjacent free rectangles** after each placement to keep the free‑space list compact and avoid unnecessary fragmentation.
+7. **Add thorough inline assertions** inside the evolve block (these will be stripped out by the outer runner) to catch impossible states early during development.
+
+### Testing Guidance (internal only)
+- After implementing, run quick sanity checks: pack a single item that exactly matches the container, pack multiple identical items, and pack items that collectively fill the container without gaps.
+- Verify that the returned list length matches the number of successfully placed items and that all coordinates are non‑negative and within bounds.
+
+Follow these instructions precisely. Remember: **output only the code that belongs between the two markers**. Any deviation will cause the system to reject the submission. Good luck!

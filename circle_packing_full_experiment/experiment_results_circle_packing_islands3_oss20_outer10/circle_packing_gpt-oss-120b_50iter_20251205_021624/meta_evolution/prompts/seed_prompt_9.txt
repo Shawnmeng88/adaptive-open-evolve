@@ -1,0 +1,101 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM PROMPT – Guidance for Evolving the Packing Code**
+
+You may edit **only** the code that appears between the markers  
+
+```
+# EVOLVE-BLOCK-START
+# EVOLVE-BLOCK-END
+```  
+
+All other parts of the file (imports, `run_packing()`, etc.) are fixed and will be merged automatically.
+
+---
+
+### **OUTPUT REQUIREMENTS (CRITICAL – DO NOT VIOLATE)**
+1. **Output ONLY the Python code that belongs inside the markers.**  
+2. **Do NOT include** the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+3. **Do NOT output any imports, `run_packing()`, or other code outside the evolve block.**  
+4. The surrounding file will automatically merge your output with the preserved sections.
+
+---
+
+### **PRIMARY OBJECTIVE**
+Improve the implementation of `construct_packing()` and any helper functions **inside the evolve block** so that the algorithm reliably produces a high‑quality 26‑circle packing (unit square, non‑overlapping circles) and scores better than the current best (0.9422).
+
+---
+
+### **WHAT TO KEEP FROM THE SUCCESSFUL APPROACH**
+- Use **NumPy** for fast vectorised distance calculations.  
+- Start from a **deterministic 5×5 grid** (25 circles) that is known to be feasible.  
+- Search for the **26th centre** by scanning a coarse lattice, then **refining** the best candidate on a finer lattice.  
+- After placing the 26th centre, **grow radii** for all circles together using a simple iterative expansion until a collision would occur.
+
+---
+
+### **WHAT TO AVOID (FAILED APPROACHES)**
+- **Do not** introduce a separate `step` variable that drives an uncontrolled optimisation loop.  
+- **Do not** call any heavyweight optimiser (e.g., `scipy.optimize`, custom gradient descent) – they caused high invalidity rates.  
+- **Do not** write code that performs many random restarts or deep nested loops; this led to >40 % invalid programs in previous iterations.  
+- **Do not** rely on external libraries beyond NumPy; keep the solution self‑contained.  
+- **Do not** produce code that exceeds the allowed execution time (avoid exhaustive O(N³) checks).
+
+---
+
+### **SPECIFIC STRATEGIES TO TRY**
+
+1. **Coarse‑to‑Fine Grid Search**  
+   - Scan the unit square on a **0.02** lattice for candidate positions that are at least a small epsilon (e.g., 0.01) away from all existing 25 centres.  
+   - Keep the **top‑k** (e.g., 5) candidates with the largest minimum distance to the existing centres.  
+
+2. **Local Refinement**  
+   - For each top‑k candidate, run a **local refinement** on a **0.001** lattice within a ±0.02 window.  
+   - Evaluate the *minimum distance to the 25 centres* for each refined point and keep the best overall.
+
+3. **Iterative Radius Expansion**  
+   - After fixing all 26 centres, initialise all radii to **0**.  
+   - In each iteration, compute the **pairwise distance matrix** (NumPy) and the **maximum allowable increase** for every circle:  
+     `delta = (distances - radii_i - radii_j) / 2`.  
+   - Increase **all radii simultaneously** by the smallest positive `delta` (or a capped step like `min(delta, 0.001)`).  
+   - Stop when the smallest positive `delta` falls below a tiny tolerance (e.g., 1e‑12) or when a collision would occur.
+
+4. **Early Exit & Validation**  
+   - After each candidate placement, immediately verify that the new centre respects a minimum distance of **2 × epsilon** from all existing centres; if not, discard it.  
+   - After radius expansion, perform a final **pairwise check** to guarantee no overlap (allow a tiny numerical tolerance).
+
+5. **Deterministic Tie‑Breaking**  
+   - When multiple candidates have identical distances, choose the one with the **lowest x coordinate**, then **lowest y**. This makes the result reproducible.
+
+---
+
+### **IMPLEMENTATION GUIDELINES**
+
+- All new helper functions (e.g., `grid_candidates`, `refine_candidate`, `expand_radii`) must be defined **inside** the evolve block.  
+- Keep function signatures simple; they should accept and return NumPy arrays or plain Python scalars.  
+- Document each helper with a short docstring explaining its purpose and parameters.  
+- Do **not** add any top‑level code that runs on import; only function definitions are allowed.  
+- Ensure the final `construct_packing()` returns a tuple `(centers, radii)` where:
+  - `centers` is a NumPy array of shape `(26, 2)` with coordinates in `[0, 1]`.
+  - `radii` is a NumPy array of shape `(26,)` containing the final radii after expansion.
+
+---
+
+### **FINAL REMINDER**
+- **Only** output the Python code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do not** include the marker lines themselves or any surrounding code.  
+
+Good luck – craft a concise, deterministic, and efficient packing construction!

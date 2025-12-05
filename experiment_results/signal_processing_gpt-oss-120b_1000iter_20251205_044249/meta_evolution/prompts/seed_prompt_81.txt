@@ -1,0 +1,103 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving `construct_packing()`**
+
+You are tasked with improving the `construct_packing()` function (and any helper functions it calls) that lives between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Your output must contain ONLY the updated Python code that belongs inside those markers** – do **not** include the markers themselves, any import statements, or surrounding scaffolding (e.g., `run_packing`). The surrounding file will automatically retain the preserved sections.
+
+### Mandatory Output Rules
+- **Output ONLY** the code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- **Do NOT** include the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines themselves.
+- **Do NOT** add any extra code outside that block (imports, helper classes, `if __name__ == "__main__":`, etc.).
+- The system will merge your code with the existing file automatically.
+
+### What Must Be Avoided (previous failure patterns)
+- Do **not** produce a solution that relies on undefined variables or missing imports; every name you reference must already exist in the preserved code or be defined within the block you output.
+- Do **not** write overly aggressive changes that break the expected function signature or return type (the function must still return a packing plan compatible with the rest of the program).
+- Do **not** introduce infinite loops, recursion without base cases, or any construct that could cause the program to hang.
+- Do **not** leave placeholder `TODO` comments or `pass` statements; the function must be fully functional.
+- Do **not** duplicate code that already exists in the preserved sections; only modify or add what is needed inside the evolve block.
+
+### Desired Characteristics of the Updated `construct_packing()`
+1. **Correctness** – The function must produce a valid packing plan for the given items and container dimensions, respecting all constraints (no overlap, items stay within bounds, orientation handling, etc.).
+2. **Efficiency** – Use a deterministic, low‑complexity algorithm (e.g., first‑fit decreasing, shelf‑packing, or simple grid placement) rather than exhaustive search or random sampling. This reduces runtime and avoids time‑outs.
+3. **Readability** – Keep the code concise and well‑commented (inline comments are allowed). Clear variable names and a short helper (e.g., `_fits(item, pos, orientation, placed)`) are encouraged.
+4. **Determinism** – The same input should always yield the same packing result, which helps the evaluation harness compare outputs reliably.
+5. **Modularity** – If you need auxiliary utilities, define them **inside** the evolve block. Do not rely on external modules that are not already imported.
+
+### Specific Strategies to Try
+- **Pre‑sort items** by decreasing volume or longest side before placement. This often yields better space utilization with simple heuristics.
+- **Shelf‑based packing**: Place items row‑by‑row (or column‑by‑column), advancing to a new shelf when the current one is full. Track the current shelf height/width and update it after each placement.
+- **Orientation handling**: For each item, consider the two axis‑aligned orientations (swap width/height) and pick the one that fits best at the candidate position.
+- **Collision detection**: Implement a lightweight `_overlaps(candidate_rect, placed_rects)` helper that checks axis‑aligned rectangle overlap. Use it to validate each potential placement.
+- **Early exit**: If an item cannot be placed after scanning all possible positions on the current shelves, return `None` or raise a clear exception – this signals to the outer harness that the packing failed.
+- **Bounding‑box updates**: Keep track of the furthest‑right and furthest‑top coordinates used so far; this lets you quickly compute the next candidate position without exhaustive grid enumeration.
+
+### Example Skeleton (you may adapt)
+```python
+def construct_packing(items, container_width, container_height):
+    # Sort items by descending max side length (or area)
+    sorted_items = sorted(items, key=lambda i: max(i.width, i.height), reverse=True)
+
+    placed = []                     # list of (x, y, w, h, item_id)
+    shelf_y = 0                     # current shelf top
+    shelf_height = 0                # height of current shelf
+    cursor_x = 0                    # next free x position on the current shelf
+
+    for item in sorted_items:
+        # Try both orientations
+        orientations = [(item.width, item.height), (item.height, item.width)]
+        placed_successfully = False
+
+        for w, h in orientations:
+            # Does it fit on the current shelf?
+            if cursor_x + w <= container_width and shelf_y + h <= container_height:
+                # Check for overlap with already placed rectangles
+                if not any(_overlaps((cursor_x, shelf_y, w, h), p) for p in placed):
+                    placed.append((cursor_x, shelf_y, w, h, item.id))
+                    cursor_x += w
+                    shelf_height = max(shelf_height, h)
+                    placed_successfully = True
+                    break
+
+        if not placed_successfully:
+            # Start a new shelf
+            shelf_y += shelf_height
+            if shelf_y >= container_height:
+                # No more vertical space – packing fails
+                raise ValueError("Unable to pack all items")
+            cursor_x = 0
+            shelf_height = 0
+            # Retry placement on the new shelf (repeat orientation loop)
+            for w, h in orientations:
+                if cursor_x + w <= container_width and shelf_y + h <= container_height:
+                    if not any(_overlaps((cursor_x, shelf_y, w, h), p) for p in placed):
+                        placed.append((cursor_x, shelf_y, w, h, item.id))
+                        cursor_x += w
+                        shelf_height = max(shelf_height, h)
+                        placed_successfully = True
+                        break
+            if not placed_successfully:
+                raise ValueError("Unable to pack all items")
+
+    return placed   # format matches the rest of the program
+```
+
+You may restructure, rename variables, or add small helper functions (e.g., `_overlaps`) **within** the evolve block, but keep the overall logic deterministic and simple.
+
+### Final Reminder
+- **Only** output the code that belongs between the evolve markers.
+- Follow all the “what must be avoided” rules strictly.
+- Aim for a clean, deterministic packing algorithm that respects the container bounds and avoids overlaps.

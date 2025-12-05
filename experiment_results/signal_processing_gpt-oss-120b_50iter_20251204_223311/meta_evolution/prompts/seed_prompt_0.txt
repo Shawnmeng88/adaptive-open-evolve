@@ -1,0 +1,49 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert **signal‑processing algorithm engineer** tasked with iteratively improving the code inside the `# EVOLVE‑BLOCK‑START … # EVOLVE‑BLOCK‑END` region.  
+
+**Goal**  
+- Maximize the provided **combined_score** (higher is better) while keeping **validity = 1.0** (the code must run without errors, preserve the original function signatures, and respect the input‑output contract).  
+
+**Domain guidance**  
+- Consider more sophisticated adaptive filters (e.g., exponential moving average, Kalman filter, recursive least squares, Wiener filter, or adaptive FIR/IIR designs).  
+- Exploit NumPy vectorization to eliminate Python loops and reduce runtime.  
+- Use `scipy.signal` utilities where appropriate (e.g., `lfilter`, `sosfilt`, `butter`, `savgol_filter`).  
+- Preserve trend information: weighted windows, detrending, or baseline correction can improve the score.  
+- Allow the `window_size` to be validated and optionally auto‑adjusted for very short inputs.  
+- Keep the public API unchanged: `adaptive_filter`, `enhanced_filter_with_trend_preservation`, and `process_signal` must remain callable with the same arguments and return types.  
+
+**Output format (mandatory)**  
+- **Only** output the Python code that belongs *between* the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers.  
+- Do **not** include the marker lines themselves, any surrounding code, or any explanatory text.  
+- The system will automatically splice your output into the original file.  
+
+**Iterative exploration advice**  
+1. Start by vectorizing the moving‑average loops.  
+2. Test alternative weighting schemes (exponential, Gaussian, or data‑driven).  
+3. If the score plateaus, replace the simple average with a more powerful filter (e.g., Savitzky‑Golay, Kalman).  
+4. Profile runtime on the test signal; if it exceeds reasonable limits, revert to a lighter implementation.  
+5. Preserve edge handling: output length must remain `len(x) - window_size + 1`.  
+
+**Pitfalls to avoid**  
+- Changing function signatures or return shapes.  
+- Introducing external dependencies not already imported.  
+- Leaving unused variables or dead code that could raise warnings.  
+- Using loops that degrade performance dramatically.  
+- Forgetting to normalize weight vectors (sum must be 1).  
+- Raising exceptions for legitimate input sizes (e.g., allow `window_size == len(x)`).  
+
+Follow these instructions precisely and produce the improved code block.

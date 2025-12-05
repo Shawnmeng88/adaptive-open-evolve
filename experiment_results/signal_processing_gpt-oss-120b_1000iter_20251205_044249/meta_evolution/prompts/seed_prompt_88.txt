@@ -1,0 +1,70 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for `construct_packing()`**
+
+You are to modify **only** the code that appears between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** output the markers themselves, any import statements, or any surrounding scaffolding (e.g., `run_packing`). The surrounding file will be merged automatically.
+
+### Mandatory Output Rules
+1. **Output ONLY** the Python statements that belong between the two markers.  
+2. **Do NOT** include the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines.  
+3. **Do NOT** add any extra code outside this region (imports, helper definitions that already exist, or top‑level statements).  
+
+### What NOT to Do (previous failures)
+- Do **not** produce code that is syntactically invalid or that raises exceptions on import.  
+- Do **not** make the function overly aggressive (e.g., infinite loops, exhaustive brute‑force without pruning).  
+- Do **not** repeat the same mistake that caused consecutive invalid programs (e.g., undefined variables, mismatched return types).  
+- Do **not** modify any code outside the evolve block, including global constants or existing helper functions.  
+
+### Goal
+Improve the `construct_packing()` implementation (and any tiny helper functions inside the evolve block) so that it builds a valid packing plan for the given items and container constraints. The function must:
+
+- Accept the same signature as originally declared.  
+- Return a data structure that the rest of the program expects (typically a list of bins, each containing a list of placed items).  
+- Handle edge cases gracefully (empty item list, items larger than any bin, duplicate items).  
+- Run in reasonable time for typical test sizes (avoid exponential blow‑up).  
+
+### Suggested Concrete Strategies
+1. **Pre‑process items**:  
+   - Sort items by descending size/weight or by a combined heuristic (e.g., volume × value).  
+   - Filter out items that cannot possibly fit into any bin and record them as “unpackable”.
+
+2. **Greedy First‑Fit Decreasing (FFD)**:  
+   - Iterate over the sorted items and place each into the first bin that has enough remaining capacity.  
+   - If no existing bin fits, open a new bin (if allowed) and place the item there.
+
+3. **Bin‑splitting fallback**:  
+   - When an item cannot fit into any current bin but a new bin is permissible, create a new bin with the minimal required capacity.  
+   - Optionally, try to rebalance by moving a previously placed smaller item to the new bin if it frees enough space for the current large item.
+
+4. **Simple backtracking guard**:  
+   - Limit backtracking depth (e.g., ≤ 3 swaps) to avoid exponential search.  
+   - Only invoke backtracking when the greedy step fails for a high‑value item.
+
+5. **Return format compliance**:  
+   - Ensure the returned object matches the expected schema (e.g., `[{ "bin_id": ..., "items": [...] }, ...]`).  
+   - Preserve any required keys that the outer program reads (e.g., `total_weight`, `remaining_capacity`).
+
+6. **Validation hook**:  
+   - At the end of the function, perform a quick sanity check: sum of item sizes per bin ≤ bin capacity, no duplicate placements, all items accounted for (or correctly marked as unpackable).  
+   - If the check fails, raise a clear `ValueError` with a concise message; do not silently return a corrupted structure.
+
+### Development Tips
+- Write the new logic in small, composable blocks inside the evolve region; each block should be testable in isolation.  
+- Re‑use existing helper functions if they are already defined outside the evolve block; do not duplicate them.  
+- Keep variable names descriptive (`sorted_items`, `bins`, `unpackable`) to aid readability and reduce typo‑related errors.  
+- Avoid global state; operate solely on the parameters passed to `construct_packing`.  
+
+Follow the rules above precisely, and produce a clean, syntactically correct implementation that improves packing quality while remaining safe and fast.

@@ -1,0 +1,64 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are tasked with improving the **`construct_packing()`** function and any helper functions that reside inside the **evolve block** delimited by `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`.  
+
+### Mandatory Output Rules  
+- **Output ONLY the code that belongs BETWEEN the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers.**  
+- **Do NOT include the markers themselves** in your response.  
+- **Do NOT output any code outside those markers** (e.g., imports, the `run_packing()` wrapper, or other unrelated sections).  
+The surrounding scaffold will be merged automatically; focus exclusively on the evolve block.
+
+### What You Must NOT Do (previous failures)  
+- Do **not** produce code that references undefined variables, missing imports, or external symbols that are not already available in the surrounding file.  
+- Do **not** change the overall file structure or add new top‑level statements outside the evolve block.  
+- Do **not** generate overly aggressive or speculative code that is likely to raise syntax or runtime errors.  
+- Do **not** repeat the same faulty pattern that caused consecutive invalid programs (e.g., returning the wrong type, missing required return statements, or using mutable default arguments).  
+
+### Goal of `construct_packing()`  
+Create a deterministic packing plan that:  
+
+1. **Validates Input** – Ensure the `items` list and `max_weight`/`max_volume` parameters are present and of the correct type.  
+2. **Sorts Items** – Apply a clear, reproducible ordering (e.g., descending by weight + volume density) to improve packing efficiency.  
+3. **Greedy Bin‑Packing** – Iterate through the sorted items, placing each into the first bin that can accommodate both its weight and volume. If no existing bin fits, open a new bin.  
+4. **Respect Constraints** – Never exceed `max_weight` **or** `max_volume` for any bin.  
+5. **Return Structure** – Produce a list of bins, where each bin is a dictionary:  
+   ```python
+   {
+       "items": [item_id, ...],
+       "total_weight": float,
+       "total_volume": float
+   }
+   ```  
+   The outer function must return this list directly.  
+
+### Specific Strategies to Try  
+
+- **Helper Function `fits(bin, item)`** – Returns `True` only if adding `item` keeps both weight and volume ≤ limits.  
+- **Helper Function `add_to_bin(bin, item)`** – Updates the bin’s `items`, `total_weight`, and `total_volume` in‑place.  
+- **Avoid Mutable Defaults** – Define helper functions with explicit parameters; never use `def helper(..., bins=[])`.  
+- **Early Exit** – If an item alone exceeds the limits, skip it and optionally record it in a separate “unpacked” list (but do **not** return this list unless the original signature expects it).  
+- **Deterministic Tie‑Breaking** – When multiple bins can accept an item, choose the bin with the smallest remaining capacity (e.g., minimal leftover weight + volume). This reduces variability and helps the evaluator.  
+
+### Formatting Guidelines  
+
+- Keep the code **PEP‑8 compliant** (indentation, line length ≤ 88 characters).  
+- Use clear variable names (`bins`, `item`, `weight`, `volume`).  
+- Include concise docstrings for any new helper functions you add.  
+- Do **not** add any `print` statements or debugging output; the evaluator expects only the packing data structure.  
+
+### Reminder  
+
+Your response must be **exactly** the code that belongs inside the evolve block—no surrounding text, no markers, no extra sections. Follow the rules above to produce a valid, functional implementation of `construct_packing()` and its helpers.

@@ -1,0 +1,53 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolving `construct_packing()`**
+
+You are to generate **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** output the markers themselves, any import statements, or any surrounding functions such as `run_packing()`. The system will automatically insert your snippet into the existing file.
+
+### Core Requirements for `construct_packing()`  
+1. **Deterministic Greedy Baseline**  
+   - Sort the list of items by descending *volume* (or weight if volume is unavailable).  
+   - Iterate through the sorted items, adding each to the current container only if **all** constraints (max weight, max volume, and any custom predicates) remain satisfied.  
+   - When an item cannot fit, start a new container and continue.  
+
+2. **Fallback Backtracking (limited depth)**  
+   - After the greedy pass, if any container violates a hard constraint, invoke a lightweight recursive backtracking routine that tries to move the last‑added item to a previous container.  
+   - Limit recursion depth to **3** to keep runtime bounded.  
+
+3. **Constraint Helpers**  
+   - Implement a helper `fits(container, item, constraints)` that returns `True` only when adding `item` would keep the container within `max_weight`, `max_volume`, and any user‑provided `custom_check(container, item)` lambda.  
+   - Provide another helper `container_metrics(container)` returning current weight and volume for debugging.  
+
+4. **Robust Edge‑Case Handling**  
+   - If an individual item exceeds *any* single‑container limit, raise a clear `ValueError` with the item’s identifier.  
+   - Ensure the function returns a list of containers, each container being a list of item identifiers.  
+
+5. **Performance Safeguards**  
+   - Use simple list comprehensions and avoid heavy library calls.  
+   - Cache container metrics after each insertion to avoid recomputing sums.  
+
+### What **NOT** to Do (explicitly forbidden)  
+- Do **not** write an overly aggressive, unconstrained search (e.g., full combinatorial enumeration).  
+- Do **not** omit the constraint checks or rely on magic numbers not defined in the surrounding code.  
+- Do **not** produce code that may cause infinite recursion or unbounded loops.  
+- Do **not** repeat the same invalid pattern that previously yielded 13/13 invalid programs.  
+- Do **not** include any text, comments, or code outside the required function bodies.  
+
+### Output Formatting (mandatory)  
+- **Only** the Python statements that belong inside the evolve block.  
+- No marker lines, no surrounding context, no explanatory text.  
+
+Proceed to write the improved `construct_packing()` implementation and its helper functions following the specifications above.

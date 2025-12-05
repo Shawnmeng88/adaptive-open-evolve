@@ -1,0 +1,79 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for `construct_packing()`**
+
+You are tasked with evolving the `construct_packing()` function (and any helper functions defined inside the evolve block) to produce a correct and efficient packing algorithm. The surrounding scaffolding (imports, `run_packing()`, etc.) is **preserved automatically**; you must only supply the code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+### Mandatory Output Rules
+1. **Output ONLY the code** that should appear between the two markers.  
+2. **Do NOT** include the markers themselves (`# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END`).  
+3. **Do NOT** output any code outside the evolve block (e.g., imports, main driver, test harness).  
+4. The system will merge your output with the unchanged surrounding code.
+
+### What You Must NOT Do (previous failures)
+- Do not write an overly aggressive or vague prompt that leads to syntax errors or missing definitions.  
+- Do not produce code that references undefined variables, missing helper functions, or external libraries that are not already imported.  
+- Do not repeat the same faulty logic across iterations (e.g., returning `None` unconditionally, using infinite loops, or ignoring input parameters).  
+- Do not omit required return statements or produce code that fails to compile.  
+
+### Goal
+Implement a **deterministic, self‑contained** packing routine that:
+- Accepts the problem description (item sizes, bin capacity, etc.) provided by the surrounding code.  
+- Returns a data structure matching the expected format (e.g., a list of bins, each bin a list of item IDs).  
+- Handles edge cases gracefully (empty input, items larger than a bin, duplicate items).  
+- Executes in a reasonable amount of time for typical test sizes (≤ 10⁴ items).
+
+### Concrete Strategies to Try
+1. **Greedy First‑Fit Decreasing (FFD):**  
+   - Sort items by descending size.  
+   - Iterate through sorted items, placing each into the first bin that can accommodate it; create a new bin if none fit.  
+   - This yields a good approximation with O(n log n) time.
+
+2. **Best‑Fit Decreasing (BFD) Variant:**  
+   - After sorting, place each item into the bin that will have the **least remaining space** after insertion (but still non‑negative).  
+   - Keeps bins tighter and often reduces total bin count.
+
+3. **Exact Small‑Instance Solver (Optional):**  
+   - If the total number of items ≤ 12, you may invoke a simple backtracking search to find the optimal packing.  
+   - Guard this with a size check to avoid exponential blow‑up.
+
+4. **Helper Functions Within the Block:**  
+   - Define small, pure helpers (e.g., `_first_fit(bin_list, item)`, `_best_fit(bin_list, item)`) **inside** the evolve block.  
+   - Keep them self‑contained; they should not rely on globals outside the block.
+
+5. **Safety Checks & Early Returns:**  
+   - If any single item exceeds the bin capacity, return an empty list or raise a clearly documented `ValueError`.  
+   - If the input list is empty, return `[]` immediately.
+
+6. **Consistent Return Type:**  
+   - Always return a list of bins, where each bin is a list of the original item identifiers (or indices) in the order they were placed.  
+   - Do not return mixed types (e.g., a tuple mixed with a list).
+
+### Example Skeleton (you may adapt)
+```python
+def construct_packing(items, capacity):
+    """
+    items:   iterable of (item_id, size)
+    capacity: maximum total size per bin
+    Returns: list of bins, each bin = list of item_id
+    """
+    # 1. Validate input
+    # 2. Choose algorithm (FFD or BFD) based on size heuristics
+    # 3. Build bins using the selected strategy
+    # 4. Return the bin list
+```
+
+Feel free to flesh out the docstring, add type hints, and implement any of the strategies above. Remember: **only the code between the markers will be kept**, so include all necessary definitions there and nothing else. Good luck!

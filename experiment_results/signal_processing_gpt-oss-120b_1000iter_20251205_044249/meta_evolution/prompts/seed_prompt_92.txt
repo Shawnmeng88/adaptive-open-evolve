@@ -1,0 +1,80 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert Python programmer tasked with evolving the `construct_packing()` function and any helper functions that reside inside the **evolve block** (the region delimited by `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`).  
+
+**Your output must be exactly the code that belongs between those two markers—** do **not** include the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines themselves, and do **not** add any imports, global statements, or surrounding scaffolding. The surrounding system will automatically preserve everything outside the evolve block.
+
+### What to do
+1. **Keep the implementation simple and deterministic.**  
+   - Use a straightforward first‑fit decreasing algorithm: sort items by size (or weight) descending, then place each item into the first bin that has enough remaining capacity.  
+   - If no existing bin can accommodate the item, create a new bin.  
+   - Return the list of bins (each bin can be represented as a list of item identifiers or a custom `Bin` object if already defined).
+
+2. **Validate inputs early.**  
+   - Verify that `items` is an iterable of objects with the required attribute (e.g., `size` or `weight`).  
+   - Verify that `capacity` is a positive number.  
+   - Raise a clear `ValueError` with an informative message if validation fails.
+
+3. **Maintain clean helper functions.**  
+   - If you need a helper (e.g., `_fits(bin, item, capacity)`), define it **inside** the evolve block and keep it pure (no side effects).  
+   - Keep helper names short and descriptive; avoid deep nesting or recursion.
+
+4. **Handle edge cases explicitly.**  
+   - Empty `items` → return an empty list of bins.  
+   - Items larger than `capacity` → raise `ValueError` indicating which item cannot fit.  
+
+5. **Write readable, PEP‑8‑compliant code.**  
+   - Use meaningful variable names (`bins`, `item`, `remaining`).  
+   - Add short docstrings to `construct_packing` and any helpers, describing parameters, return value, and raised exceptions.  
+   - Keep line length ≤ 88 characters.
+
+### What **NOT** to do
+- **Do not** write overly aggressive or speculative code (e.g., complex genetic algorithms, deep recursion, or heuristic searches) that may produce syntax errors or exceed the allowed token budget.  
+- **Do not** omit input validation; missing checks caused the previous failures.  
+- **Do not** produce code that references undefined variables or external modules not already imported in the outer file.  
+- **Do not** include any code outside the evolve block, including import statements, `if __name__ == "__main__":` blocks, or test harnesses.  
+- **Do not** output the marker comments themselves.
+
+### Suggested strategy (concrete)
+```text
+def construct_packing(items, capacity):
+    """
+    Pack `items` into bins of size `capacity` using first‑fit decreasing.
+
+    Parameters
+    ----------
+    items : iterable of objects with a numeric `size` attribute
+    capacity : positive number indicating bin capacity
+
+    Returns
+    -------
+    list[list[object]]
+        A list where each element is a list of items assigned to that bin.
+
+    Raises
+    ------
+    ValueError
+        If any item is larger than `capacity` or inputs are malformed.
+    """
+    # 1. Validate inputs
+    # 2. Sort items by descending size
+    # 3. Iterate, placing each item into the first bin that fits
+    # 4. Create a new bin when necessary
+    # 5. Return the collection of bins
+```
+Implement the body following the steps above, and if you need a tiny helper like `_fits(bin, item, capacity)`, define it right above or below `construct_packing` inside the same evolve block.
+
+**Remember:** Output only the code that belongs between the evolve markers, nothing else.

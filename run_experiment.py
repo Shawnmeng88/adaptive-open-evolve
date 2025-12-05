@@ -64,6 +64,13 @@ PROBLEMS = {
         "baseline_score": None,
         "baseline_iterations": None,
     },
+    "signal_processing": {
+        "initial_program": "examples/signal_processing/initial_program.py",
+        "evaluator": "examples/signal_processing/evaluator.py",
+        "description": "Real-Time Signal Processing",
+        "baseline_score": 0.37,  # SoTA achieved after ~130 iterations with Kalman Filter
+        "baseline_iterations": 130,
+    },
 }
 
 
@@ -437,14 +444,9 @@ def plot_comparison(
     # Save
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
     plt.savefig(output_path.replace('.png', '.pdf'), bbox_inches='tight')
+    plt.close()  # Close figure to free memory and allow subprocess to exit
     
     print(f"\nPlot saved to: {output_path}")
-    
-    # Also show if in interactive mode
-    try:
-        plt.show()
-    except:
-        pass
 
 
 def create_summary_report(

@@ -1,0 +1,109 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – GUIDELINES FOR EVOLUTION BLOCK**
+
+You may edit **only** the code that appears between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...
+# EVOLVE-BLOCK-END
+```  
+
+When you respond, **output ONLY the Python code that belongs inside those markers** – do **not** include the markers themselves, any import statements, or any other surrounding code. The surrounding framework (imports, `run_packing()`, etc.) will be merged automatically.
+
+---
+
+### PRIMARY OBJECTIVE
+Improve the **`construct_packing()`** function (and any helper functions inside the evolve block, such as `compute_max_radii`, `_assert_valid`, `_generate_hex_lattice`, etc.) so that a packing of **26 circles inside the unit square** attains:
+
+1. **Validity = 1.0** – every circle centre `(x, y)` satisfies `0 ≤ x ≤ 1` and `0 ≤ y ≤ 1`; all radii are non‑negative; no two circles overlap (distance between centres ≥ sum of radii).  
+
+The evaluation will reject any solution that produces a validity score < 1.0.
+
+---
+
+### WHAT TO AVOID (DO NOT DO)
+
+- **Do not** generate packings that place any centre outside the unit square.  
+- **Do not** produce negative radii.  
+- **Do not** allow any pair of circles to overlap (distance < sum of radii).  
+- **Do not** rely on hard‑coded magic numbers that are not justified by geometry; they lead to the repeated validity failures observed in prior attempts.  
+- **Do not** omit boundary‑margin handling (e.g., forgetting to subtract the radius from the unit‑square limits).  
+- **Do not** leave debugging prints or stray `return` statements that break the expected function signatures.  
+
+Any of the above will cause the program to fail the validity checks (the “Validity failures” listed in the problem description).
+
+---
+
+### MANDATORY OUTPUT FORMAT (CRITICAL)
+
+- **Output ONLY** the code that goes **between** `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do NOT** include the markers themselves.  
+- **Do NOT** include any code outside those markers (imports, `run_packing()`, etc.).  
+
+The system will automatically merge your output with the preserved code sections.
+
+---
+
+### SUGGESTED STRATEGIES (CONCRETE, DOMAIN‑SPECIFIC)
+
+1. **Hexagonal Lattice Generation**  
+   - Use a hexagonal (triangular) lattice scaled to fit the unit square.  
+   - Compute the maximum feasible lattice spacing `s` such that `s * (n_rows‑1) + radius ≤ 1` and `s * sqrt(3)/2 * (n_cols‑1) + radius ≤ 1`.  
+   - Adjust the lattice origin to centre the pattern and guarantee all centres are ≥ radius from the borders.
+
+2. **Iterative Radius Scaling**  
+   - Start with a uniform radius `r0 = 0.5 / sqrt(26)` (or a tighter bound).  
+   - After placing centres, compute the minimal pairwise distance `d_min`.  
+   - Set the final radius to `r = min(d_min / 2, min(x, y, 1‑x, 1‑y) for each centre)`.  
+   - This guarantees non‑overlap and boundary compliance.
+
+3. **Vectorised Validity Checks**  
+   - Use NumPy broadcasting to compute all pairwise distances in one step.  
+   - Verify `distances >= 2 * r - eps` (with a tiny epsilon, e.g., `1e-9`) and `0 + r <= centres <= 1 - r`.  
+   - Raise a clear `AssertionError` with a descriptive message if any check fails; this helps catch subtle bugs during development.
+
+4. **Boundary‑Margin Adjustment**  
+   - After generating raw lattice points, shift every point by `+r` in both axes and then clip to `[r, 1‑r]`.  
+   - This eliminates any accidental out‑of‑bounds centres caused by floating‑point rounding.
+
+5. **Fallback Random Perturbation (only if lattice fails)**  
+   - If the lattice cannot accommodate 26 circles with a reasonable radius, apply a small random jitter (e.g., `±0.001`) to each centre and re‑validate.  
+   - Limit the jitter magnitude to keep the packing within the unit square.
+
+6. **Clear Helper API**  
+   - Keep helper functions pure (no side effects) and return explicit values:  
+     ```python
+     def _generate_hex_lattice(num_circles: int, radius: float) -> np.ndarray:
+         ...
+     def compute_max_radii(centers: np.ndarray) -> float:
+         ...
+     def _assert_valid(centers: np.ndarray, radii: np.ndarray) -> None:
+         ...
+     ```  
+   - This makes the `construct_packing()` logic easier to read and test.
+
+---
+
+### IMPLEMENTATION NOTES
+
+- **Use only NumPy** (already imported in the surrounding code).  
+- **Do not** introduce new external dependencies.  
+- Keep the function signatures unchanged; `construct_packing()` must return a tuple `(centers, radii)`.  
+- Ensure the code is deterministic (except for the optional small jitter, which should be seeded if used).  
+
+Follow these guidelines precisely. Your submission will be merged with the surrounding framework; any deviation from the output format or the “do not” rules will cause the evaluation to fail. Good luck!

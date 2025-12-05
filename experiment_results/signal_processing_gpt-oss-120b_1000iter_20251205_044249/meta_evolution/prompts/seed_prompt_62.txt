@@ -1,0 +1,68 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are to write **only** the Python code that belongs inside the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region of the provided file.  
+
+**Output Rules (must be obeyed exactly):**  
+- Output **only** the code that goes between the two markers.  
+- Do **not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+- Do **not** add any imports, helper definitions, or other code outside the block; the surrounding file (e.g., `run_packing()`) will be merged automatically.  
+
+**Goal:** Improve the `construct_packing()` function and any helper functions it calls so that the packing algorithm correctly assigns items to boxes under the given constraints and returns a valid packing structure.
+
+**What NOT to do (these caused previous failures):**  
+- Do not write a vague or overly aggressive prompt that leaves the model guessing about required signatures, return types, or variable names.  
+- Do not produce code that depends on undefined globals or external libraries not already imported in the outer file.  
+- Do not repeat the same high‑invalidity patterns (e.g., using recursion without base cases, returning `None`, or referencing missing parameters).  
+- Do not ignore edge cases such as empty item lists, zero‑capacity boxes, or items larger than any box.
+
+**Specific strategies to try (domain‑specific guidance):**  
+
+1. **First‑Fit Decreasing (FFD) algorithm**  
+   - Sort the `items` list in descending order of size.  
+   - Iterate through each item and place it into the first box that has enough remaining capacity; if none exists, create a new box (if the problem permits) or raise an informative error.  
+
+2. **Explicit data structures**  
+   - Represent a box as a dictionary: `{'id': box_id, 'capacity': max_capacity, 'remaining': remaining_capacity, 'items': [item_ids]}`.  
+   - Maintain a list `boxes` that the function returns.  
+
+3. **Clear parameter handling**  
+   - `construct_packing(items, box_capacities)` receives:  
+     * `items`: a list of tuples `(item_id, size)`  
+     * `box_capacities`: a list of integers (capacity for each box type)  
+   - Validate inputs at the top: ensure all sizes are non‑negative and each item fits into at least one box type.  
+
+4. **Deterministic box selection**  
+   - When multiple box types can accommodate an item, choose the *smallest* box that fits (to minimize waste).  
+   - Keep box IDs sequential (`0, 1, 2, ...`).  
+
+5. **Return format**  
+   - Return a list of box dictionaries as described above.  
+   - Each box dictionary must contain the keys `id`, `capacity`, `remaining`, and `items`.  
+
+6. **Helper functions (optional but allowed inside the block)**  
+   - `find_box_for_item(item_size, boxes, box_capacities)` – returns the index of a suitable box or `None`.  
+   - `create_new_box(box_id, capacity)` – returns a fresh box dictionary.  
+
+7. **Edge‑case handling**  
+   - If `items` is empty, return an empty list.  
+   - If an item cannot fit into any provided box capacity, raise `ValueError` with a clear message.  
+
+**Implementation notes:**  
+- Use only standard Python constructs; do not import additional modules.  
+- Keep the code concise (no unnecessary logging or prints).  
+- Ensure the function name and signature match exactly what the outer file expects.  
+
+Write the code now, respecting the output rules above.

@@ -1,0 +1,61 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a code‑generation assistant tasked with evolving the `construct_packing()` function and any helper functions that live inside the **EVOLVE** block of the program.  
+
+**Output Rules (must be obeyed exactly):**  
+- **Only** output the Python code that belongs **between** the lines `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the marker lines themselves, any surrounding imports, the `run_packing()` driver, or any other code outside the block.  
+- The system will automatically splice your output into the preserved surrounding code, so any extra text or symbols will cause a merge error.  
+
+**What NOT to do (these caused previous failures):**  
+- Do not write a completely new program or replace the whole file.  
+- Do not add explanatory comments or prose outside the required code region.  
+- Do not repeat the same faulty logic that led to repeated invalid programs (e.g., returning `None` unconditionally, using undefined variables, or calling non‑existent helpers).  
+- Do not ignore the required function signatures or expected return types.  
+
+**Goal:** Produce a correct, efficient implementation of `construct_packing()` that builds a feasible packing plan for the given items and constraints. The function should return a data structure (as defined by the surrounding code) that represents a valid packing, or raise a clear exception if none can be found.
+
+**Suggested concrete strategies (choose one or combine):**  
+
+1. **Greedy heuristic with backtracking** –  
+   - Sort items by decreasing volume or weight.  
+   - Attempt to place each item in the first bin that fits, updating remaining capacity.  
+   - If an item cannot be placed, backtrack to the previous item, try the next bin, and continue.  
+   - Limit backtrack depth to avoid exponential blow‑up; fall back to a simple “no solution” exception if the limit is reached.
+
+2. **Bin‑first‑fit decreasing (FFD) with capacity checks** –  
+   - Compute each bin’s total capacity (volume, weight, etc.).  
+   - Iterate over items sorted by a combined metric (e.g., volume × weight).  
+   - For each item, scan bins in order and place it in the first bin where all constraints remain satisfied.  
+   - Return the constructed packing map.
+
+3. **Recursive depth‑first search with pruning** –  
+   - Define a recursive helper that tries to assign the next unplaced item to any bin that still has enough free space.  
+   - Prune branches early when remaining free capacity cannot possibly accommodate the sum of the still‑unplaced items (use a quick lower‑bound check).  
+   - Cache failed states (memoization) to avoid repeating identical sub‑problems.
+
+4. **Constraint‑driven placement using a priority queue** –  
+   - Maintain a priority queue of bins ordered by the amount of free space left (largest first).  
+   - Pop the bin with most free space, try to fit the largest remaining item; if it fits, push the bin back with updated capacity.  
+   - Continue until all items are placed or no bin can accept the next item, then raise an exception.
+
+**Implementation notes:**  
+- Respect the exact signatures already declared in the EVOLVE block (e.g., `def construct_packing(items, bins):`).  
+- Use only variables and helper functions that are already defined or that you add **inside** the EVOLVE block.  
+- Return the packing in the format expected by the outer code (usually a dictionary `{bin_id: [item_ids...]}` or a list of assignments).  
+- Include minimal inline comments **inside** the code block if they help clarify logic, but keep them concise and syntactically valid Python comments.  
+
+Remember: **Only the code** between the markers will be accepted. Follow the output rules strictly to avoid merge errors. Good luck!

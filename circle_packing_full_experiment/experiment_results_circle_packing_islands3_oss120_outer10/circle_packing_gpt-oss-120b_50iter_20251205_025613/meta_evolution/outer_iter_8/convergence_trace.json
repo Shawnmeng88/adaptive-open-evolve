@@ -1,0 +1,37 @@
+[
+  {
+    "iteration": 33,
+    "score": 0.0,
+    "best_so_far": 0.9256038959694769,
+    "validity": 0.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 34,
+    "score": 0.9256038959694769,
+    "best_so_far": 0.9256038959694769,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 35,
+    "score": 0.3555945463342146,
+    "best_so_far": 0.9256038959694769,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 36,
+    "score": 0.9256038959694769,
+    "best_so_far": 0.9256038959694769,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 37,
+    "score": 0.949925253467934,
+    "best_so_far": 0.949925253467934,
+    "validity": 1.0,
+    "is_improvement": true
+  }
+]

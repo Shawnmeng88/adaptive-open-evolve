@@ -1,0 +1,73 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for `construct_packing()`**
+
+You are tasked with improving only the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** add, remove, or modify any code outside this block (imports, `run_packing()`, etc.). The system will automatically splice your output into the preserved sections.
+
+### OUTPUT REQUIREMENTS (STRICT)
+- **Output ONLY the Python statements that belong inside the evolve block.**  
+- **Do NOT** include the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` comments themselves.  
+- **Do NOT** output any surrounding code, comments, or whitespace that is not part of the block.  
+- The result must be a syntactically valid fragment that can be inserted directly.
+
+### WHAT TO IMPROVE
+Focus exclusively on `construct_packing()` and any helper functions defined within the evolve block. Your goal is to produce a correct, efficient, and robust packing algorithm that passes all hidden tests.
+
+### SPECIFIC STRATEGIES TO APPLY
+1. **Clear Input Validation**  
+   - Verify that `items` is an iterable of `(weight, value)` pairs.  
+   - Ensure `capacity` is a non‑negative integer.  
+   - Return an empty packing (e.g., `[]`) immediately for degenerate cases (`capacity == 0` or `items` empty).
+
+2. **Deterministic Greedy Baseline**  
+   - Implement a simple **value‑per‑weight** greedy heuristic as a fallback.  
+   - Sort items by `value / weight` (handle zero weight safely).  
+   - Add items while the cumulative weight does not exceed `capacity`.
+
+3. **Dynamic Programming for Exact Solution**  
+   - When the number of items ≤ 30 *or* `capacity` ≤ 10,000, use classic 0/1 knapsack DP (either 2‑D table or 1‑D space‑optimized array).  
+   - Reconstruct the chosen item indices from the DP table.
+
+4. **Hybrid Switch**  
+   - Choose the algorithm at runtime based on problem size:
+     - **Small‑scale** → DP (exact optimal).  
+     - **Large‑scale** → Greedy (fast, good‑enough).  
+   - Provide a clear comment explaining the switch criteria.
+
+5. **Return Format**  
+   - Return a list of original item indices that are selected.  
+   - Preserve the original order of indices in the returned list (optional but aids predictability).
+
+6. **Avoid Common Pitfalls**  
+   - **Do NOT** use recursion that can exceed Python’s recursion limit.  
+   - **Do NOT** rely on external libraries not already imported in the outer file.  
+   - **Do NOT** produce side‑effects (printing, modifying global state).  
+   - **Do NOT** leave any `pass` statements or unfinished branches.
+
+7. **Performance Considerations**  
+   - Use `enumerate` once to keep track of original indices while sorting.  
+   - For DP, use a single list of length `capacity + 1` to keep memory O(capacity).  
+   - Break early from loops when further items cannot improve the solution.
+
+### WHAT TO AVOID (LEARNED FROM FAILED ITERATIONS)
+- Over‑aggressive transformations that remove needed validation or return types.  
+- Generating code that is syntactically incomplete (e.g., missing parentheses, colons).  
+- Introducing new imports or external dependencies inside the evolve block.  
+- Writing overly complex recursive solutions that cause stack overflows.  
+- Omitting the required output format (including markers or extra code).  
+
+### FINAL INSTRUCTION
+Write the revised implementation of `construct_packing()` (and any helper functions it calls) **exactly** as a code fragment ready to replace the existing block. Remember: **only the code inside the evolve block** should be output.

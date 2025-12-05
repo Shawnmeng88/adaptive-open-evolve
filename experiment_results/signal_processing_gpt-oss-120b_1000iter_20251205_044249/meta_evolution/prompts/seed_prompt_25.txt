@@ -1,0 +1,113 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for `construct_packing()`**
+
+You are tasked with evolving only the code that lies between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do NOT output the markers themselves** and **do NOT include any code outside this region** (imports, `run_packing()`, etc.). The surrounding code will be merged automatically.
+
+### Mandatory Output Rules
+1. **Only** output the Python statements that belong **inside** the evolve block.
+2. **Never** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` comments.
+3. Do not add extra imports, global variables, or helper definitions that are outside the block.
+4. The output must be syntactically correct and pass a basic lint check (no stray indentation, unmatched parentheses, etc.).
+
+### What Must NOT Be Done (Avoid Repeating Past Failures)
+- Do **not** write overly aggressive or ambiguous code that could cause syntax errors or undefined names.
+- Do **not** produce code that relies on external state not defined within the block.
+- Do **not** repeat the same logical mistakes that led to repeated invalid programs (e.g., missing return statements, using undefined variables, infinite loops).
+- Do **not** introduce heavy recursion or unbounded iteration that could cause time‑outs.
+
+### Goal of `construct_packing()`
+Create a packing plan that assigns each item to a container while respecting:
+- Container capacity limits.
+- Item size constraints.
+- Optional preferences such as minimizing the number of containers or balancing load.
+
+The function signature is fixed:
+```python
+def construct_packing(items, containers):
+    """Return a list of (item_id, container_id) assignments."""
+```
+- `items` is a list of dictionaries: `{'id': ..., 'size': ...}`.
+- `containers` is a list of dictionaries: `{'id': ..., 'capacity': ...}`.
+- Return a list of tuples `(item_id, container_id)`; each item must appear exactly once, and no container may exceed its capacity.
+
+### Concrete Strategies to Try (Pick ONE and implement cleanly)
+
+1. **Greedy First‑Fit Decreasing (FFD)**
+   - Sort items by descending size.
+   - Iterate over items, placing each into the first container that can accommodate it.
+   - Break early if no container fits (skip the item or raise a clear exception).
+
+2. **Best‑Fit Decreasing**
+   - Similar to FFD, but for each item choose the container that will have the **least remaining space** after placement (still non‑negative).
+   - Helps balance load and often reduces the number of containers used.
+
+3. **Simple Bin‑Packing with Capacity Tracking**
+   - Build a dictionary `remaining = {c['id']: c['capacity'] for c in containers}`.
+   - For each item (any order), find any container where `remaining[container_id] >= item['size']`.
+   - Update `remaining` and record the assignment.
+   - If an item cannot be placed, return an empty list or raise `ValueError` with a helpful message.
+
+4. **Two‑Pass Heuristic (Large then Small)**
+   - First pass: pack items larger than half the max container capacity using Best‑Fit.
+   - Second pass: pack remaining items using First‑Fit.
+   - This reduces the chance of “big items” blocking later placements.
+
+### Implementation Guidelines
+- **Validate inputs** at the start of the function (type checks, required keys). If validation fails, raise `ValueError` with a concise message.
+- **Maintain deterministic behavior**: avoid random.choice; use sorted order so results are reproducible.
+- **Return early on failure** with a clear indicator (empty list or exception). Do not silently drop items.
+- **Keep the code short and readable**: no more than ~30 lines inside the block.
+- **Do not call external functions** that are not defined within the block.
+- **Document** the chosen strategy with a brief docstring and inline comments.
+
+### Example Skeleton (you may adapt)
+```python
+def construct_packing(items, containers):
+    """
+    Greedy Best‑Fit Decreasing packing.
+    Returns a list of (item_id, container_id) assignments.
+    Raises ValueError if any item cannot be placed.
+    """
+    # Validate input structure
+    # ...
+
+    # Sort items descending by size
+    sorted_items = sorted(items, key=lambda i: i['size'], reverse=True)
+
+    # Track remaining capacity per container
+    remaining = {c['id']: c['capacity'] for c in containers}
+    assignments = []
+
+    for item in sorted_items:
+        # Find best container (minimum leftover after placement)
+        best_id = None
+        best_leftover = None
+        for cid, cap in remaining.items():
+            if cap >= item['size']:
+                leftover = cap - item['size']
+                if best_leftover is None or leftover < best_leftover:
+                    best_leftover = leftover
+                    best_id = cid
+        if best_id is None:
+            raise ValueError(f"Item {item['id']} (size {item['size']}) cannot be placed.")
+        remaining[best_id] -= item['size']
+        assignments.append((item['id'], best_id))
+
+    return assignments
+```
+
+Use the skeleton above **or** any of the other strategies, but ensure the final code obeys all mandatory output rules and avoids the listed failure patterns.

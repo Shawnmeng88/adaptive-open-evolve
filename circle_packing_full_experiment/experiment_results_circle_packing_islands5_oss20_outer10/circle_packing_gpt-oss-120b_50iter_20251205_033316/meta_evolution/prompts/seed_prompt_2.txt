@@ -1,0 +1,107 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – GUIDELINES FOR EVOLUTION BLOCK**
+
+You are to edit **only** the code that appears between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...
+# EVOLVE-BLOCK-END
+```  
+
+When you respond, **output ONLY the Python code that belongs inside those markers** – do **not** include the markers themselves, any imports, or any other surrounding code. The surrounding framework (imports, `run_packing()`, etc.) will be merged automatically.
+
+---
+
+### Primary Objective
+Improve the **`construct_packing()`** function (and any helper functions such as **`compute_max_radii()`**) so that a packing of **exactly 26 circles inside the unit square** achieves the highest possible `combined_score` **while keeping `validity = 1.0`**.
+
+**Validity requirements (must never be violated):**
+1. Every centre `(x, y)` satisfies `0 ≤ x ≤ 1` and `0 ≤ y ≤ 1`.
+2. All radii are non‑negative real numbers.
+3. No two circles overlap: for any pair `i, j` the distance between centres must be **≥** `r_i + r_j`.
+
+If any of these conditions fail, the submission receives a validity penalty and will be rejected.
+
+---
+
+### What **failed** in previous attempts (do **NOT** repeat)
+- Placing circles whose centres lie outside the unit square.
+- Computing radii that become negative after adjustments.
+- Forgetting to enforce the pairwise non‑overlap condition after moving or resizing circles.
+- Using a hard‑coded radius that does not respect the nearest‑neighbor distances, leading to hidden overlaps.
+
+All of the above caused the validity failures observed (2/6 and 3/6 cases). Your new code must explicitly check and enforce these constraints.
+
+---
+
+### Focus of the Evolution Block
+- **Only** modify `construct_packing()` and any helper functions defined inside the evolve block (e.g., `compute_max_radii`, `refine_positions`, `optimize_radii`).  
+- Do **not** change `run_packing()` or any code outside the block; those sections are preserved automatically.
+
+---
+
+### Mandatory Output‑Format Instruction
+- **Output ONLY** the code that belongs **between** `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the marker lines themselves.  
+- Do **not** include any other code (imports, `run_packing`, etc.).  
+
+The system will merge your output with the surrounding framework.
+
+---
+
+### Suggested Concrete Strategies (you may combine them)
+
+1. **Start from a dense deterministic lattice**  
+   - Use a hexagonal (triangular) lattice scaled to fit inside the unit square.  
+   - Compute the maximal uniform radius that fits the lattice without crossing the square boundaries.  
+   - If the lattice yields fewer than 26 circles, add extra circles in the largest gaps using a local optimisation step.
+
+2. **Iterative refinement with explicit constraints**  
+   - After an initial placement, run a few iterations of a simple gradient‑free “push‑apart” routine: for each overlapping pair, move the two centres slightly away from each other along the line joining them and reduce the larger radius if necessary.  
+   - After each move, recompute the maximal admissible radius for each circle as the minimum of its distance to the square edges and half the distance to the nearest neighbour.
+
+3. **Compute radii analytically** (`compute_max_radii`)  
+   - For each centre `c_i`, compute `d_edge = min(c_i.x, 1‑c_i.x, c_i.y, 1‑c_i.y)`.  
+   - Compute `d_nn = min_{j≠i} (‖c_i‑c_j‖ / 2)`.  
+   - Set `r_i = min(d_edge, d_nn)`.  
+   - Ensure `r_i` is never negative; clamp to zero if numerical errors occur.
+
+4. **Deterministic tie‑breaking**  
+   - When two circles have the same limiting distance, keep the one with the smaller index unchanged and adjust the other.  
+   - This avoids random behaviour that could accidentally place a centre outside the domain.
+
+5. **Final validation step** (must be present before returning)  
+   - Loop over all circles and assert the three validity conditions.  
+   - If any condition fails, raise an exception or fall back to a safe configuration (e.g., the original uniform lattice) so that the function never returns an invalid packing.
+
+6. **Scoring optimisation**  
+   - The `combined_score` is typically a monotonic function of the sum of radii (or their squares).  
+   - After the refinement loop, optionally perform a tiny uniform scaling of all radii upwards by a factor `α > 1` while re‑checking validity; keep the largest `α` that still satisfies all constraints.
+
+---
+
+### Implementation Tips
+- Use **NumPy** for vectorised distance calculations; it is already imported in the outer code.  
+- Keep the functions pure (no side‑effects) and return the final `centers` (Nx2 array) and `radii` (N‑vector).  
+- Add clear docstrings explaining the algorithm; this helps future reviewers understand why the code is safe.  
+- Do **not** introduce randomness unless you also include a deterministic seed and a fallback to a guaranteed‑valid layout.
+
+---
+
+### Final Reminder
+Your submission will be judged on **validity = 1.0** and the resulting `combined_score`. Follow the format rules exactly, avoid the pitfalls listed above, and apply the concrete strategies to produce a tighter, fully valid packing of 26 circles. Good luck!

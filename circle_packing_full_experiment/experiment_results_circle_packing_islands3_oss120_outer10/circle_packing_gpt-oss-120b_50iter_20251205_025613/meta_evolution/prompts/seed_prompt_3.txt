@@ -1,0 +1,87 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for Evolving the Packing Code**
+
+---
+
+### Core Goal
+Create a `construct_packing()` implementation (and any helper functions defined inside the evolve block) that **maximises the total sum of radii** while guaranteeing **validity = 1.0** – i.e., no two circles overlap and every circle lies completely inside the unit square [0, 1] × [0, 1].
+
+---
+
+### Mandatory Output‑Format Rules (do **not** break these)
+
+1. **Output ONLY the Python code that belongs BETWEEN the markers**  
+   `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+2. **Do NOT include the markers themselves**, any surrounding imports, or functions such as `run_packing()` – those are preserved automatically by the system.  
+3. The output must be **pure code** (no explanatory text, markdown, or comments outside the evolve block).
+
+---
+
+### What Worked – Keep These Ideas
+
+- **Hexagonal lattice seed**: generate a dense set of candidate points using a hexagonal (triangular) lattice with spacing `s`.  
+- **Border margin**: keep every candidate at least `r` away from the unit‑square edges (use `r = s/2` for the initial lattice).  
+- **Greedy radius assignment**: for each candidate, compute the distance to the nearest already‑placed centre and set the new radius to the minimum of that distance and the distance to the square edges.  
+- **Iterative refinement**: after an initial greedy pass, optionally run a few local‑optimisation sweeps (e.g., shrink overly large circles, try to insert additional circles in the remaining free space).
+
+---
+
+### Specific Strategies to Try (you may combine them)
+
+1. **Dynamic lattice spacing** – start with a relatively fine spacing (e.g., `s = 0.05`) to get many candidates, then **prune** candidates that would produce radii below a small threshold (e.g., `0.005`). This reduces wasted iterations.
+
+2. **Randomised perturbation** – after the greedy lattice placement, randomly jitter a small subset of centres (±`0.01`) and recompute their radii; keep the perturbation only if the total score improves and validity remains perfect.
+
+3. **Two‑phase packing**  
+   - **Phase 1**: place circles on the hex lattice as described.  
+   - **Phase 2**: fill the gaps by sampling uniformly random points, computing the maximal feasible radius (distance to nearest existing centre and to the borders), and adding the point only if the radius exceeds the Phase 1 minimum‑radius threshold.
+
+4. **Local shrink‑and‑grow** – for any circle whose radius is larger than the average of its neighbours, try shrinking it by a tiny factor (`0.98`) and redistributing the freed space to nearby smaller circles (increase their radii up to the new clearance). Accept the change only if the total sum of radii increases.
+
+5. **Early‑stop validity guard** – after every insertion or modification, **immediately verify** that the new circle does not intersect any existing circle and stays inside the unit square. Abort the current operation if a violation is detected; this prevents cascading invalid states.
+
+---
+
+### What Must Be **Avoided** (explicitly forbid these behaviours)
+
+- **Over‑aggressive pruning** that removes too many candidates, leading to a low‑score plateau.  
+- **Repeated failures**: do **not** generate code that repeatedly attempts the same invalid placement without a fallback strategy.  
+- **High invalidity rate**: any approach that leaves a non‑zero probability of overlapping circles or circles crossing the border is disallowed.  
+- **Premature convergence**: avoid stopping after a single greedy pass; incorporate at least one refinement or gap‑filling step.  
+- **Unclear constraints**: all distance calculations must be explicit; do not rely on hidden globals or external state.  
+
+If you detect that a candidate would cause overlap or border violation, **skip** that candidate and continue; never force an invalid placement.
+
+---
+
+### Implementation Checklist (inside the evolve block)
+
+- Define a helper `def _hex_lattice_points(spacing, required):` that returns a NumPy array of points satisfying the border margin.
+- In `construct_packing()`:
+  1. Call the lattice helper to obtain a pool of candidate centres.
+  2. Sort or shuffle candidates to reduce systematic bias.
+  3. Greedily assign radii using the minimum clearance rule.
+  4. Perform at least one refinement pass (perturbation, gap‑filling, or shrink‑and‑grow).
+  5. Return two arrays: `centers` (shape `(n,2)`) and `radii` (shape `(n,)`).
+
+- Use only the standard library and `numpy`; do **not** import additional packages.
+- Keep the code **self‑contained** within the evolve block; do not reference external files or variables.
+
+---
+
+### Final Reminder
+Remember: **Your entire response must be ONLY the code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.** No markers, no extra text, no comments outside the block. Follow the strategies above, avoid the listed pitfalls, and aim for the highest possible total radius while maintaining perfect validity.

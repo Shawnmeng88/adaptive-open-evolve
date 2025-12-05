@@ -1,0 +1,96 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – GUIDELINES FOR EVOLUTION BLOCK**
+
+You may edit **only** the code that appears between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...
+# EVOLVE-BLOCK-END
+```  
+
+When you respond, **output ONLY the Python code that belongs inside those markers** – do **not** include the markers themselves, any import statements, or any other surrounding code. The surrounding framework (imports, `run_packing()`, etc.) will be merged automatically.
+
+---
+
+### Primary Goal
+Improve the **`construct_packing()`** function (and any helper functions defined inside the evolve block, e.g., `compute_max_radii`) so that the resulting packing of **26 circles inside the unit square** satisfies:
+
+1. **Validity = 1.0** – every centre `(x, y)` lies in `[0, 1] × [0, 1]`, all radii are non‑negative, and for every pair of circles the Euclidean distance between centres is **≥** the sum of their radii (no overlap).
+2. **Maximum minimum radius** – among all valid packings of 26 circles, the smallest radius should be as large as possible (the evaluation metric rewards larger minima).
+
+---
+
+### What **must NOT** be done (these caused previous validity failures)
+
+- **Place any centre outside the unit square** (x < 0, x > 1, y < 0, y > 1).  
+- **Assign a negative radius** to any circle.  
+- **Allow overlapping circles** (distance < sum of radii).  
+- **Produce fewer or more than 26 circles** (the count must be exactly 26).  
+- **Rely on hard‑coded magic numbers that break when the layout is perturbed** (e.g., fixed offsets that push circles out of bounds after a small adjustment).  
+- **Use a naive random‑placement loop without a rejection test** – this leads to many overlaps and invalid packings.  
+
+If any of the above occurs, the solution will be rejected.
+
+---
+
+### Suggested Concrete Strategies (you may combine them)
+
+1. **Hexagonal / Staggered Grid Seed**  
+   - Start with a dense hexagonal lattice scaled to fit inside the unit square.  
+   - Trim or merge cells to obtain exactly 26 points.  
+   - This gives a high baseline minimum distance.
+
+2. **Analytic 5 × 5 Grid with Central Replacement**  
+   - Place points on a regular 5 × 5 grid (spacing `0.2`).  
+   - Replace the central point with **two** circles placed symmetrically around the centre (e.g., offset by `±δ` on both axes).  
+   - Compute the maximal radius that satisfies all pairwise constraints analytically.
+
+3. **Iterative Radius Maximisation**  
+   - After fixing the centre coordinates, compute the maximal feasible radius for each circle as the minimum of the distances to the square edges and to all other centres (minus the other circle’s radius).  
+   - Use a simple loop that repeatedly updates radii until convergence.
+
+4. **Local Optimisation with SciPy (if available)**  
+   - Formulate the problem as a constrained optimisation: maximise the minimum radius `r_min` subject to the validity constraints.  
+   - Use `scipy.optimize.minimize` with the “SLSQP” method and a penalty for any violation.  
+   - Initialise the optimizer with one of the deterministic seeds above to avoid poor local minima.
+
+5. **Pairwise Distance Matrix Check**  
+   - Implement a helper `pairwise_distances(centers)` that returns a symmetric matrix.  
+   - Use it to verify the non‑overlap condition efficiently and to compute the maximal radii in a vectorised way (NumPy).
+
+6. **Safety‑First Post‑Processing**  
+   - After any construction step, run a final validation pass: clamp any centre that drifted out of bounds back into `[0, 1]`, set any negative radius to `0`, and shrink any overlapping pair just enough to satisfy the distance constraint.
+
+---
+
+### Implementation Checklist (inside the evolve block)
+
+- **`construct_packing()`** must return two NumPy arrays: `centers` of shape `(26, 2)` and `radii` of shape `(26,)`.  
+- All helper functions used by `construct_packing()` must be defined **inside** the evolve block.  
+- Use **vectorised NumPy operations** wherever possible for speed and clarity.  
+- Include a **docstring** that explains the chosen construction method and any parameters you expose.  
+- At the end of `construct_packing()`, call a **internal validation helper** (e.g., `_assert_valid(centers, radii)`) that raises an informative `AssertionError` if any of the validity rules are broken; this helps catch regressions during development.  
+
+---
+
+### Final Reminder
+- **Only edit code between the markers**; do not add, remove, or modify anything outside them.  
+- **Do not include the markers** in your response.  
+- **Do not add imports or top‑level statements**; assume `numpy` (as `np`) and any other needed libraries are already imported in the surrounding file.  
+
+Good luck – produce a clean, deterministic packing that passes all validity checks and maximises the smallest circle radius!

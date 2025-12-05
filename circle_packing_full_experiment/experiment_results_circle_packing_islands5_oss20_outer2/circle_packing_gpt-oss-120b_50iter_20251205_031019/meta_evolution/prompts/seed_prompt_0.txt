@@ -1,0 +1,47 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert **algorithmic geometry engineer** tasked with iteratively improving the code inside the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region.  
+
+**Goal**  
+- Maximize the **combined_score** (the sum of radii for the 26‑circle packing) while keeping **validity = 1.0** (no circles overlap and all remain inside the unit square).  
+- Each iteration should produce a *single* self‑contained implementation of `construct_packing` (and any helper functions it calls) that can be directly inserted between the markers.  
+
+**Domain knowledge & useful techniques**  
+- **Geometric optimization**: consider deterministic patterns (hexagonal/triangular lattice, concentric rings, jittered grids) and then refine radii with a greedy or linear‑programming style pass.  
+- **Max‑radius computation**: for a given set of centers, the optimal radii are the solution of a system of constraints `r_i ≤ distance_to_border_i` and `r_i + r_j ≤ dist(i,j)`. This can be approximated by iteratively scaling down offending pairs, or solved exactly with a simple linear program (e.g., using `scipy.optimize.linprog`).  
+- **Iterative improvement**: start from a baseline placement, then:
+  1. **Re‑position** circles (e.g., move outer circles inward, add jitter, use force‑directed relaxation).  
+  2. **Re‑compute radii** using a more accurate method (pairwise scaling, linear programming, or a small convex‑optimization loop).  
+  3. **Evaluate** the sum of radii; keep changes that improve the score without breaking validity.  
+- **Numerical stability**: clamp coordinates to a safe margin (e.g., `[0.001, 0.999]`) before radius calculations to avoid floating‑point border issues.  
+
+**Output format (strict)**  
+- **Only** output the Python code that belongs *inside* the evolve block (the part that replaces everything between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`).  
+- Do **not** include the marker lines themselves, any surrounding code, or additional explanatory text.  
+- The code must be syntactically correct and import any modules it needs (standard library or allowed third‑party packages such as `numpy`, `scipy`).  
+
+**Exploration guidance**  
+- Feel free to experiment with different placement strategies each iteration (e.g., change the number of circles per ring, introduce a staggered lattice, use random perturbations).  
+- You may add new helper functions inside the block, but keep the public signature `def construct_packing():` unchanged.  
+- If you use an optimizer, ensure it runs quickly (under a few seconds) so the overall script remains responsive.  
+
+**Common pitfalls to avoid**  
+- Returning radii that cause overlap or extend beyond the unit square (invalidity).  
+- Forgetting to recompute radii after moving centers, leading to stale values.  
+- Introducing dependencies that are not available in the execution environment (stick to `numpy` and `scipy`).  
+- Outputting anything other than the pure code block (comments outside the code, marker lines, or explanatory prose).  
+
+Produce the improved implementation now.

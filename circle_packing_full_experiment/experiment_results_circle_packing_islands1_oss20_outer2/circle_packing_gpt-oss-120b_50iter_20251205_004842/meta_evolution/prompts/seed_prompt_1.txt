@@ -1,0 +1,93 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert **algorithmic geometry and optimization engineer** tasked with improving only the code inside the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region.  
+
+**Goal**  
+- Maximize the *combined_score* while keeping **validity = 1.0** (no overlapping circles, all circles fully inside the unit square).  
+- The surrounding code (`run_packing`, imports, visualisation, etc.) is fixed and will be merged automatically; you must not modify it.
+
+---
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+
+- **Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+- **Do NOT include the markers themselves** in your answer.  
+- **Do NOT include any code outside those markers** (imports, `run_packing`, etc.).  
+- The system will automatically splice your output into the preserved sections.
+
+If you break any of the rules above the evaluation will fail.
+
+---
+
+## WHAT TO KEEP FROM THE CURRENT BEST APPROACH
+
+1. **Edge‑based radius initialization** – start each circle with the minimum distance to the four sides of the unit square.  
+2. **Vectorised pairwise distance computation** – use `np.subtract.outer` / broadcasting to obtain the full distance matrix efficiently.  
+3. **Iterative radius reduction** – repeatedly shrink radii that violate the non‑overlap constraint until the system stabilises.  
+4. **Early exit when changes fall below a tolerance** – prevents wasteful iterations.
+
+---
+
+## WHAT TO AVOID (FAILED APPROACHES)
+
+- **Pure random placement without deterministic validation** – leads to many validity failures.  
+- **Greedy insertion that never revisits earlier circles** – often leaves large gaps and causes later circles to be forced into overlap.  
+- **Hard‑coded iteration limits that stop before convergence** – results in overlapping circles.  
+- **Using Python loops over every pair of circles** – extremely slow and encourages shortcuts that break correctness.  
+- **Ignoring the “half‑distance” rule** (`radius_i + radius_j ≤ distance_ij`) or applying it only approximately.
+
+---
+
+## SUGGESTED STRATEGIES TO TRY (you may combine them)
+
+1. **Compute a global feasible radius bound**  
+   ```python
+   max_edge = np.minimum.reduce([centers[:,0], centers[:,1],
+                                 1-centers[:,0], 1-centers[:,1]])
+   radii = max_edge.copy()
+   ```
+2. **Vectorised pairwise distance matrix**  
+   ```python
+   diff = centers[:, None, :] - centers[None, :, :]          # (n, n, 2)
+   dists = np.linalg.norm(diff, axis=2) + np.eye(n)        # add eye to avoid zero self‑dist
+   ```
+3. **Iterative shrink with damping**  
+   - At each iteration compute the violation matrix `viol = radii[:,None] + radii[None,:] - dists`.  
+   - For any positive entry, reduce the two involved radii by `alpha * viol/2` (e.g., `alpha = 0.5`).  
+   - Clip radii to the edge bound after each shrink.  
+   - Stop when `np.max(viol) ≤ 1e-6` or after a safe max‑iter (e.g., 500).  
+
+4. **Binary‑search refinement (optional)** – after the iterative phase, perform a few binary‑search steps on each radius to push them as large as possible without re‑introducing overlap.
+
+5. **Post‑processing “tightening”** – once radii are feasible, try a single pass that expands each radius by the remaining slack to the nearest neighbor or edge (again respecting non‑overlap).
+
+6. **Return both `centers` and the final `radii`** in the exact format expected by the outer code.
+
+---
+
+## IMPLEMENTATION NOTES
+
+- Use only **NumPy** (already imported) – no external solvers.  
+- Keep all helper functions **local to the evolve block**; do not rely on globals.  
+- Ensure the function signatures match the surrounding code (e.g., `def construct_packing(num_circles, seed=None):`).  
+- Preserve deterministic behaviour when a `seed` is supplied (use `np.random.default_rng(seed)`).  
+- Document each helper briefly with a docstring; the outer system does not need the comments but they aid readability.
+
+---
+
+### Deliverable
+
+Write the updated `construct_packing` implementation (and any small helper functions it needs) that follows the guidelines above and **outputs only the code between the markers**.

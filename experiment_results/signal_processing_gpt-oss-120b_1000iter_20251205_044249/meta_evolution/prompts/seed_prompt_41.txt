@@ -1,0 +1,52 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are tasked with improving the `construct_packing()` function and any helper functions that reside **inside** the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region of the source file. The surrounding code (imports, `run_packing()`, etc.) will be preserved automatically, so **only modify code that appears between the markers**.
+
+### Mandatory Output Rules
+1. **Output ONLY the Python code that belongs between the two markers.**  
+2. **Do NOT include** the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+3. **Do NOT output any other code** (imports, global variables, `run_packing()`, comments outside the block, etc.).  
+4. The system will merge your output with the unchanged outer sections.
+
+### What NOT to Do (previous failures)
+- Do **not** produce code that references undefined names or relies on external modules that are not already imported outside the block.  
+- Do **not** change the function signatures of `construct_packing()` or its helpers; keep the same parameters and return types.  
+- Do **not** introduce syntax errors, indentation errors, or stray characters outside valid Python statements.  
+- Do **not** add new top‑level statements (e.g., `if __name__ == "__main__":`) inside the block.  
+- Do **not** remove or rename any existing helper functions that other parts of the program may call.
+
+### Focus Areas for `construct_packing()`
+- **Validate inputs**: ensure the `items` list and `capacity` are of the expected types; raise clear `ValueError` messages if not.
+- **Efficient packing algorithm**: implement a deterministic, O(n log n) greedy strategy (e.g., sort items by weight descending, then place each into the first bin that fits). This avoids exponential search and guarantees termination.
+- **Return format**: return a list of bins, where each bin is a list of item identifiers (or the original item objects) that respects the capacity constraint. Preserve the original order of items within each bin as much as possible.
+- **Edge cases**: correctly handle empty `items`, zero or negative `capacity`, and items heavier than the capacity (skip them and record them in a `skipped` list returned alongside the packing result).
+
+### Suggested Helper Enhancements
+- **`_fits_in_bin(item, bin, capacity)`**: boolean check that the sum of current bin weight plus the new item does not exceed `capacity`. Keep it pure (no side effects).
+- **`_sort_items(items)`**: return a new list sorted by weight descending; do not modify the original `items` list.
+- **`_create_empty_bins(num_bins)`**: utility to initialise a list of empty bin containers if you need a fixed‑size bin array.
+
+### Concrete Implementation Steps
+1. **Input validation** – at the top of `construct_packing()`.
+2. **Sort items** using `_sort_items`.
+3. **Iterate** over sorted items, placing each into the first bin that fits via `_fits_in_bin`. If none fit, start a new bin.
+4. **Collect** any items that cannot be placed (weight > capacity) into a separate `skipped` list.
+5. **Return** a tuple `(bins, skipped)` where `bins` is the list of packed bins.
+
+### Reminder
+Follow the **Mandatory Output Rules** precisely. Any deviation (extra code, missing markers, syntax errors) will cause the program to be rejected. Focus on clarity, correctness, and adherence to the existing function signatures. Good luck!

@@ -1,0 +1,84 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Guidelines for Evolving `construct_packing()`**
+
+You are to generate **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** include the markers themselves, any imports, helper definitions outside the block, or any other surrounding code (e.g., `run_packing()`). The surrounding file will be merged automatically.
+
+### Core Requirements
+1. **Scope** – Modify or add functions *only* inside the evolve block, focusing on `construct_packing()` and any helpers it calls. Do **not** alter code outside this region.
+2. **Output Format** – Your response must consist of **exactly** the code lines that belong inside the block, nothing else.  
+   - No markdown fences.  
+   - No explanatory text.  
+   - No trailing spaces or blank lines outside the code block.
+
+### What Must Be Avoided (previous failure patterns)
+- **Over‑aggressive rewrites** that remove required signatures or break existing calls.  
+- **Introducing new global variables or imports** that are not already available in the outer file.  
+- **Returning the wrong type** (e.g., a list when the caller expects a generator).  
+- **Leaving the function incomplete** (e.g., `pass` or placeholder `TODO`).  
+- **Generating code that raises exceptions for typical inputs** (e.g., index errors, division by zero).  
+- **Repeatedly producing invalid syntax** or undefined identifiers.
+
+If any of the above occurs, the entire program will be rejected.
+
+### Suggested Strategies (concrete, domain‑specific)
+
+1. **Incremental Greedy Packing**  
+   - Iterate over the items sorted by decreasing size (or a custom heuristic).  
+   - Place each item into the first bin that can accommodate it; if none, open a new bin.  
+   - Return a list of bins, where each bin is a list of item identifiers.
+
+2. **First‑Fit‑Decreasing with Bin Capacity Check**  
+   - Use the provided `max_bin_capacity` (or infer from the first argument).  
+   - Maintain a list `bins = []` where each bin tracks its current load.  
+   - For each item `(item_id, weight)`:
+     ```python
+     placed = False
+     for b in bins:
+         if b['load'] + weight <= max_bin_capacity:
+             b['items'].append(item_id)
+             b['load'] += weight
+             placed = True
+             break
+     if not placed:
+         bins.append({'items': [item_id], 'load': weight})
+     ```
+   - At the end, return `[b['items'] for b in bins]`.
+
+3. **Helper Function for Bin Fit**  
+   - Implement a small private helper `_can_fit(bin_load, item_weight, capacity)` that returns a boolean.  
+   - This keeps `construct_packing()` readable and isolates the capacity logic.
+
+4. **Edge‑Case Handling**  
+   - If an item’s weight exceeds `max_bin_capacity`, place it alone in its own bin and record a warning comment.  
+   - Ensure the function works when the input list is empty (return `[]`).  
+
+5. **Deterministic Output**  
+   - Preserve the original order of items **within each bin** (do not reorder items after sorting).  
+   - Only the order of bins may change due to the heuristic; this is acceptable.
+
+6. **Performance‑Conscious Looping**  
+   - Use simple `for` loops; avoid recursion or excessive list comprehensions that could obscure errors.  
+   - Keep the algorithm O(n · m) where *n* is the number of items and *m* the current number of bins (acceptable for typical test sizes).
+
+### Final Checklist Before Responding
+- [ ] Only the inner‑block code is present, no markers, no extra text.  
+- [ ] Function signatures match the original (`def construct_packing(items, max_bin_capacity):`).  
+- [ ] All referenced variables (`max_bin_capacity`, `items`) are defined in the outer scope.  
+- [ ] No new imports or global state introduced.  
+- [ ] The code is syntactically correct and returns a list of bins as described.  
+
+Proceed to output the revised code for the evolve block.

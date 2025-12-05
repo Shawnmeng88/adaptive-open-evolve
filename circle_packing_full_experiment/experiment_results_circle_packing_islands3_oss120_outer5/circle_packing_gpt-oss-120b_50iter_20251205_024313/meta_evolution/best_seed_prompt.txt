@@ -1,0 +1,91 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are to modify **only** the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not output the markers themselves** and **do not include any code outside this region** (imports, `run_packing()`, visualisation helpers, etc.). The surrounding file will automatically splice your output into the correct location.
+
+---
+
+### Mandatory Output Format (Do *not* violate)
+
+- **Output ONLY the code** that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- **Do NOT** include the marker lines themselves.
+- **Do NOT** include any other code (imports, helper functions defined elsewhere, `run_packing()`, etc.).
+- The system will merge your output with the preserved sections automatically.
+
+---
+
+### Primary Objective  
+
+Maximize the overall `combined_score` while guaranteeing that every generated packing passes **all validity checks** (no overlap, all circles inside the container, correct radius handling, etc.).
+
+---
+
+### What Worked – Keep These Ideas  
+
+1. **Linear‑programming formulation** using `scipy.optimize.linprog` to find the maximal feasible radius for a given set of centers.  
+2. **Iterative global expansion** (`_GLOBAL_STEP`) combined with a **refinement phase** (`_REFINE_STEP`) to tighten the solution after the coarse search.  
+3. **Explicit constraint building** (`_build_lp_matrices`) that encodes container bounds and pairwise non‑overlap as linear inequalities.  
+4. **Fallback center addition** (`_find_extra_center`) when the LP fails to improve the radius.
+
+---
+
+### What Failed – **Do NOT** repeat these patterns  
+
+- **Allowing LP solutions that violate a single inequality by > 1e‑9** – this caused 36 % of validity failures.  
+- **Skipping the final geometry validation** (`_validate_solution`) after refinement – led to 9 % of failures.  
+- **Using a fixed small number of refinement iterations** regardless of convergence – produced 20 % of failures where circles still overlapped.  
+
+---
+
+### Suggested Strategies – Try These Improvements  
+
+1. **Tighten LP feasibility tolerance**: set `linprog` options `tol=1e‑10` and enforce a post‑solve check that every constraint residual ≤ `_EPS = 1e‑9`. Reject any solution that exceeds this bound and trigger a retry with a smaller step size.  
+
+2. **Adaptive iteration control**:  
+   - Begin with `_REFINE_ITER = 30`.  
+   - After each refinement pass, compute the maximum constraint violation.  
+   - If the violation is > `_EPS`, double the iteration count (capped at 120) and continue; otherwise break early.  
+
+3. **Dynamic step scaling**:  
+   - When the global expansion fails to improve the radius for three consecutive steps, halve `_GLOBAL_STEP` (but never below `0.001`).  
+   - Conversely, if the radius improves by > `0.02` in a single step, increase `_GLOBAL_STEP` by 10 % up to a maximum of `0.05`.  
+
+4. **Hybrid heuristic fallback**:  
+   - If the LP is infeasible after `_MAX_ITER_GLOBAL` attempts, invoke a simple greedy placement: randomly sample a point inside the container, reject it if it overlaps any existing circle (using the current radius), and repeat up to `1000` trials.  
+   - Accept the first feasible point as a new center and restart the LP from this augmented set.  
+
+5. **Robust validation pipeline** (`_validate_solution`):  
+   - Check pairwise distances **and** container distance with a margin of `2*_EPS`.  
+   - Verify that the returned radius is non‑negative and that all centers lie within the container’s interior (distance ≤ `R_container - radius`).  
+   - If any check fails, automatically rollback the last added center and retry with a reduced step.  
+
+6. **Cache LP matrices**: For a given `centers` list, reuse previously built `A_ub`, `b_ub` when only the radius variable changes. This reduces numerical noise and improves convergence speed.  
+
+7. **Logging for debugging** (optional, but must not affect return value):  
+   - Append a short string to a module‑level list `debug_log` each time a step succeeds or fails, including iteration number, radius, and max violation.  
+   - This information is never returned to the caller but can be inspected during development.  
+
+---
+
+### Implementation Checklist  
+
+- **Only edit** functions inside the evolve block: `construct_packing`, `_build_lp_matrices`, `_solve_radius_lp`, `_find_extra_center`, `_validate_solution`, and any new helper you add.  
+- Preserve existing signatures; **do not add new parameters** to `construct_packing`.  
+- Keep all imports and the `run_packing` wrapper untouched – they are managed outside the evolve block.  
+- Ensure the final returned object from `construct_packing` is a dictionary with keys `centers` (list of `(x, y)` tuples) and `radius` (float).  
+
+Follow these guidelines precisely; any deviation will cause the evaluation harness to reject the submission. Good luck!

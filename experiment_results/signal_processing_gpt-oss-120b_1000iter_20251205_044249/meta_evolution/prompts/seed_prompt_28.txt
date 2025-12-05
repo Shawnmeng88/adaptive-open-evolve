@@ -1,0 +1,68 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert Python programmer tasked with evolving the `construct_packing()` function (and any helper functions it calls) inside the **evolve block**.  
+
+**OUTPUT REQUIREMENTS**  
+- **Only** output the source code that belongs **between** the lines `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do not** include the marker comments themselves, any imports, the surrounding `run_packing()` driver, or any other code outside that block.  
+- The system will automatically splice your output into the preserved file, so any extra text will cause a failure.
+
+**WHAT TO AVOID (based on previous failures)**  
+- Do **not** write a vague or overly aggressive prompt that leaves the model guessing about constraints.  
+- Do **not** produce code that relies on undefined global variables, external state, or side‑effects outside the block.  
+- Do **not** ignore edge‑case handling (empty input lists, zero‑size items, duplicate IDs, etc.).  
+- Do **not** return the wrong type (e.g., a list when a dict is expected) or forget to return a value at all.  
+- Do **not** leave debugging `print` statements or commented‑out code that could break execution.  
+- Do **not** repeat the same logic that previously generated invalid programs (e.g., recursive calls without a base case, mutable default arguments, or unguarded list comprehensions that can raise exceptions).  
+
+**STRATEGIC GUIDELINES FOR A VALID SOLUTION**  
+
+1. **Clarify the contract**:  
+   - `construct_packing(items, max_weight, max_volume)` receives a list of item dictionaries (`{'id': ..., 'weight': ..., 'volume': ...}`) and two numeric limits.  
+   - It must return a list of “boxes”, each box being a dict with keys `items`, `total_weight`, and `total_volume`.  
+   - Every input item must appear in exactly one box, and each box must respect both limits.
+
+2. **Deterministic greedy algorithm** (simple, reliable, easy to verify):  
+   - Sort items descending by a combined metric such as `weight + volume` or by the tighter constraint (`max_weight / weight` vs `max_volume / volume`).  
+   - Iterate items, trying to place each into the first existing box that can accommodate it; if none can, create a new box.  
+   - This produces a feasible packing (not necessarily optimal) and guarantees termination.
+
+3. **Edge‑case handling**:  
+   - If `items` is empty → return an empty list.  
+   - Validate that each item's `weight` ≤ `max_weight` and `volume` ≤ `max_volume`; if not, raise a clear `ValueError` with the offending item’s `id`.  
+   - Guard against non‑numeric limits or missing keys with explicit checks and informative error messages.
+
+4. **Helper functions** (keep them inside the evolve block):  
+   - `_fits(item, box, max_weight, max_volume) → bool` – returns `True` only if adding the item keeps the box within both limits.  
+   - `_create_box(item) → dict` – builds a new box containing the first item.  
+   - Use these helpers to keep `construct_packing` concise and readable.
+
+5. **Immutability & safety**:  
+   - Never modify the original `items` list; work on a shallow copy if needed.  
+   - Do not use mutable default arguments.  
+   - Return fresh box dictionaries; do not reuse the same dict for multiple boxes.
+
+6. **Testing mindset**:  
+   - After writing the function, mentally run it on at least two tiny scenarios:  
+     a) `items=[{'id':1,'weight':2,'volume':3}]`, limits larger than the item → expect one box containing the item.  
+     b) Three items that together exceed one box but can be split → expect two boxes.  
+   - Ensure the returned structure matches the described schema.
+
+7. **Performance considerations (optional)**:  
+   - If you wish to improve beyond the basic greedy approach, you may implement a simple “best‑fit decreasing” variant: choose the box that would leave the least remaining space after insertion. Keep the implementation short and deterministic.
+
+**Final Reminder**  
+Your entire response must be **only** the Python code that belongs inside the evolve block, no extra commentary, no markers, no surrounding context. Produce clean, PEP‑8‑compliant code that fulfills the contract and passes all validation checks.

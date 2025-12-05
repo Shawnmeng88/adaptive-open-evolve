@@ -1,0 +1,81 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – GUIDELINES FOR EVOLUTION BLOCK**
+
+You are to edit **only** the code that appears between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...
+# EVOLVE-BLOCK-END
+```  
+
+When you respond, **output ONLY the Python code that belongs inside those markers** – do **not** include the markers themselves, any import statements, or any other surrounding code. The surrounding framework (imports, `run_packing()`, etc.) will be merged automatically.
+
+---
+
+### Primary Objective
+Improve the **`construct_packing()`** function (and any helper functions such as **`compute_max_radii()`**) so that a packing of **26 circles inside the unit square** achieves:
+
+1. **Validity = 1.0** – every circle centre `(x, y)` satisfies `0 ≤ x ≤ 1` and `0 ≤ y ≤ 1`; all radii are non‑negative; no two circles overlap (distance between centres ≥ sum of radii).  
+2. **Maximum possible minimal radius** – increase the smallest radius among the 26 circles as much as possible while preserving validity.
+
+---
+
+### What Worked (keep these ideas)
+
+- **Explicit geometric constraints** in the code (e.g., checking bounds, non‑overlap) help the verifier.
+- **Structured grid‑based layouts** (regular spacing) provide a solid baseline.
+- **Local refinement** (splitting a grid cell, adjusting radii) can increase the count without breaking constraints.
+- **Deterministic placement** (no random sampling) yields reproducible, verifiable solutions.
+
+---
+
+### What Failed (DO NOT DO)
+
+- **Random or heuristic search** that can leave circles outside the unit square or cause overlaps.  
+- **Hard‑coded radii that ignore neighbour distances** – leads to validity failures.  
+- **Adding circles after the initial layout without re‑checking all pairwise constraints** – produces overlapping circles.  
+- **Using global optimization libraries** that are not deterministic or that produce floating‑point rounding errors causing marginal overlaps.  
+- **Modifying only the centre positions without adjusting radii accordingly** – reduces the minimal radius and may violate the “no‑overlap” rule.
+
+---
+
+### Suggested Strategies (try these, but stay within the allowed scope)
+
+1. **Enhanced Grid with Variable Cell Size**  
+   - Start from a uniform `n × n` grid (e.g., `5 × 5` gives 25 circles).  
+   - Identify a cell where you can safely insert a **second** circle by splitting the cell into two sub‑cells and reducing the radii proportionally.  
+   - Compute the maximal radius that fits in each sub‑cell given the distances to all existing circles.
+
+2. **Boundary‑Aware Placement**  
+   - Place circles whose centres lie on a margin `r` from each side of the square to guarantee they stay inside.  
+   - For interior circles, enforce a minimum clearance of `2 r` from neighbours.
+
+3. **Iterative Radius Adjustment**  
+   - After an initial placement, compute the **minimum allowable radius** for each circle given its neighbours (`r_i = min(dist(i,j))/2`).  
+   - Set each circle’s radius to the **minimum of** this value and a global target radius.  
+   - Repeat once (or twice) to propagate adjustments; this stays deterministic and cheap.
+
+4. **Symmetry Exploitation**  
+   - Mirror placements across the vertical or horizontal mid‑line to reduce the number of unique distance checks.  
+   - Ensure the mirrored circle respects the same radius constraints.
+
+5. **Explicit Helper Functions**  
+   - `compute_max_radii(centers)`: returns the largest radii that keep all circles non‑overlapping and inside the unit square.  
+   - `is_valid(centers, radii)`: returns `True` only if every centre is within `[0,1]` and all pairwise distances satisfy `dist ≥ r_i + r_j`.
+
+Implement these ideas **only inside the evolve block**. Keep the function signatures unchanged; only improve the internal logic. Do not add new top‑level imports or modify code outside the block.

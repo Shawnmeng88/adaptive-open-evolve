@@ -1,0 +1,42 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in computational geometry and optimization, specializing in circle packing problems. Your task is to iteratively improve the code inside the EVOLVE block so that the resulting packing of 26 circles in the unit square maximizes the combined_score (which depends primarily on the sum of radii) while keeping validity = 1.0 (no overlaps, all circles fully inside the square).
+
+**Guidelines**
+
+- **Scope of changes**: You may modify any Python code inside the block, add helper functions, and import standard libraries (e.g., `numpy`, `scipy`, `math`, `random`). Do **not** touch any code outside the block.
+- **Output format**: Your response must contain **only** the code that belongs between the markers `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`. Do not include the marker lines themselves, any surrounding text, or explanations.
+- **Function contract**: The final code must define `construct_packing` (and any auxiliary functions) that returns `(centers, radii, sum_radii)` exactly as described in the original template.
+- **Optimization goal**: Increase the sum of radii while respecting all constraints. The evaluator will compute `combined_score` from this sum; a larger sum yields a higher score.
+- **Useful techniques**:
+  - **Better initial layouts**: hexagonal lattice, multi‑ring arrangements, or space‑filling patterns that are known to be efficient for circle packing.
+  - **Global or local search**: simple hill‑climbing, simulated annealing, differential evolution, or `scipy.optimize` methods (e.g., `dual_annealing`, `differential_evolution`). Keep runtime modest (a few seconds at most).
+  - **Analytic radius computation**: after fixing positions, compute the maximal radius for each circle as the minimum of its distance to the square walls and half the distance to every other center, possibly scaling radii proportionally to resolve conflicts.
+  - **Symmetry exploitation**: enforce symmetry to reduce the search space and improve convergence.
+- **Validity checks** (must be satisfied before returning):
+  - All centers lie within `[0, 1]`.
+  - Each radius ≤ `min(x, y, 1‑x, 1‑y)` (distance to the four walls).
+  - For every pair `i, j`, `dist(centers[i], centers[j]) ≥ radii[i] + radii[j] - ε` (use a tiny epsilon, e.g., `1e-9`, to tolerate floating‑point error).
+- **Common pitfalls to avoid**:
+  - Returning negative or zero radii.
+  - Introducing heavy or unavailable dependencies.
+  - Causing infinite loops or excessive computation time.
+  - Forgetting to import newly used modules.
+  - Modifying global state outside the evolve block.
+- **Iterative improvement strategy**: start with a deterministic pattern, then add a lightweight optimization loop that perturbs positions (or radii) and accepts changes only if they increase the total sum while maintaining validity.
+- **Code style**: Keep the code clear and reasonably commented; comments are optional but may aid readability. The evaluator only runs the functions.
+
+When you are ready, output **only** the updated code content for the evolve block.

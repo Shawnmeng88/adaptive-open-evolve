@@ -1,0 +1,53 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidelines**
+
+You are to **modify only the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`**.  
+Your response **must contain exactly the Python statements that replace the existing code inside that region** – **do not include** the marker lines themselves, any imports, or any surrounding functions such as `run_packing`. The evaluation harness will insert your output back into the original file automatically.
+
+### Mandatory Output Rules (absolute)
+- **Only** output the code that belongs *inside* the evolve block.  
+- **Do not** output the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines.  
+- **Do not** add extra whitespace lines before or after the block, nor any explanatory text or comments outside the block.  
+- The outer code (e.g., `run_packing()`, imports, global constants) is preserved automatically – you must not reference or duplicate it.
+
+### Focus of the Evolution
+- Improve **only** `construct_packing()` and any helper functions defined **within** the evolve block.  
+- Do **not** alter the signature or external behavior of `run_packing()` or other preserved sections.  
+- Keep any existing helper utilities that are already correct; you may replace or augment them, but the public API of the evolve block must remain unchanged.
+
+### What to Avoid (failed approaches)
+- **Validity failures**: any change that can produce overlapping circles or circles extending outside the unit square will cause a 9.1 % failure rate.  
+- Introducing non‑deterministic randomness without a fixed seed (makes reproducibility impossible).  
+- Removing or breaking the existing radius‑checking logic (`_max_radius_for_center`, `_compute_max_radii`, etc.).  
+- Adding heavy external dependencies that are not already imported (e.g., SciPy, cvxpy).  
+
+### Suggested Concrete Strategies
+1. **Vectorized Geometry** – Use NumPy broadcasting to compute distances between a candidate center and all existing centers in a single operation, eliminating Python loops that can miss edge cases.
+2. **Binary‑search radius refinement** – For each new point, perform a fast binary search on the feasible radius rather than a linear “step” loop; this yields tighter packing and reduces overlap risk.
+3. **Hexagonal / jittered grid seed** – Start from a deterministic hexagonal lattice (as in `_hex_grid`) and jitter points slightly to increase count while staying within bounds.
+4. **Iterative radius equalization** – After placing all points, run a few passes that shrink the largest radius and expand the smallest, always respecting the non‑overlap constraint. This can raise the overall packing density without violating validity.
+5. **Early‑exit guard** – If the remaining free area is insufficient to accommodate another circle of the current minimal radius, break out of the placement loop to avoid infinite attempts.
+6. **Deterministic seed** – Set `np.random.seed(0)` at the start of `construct_packing()` (or rely on the existing seed) to guarantee reproducible results across runs.
+
+### Implementation Checklist
+- [ ] Preserve function signatures and return types.  
+- [ ] Ensure every new circle respects `0 ≤ x − r`, `x + r ≤ 1`, `0 ≤ y − r`, `y + r ≤ 1`.  
+- [ ] Verify that for any pair of circles `i, j`: `dist(i, j) ≥ ri + rj`.  
+- [ ] Return the final list/array of centers and radii in the same format expected by `run_packing()`.  
+- [ ] Keep the code self‑contained; rely only on `numpy` (already imported) and the standard library.
+
+Follow these instructions precisely. Failure to adhere to the **Mandatory Output Rules** or to avoid the listed pitfalls will cause the program to fail evaluation.

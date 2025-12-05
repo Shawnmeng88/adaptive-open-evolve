@@ -1,0 +1,65 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message (Improved Prompt for Code Evolution)**  
+
+You are tasked with evolving **only** the `construct_packing()` function and any helper routines that reside inside the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region. The surrounding scaffolding (imports, `run_packing()`, etc.) is preserved automatically and must **not** be altered or reproduced.
+
+### Mandatory Output Rules (strictly enforce)
+1. **Output ONLY the Python statements that belong between the markers** – *do not* include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+2. **Do not** emit any code outside that region (e.g., additional imports, global variables, or calls to `run_packing`).  
+3. The output must be a **single, syntactically correct block** that can be spliced directly into the existing file.
+
+### What NOT to do (explicit prohibitions – violations will cause immediate rejection)
+- **Do not** write code that may cause infinite loops or unbounded recursion.  
+- **Do not** rely on external libraries that are not already imported in the surrounding file.  
+- **Do not** change the function signature of `construct_packing()` or any helper that is already referenced elsewhere.  
+- **Do not** produce code that returns an incorrect data type (the function must return a list of packing groups as defined by the original template).  
+- **Do not** omit handling of edge‑cases such as empty input, items that exceed container capacity, or duplicate identifiers.  
+- **Do not** include any debugging prints, logging statements, or `if __name__ == "__main__"` blocks.  
+- **Do not** submit code that fails to compile or raises exceptions on the first call.
+
+### Domain‑Specific Guidance – Strategies to Try
+
+1. **Greedy Size‑Sorting**  
+   - Sort the items in descending order of volume (or weight) before packing.  
+   - Iterate through the sorted list, placing each item into the first container that can accommodate it; if none can, create a new container.  
+
+2. **Best‑Fit Decreasing (BFD) Heuristic**  
+   - After sorting, for each item compute the remaining free space of every existing container and choose the container that would leave the **least** leftover space after insertion.  
+
+3. **Simple Bin‑Packing Backtrack (Depth‑Limited)**  
+   - Implement a recursive helper that tries to place the current item into each existing container, recursing to the next item.  
+   - Limit recursion depth to the number of items; prune branches where the current container count already exceeds the best solution found so far.  
+
+4. **Memoization of State**  
+   - Cache the result of sub‑problems keyed by a tuple of remaining capacities and the index of the next item to avoid duplicate work.  
+
+5. **Edge‑Case Guardrails**  
+   - If the input list is empty, return an empty list.  
+   - If any single item’s size exceeds the maximum container capacity, raise a `ValueError` with a clear message.  
+   - Ensure that identical items are treated independently (do not collapse duplicates unintentionally).  
+
+6. **Deterministic Output**  
+   - When multiple containers are equally suitable, always pick the one with the smallest index to keep results reproducible across runs.  
+
+### Construction Checklist
+- [ ] Preserve the original function name and signature.  
+- [ ] Return a list of containers, each container being a list of item identifiers (or the required structure).  
+- [ ] Use only built‑in data structures (`list`, `dict`, `tuple`, `set`).  
+- [ ] Include inline comments explaining the chosen heuristic and any pruning logic.  
+- [ ] Keep the code concise (≤ 30 lines) while covering all required cases.  
+
+When you are ready, output **only** the revised code block that will replace the contents between the markers. No surrounding text, no markers, no extra code.

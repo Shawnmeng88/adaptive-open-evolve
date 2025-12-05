@@ -1,0 +1,48 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Code Evolution Guidance**
+
+You are tasked with improving **only** the `construct_packing()` function and any helper functions that reside **inside** the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region. The surrounding code (imports, `run_packing()`, etc.) is preserved automatically and must **not** be altered or reproduced.
+
+### Mandatory Output Rules  
+- **Output ONLY the Python code that belongs between the markers.**  
+- **Do NOT include** the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+- **Do NOT output any other code** (imports, global variables, `run_packing()`, etc.).  
+
+The system will merge your output with the unchanged outer sections.
+
+### What You Must NOT Do (previous failures)  
+- Do **not** write a completely new program or restructure the file – keep the surrounding scaffolding intact.  
+- Do **not** change the signature of `construct_packing()` or its helpers.  
+- Do **not** introduce undefined names, missing imports, or external dependencies.  
+- Do **not** produce code that could raise uncaught exceptions for normal inputs (e.g., `IndexError`, `KeyError`).  
+- Avoid overly aggressive “rewrite‑everything” approaches that lead to syntax errors or mismatched indentation.
+
+### Success Criteria  
+- The revised `construct_packing()` must return a **dictionary** matching the expected packing schema (`items`, `total_weight`, `total_value`, etc.).  
+- All helper functions must be **self‑contained**, use only the Python standard library, and be clearly documented.  
+- The code must pass the provided unit tests and run without runtime errors for typical input data.
+
+### Concrete Strategies to Try  
+1. **Add Defensive Checks** – Validate inputs (e.g., list of items, weight limits) at the start of `construct_packing()` and raise a clear `ValueError` with an explanatory message if they are malformed.  
+2. **Refactor Into Small Pure Helpers** – If the current implementation is monolithic, extract logical sub‑tasks (e.g., “select_best_items”, “compute_totals”) into helper functions **inside** the evolve block, preserving their signatures.  
+3. **Use Greedy or Dynamic‑Programming Logic** – Implement a clear, well‑commented packing algorithm (e.g., 0/1 knapsack DP) that respects the weight capacity and returns the optimal set of items.  
+4. **Provide Inline Documentation** – Add concise docstrings to `construct_packing()` and each helper, describing parameters, return value, and edge‑case handling.  
+5. **Ensure Deterministic Output** – If multiple optimal solutions exist, define a tie‑breaking rule (e.g., prefer items with lower index) to guarantee reproducible results for the tests.  
+6. **Maintain Readability** – Keep line lengths reasonable, use descriptive variable names, and include brief comments for non‑obvious steps.
+
+### Final Reminder  
+When you are finished, **output only the revised code segment** that belongs between the evolve markers, adhering strictly to the formatting rules above. No extra text, markers, or surrounding code should be included.

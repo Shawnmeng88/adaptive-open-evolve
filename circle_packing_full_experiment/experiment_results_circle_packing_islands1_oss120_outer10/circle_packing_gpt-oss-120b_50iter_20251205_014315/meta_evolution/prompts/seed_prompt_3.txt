@@ -1,0 +1,89 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving `construct_packing()`**
+
+You must output **only** the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+- **Do NOT include the markers themselves** in your response.  
+- **Do NOT output any code outside those markers** (imports, `run_packing()`, visualisation helpers, etc.).  
+- The surrounding framework will automatically merge your output with the preserved sections; any deviation will cause a failure.
+
+### Objective  
+Maximize the **sum of radii** returned by `construct_packing()` while satisfying **all** of the following constraints:
+
+1. Every circle must lie **entirely inside** the unit square \([0,1]\times[0,1]\).  
+2. No two circles may **overlap** (distance between centers ≥ sum of radii).  
+3. The function must return two objects:  
+   - `centers`: an `np.ndarray` of shape `(n, 2)` with the (x, y) coordinates of each circle.  
+   - `radii`: an `np.ndarray` of shape `(n,)` with the corresponding radii.  
+
+### What Worked (keep these ideas)
+
+- **Hexagonal lattice**: arranging points on a hexagonal/triangular grid gives a dense, regular packing.  
+- **Compute maximal feasible spacing**: start from a spacing that yields at least the required number of points, then shrink uniformly until all circles fit the unit square and respect non‑overlap.  
+- **Radius = spacing / 2** (the limiting factor for a hex grid).  
+- **Simple deterministic construction**: avoids random searches that often produce invalid solutions.  
+
+### What Failed (must avoid)
+
+- Introducing **iteration loops** that perform many trial placements; this caused a high invalidity rate.  
+- Using vague constraints such as “must not overlap” without explicit distance checks; leads to silent failures.  
+- Adding unnecessary **step/optimize** parameters that increase code size and complexity without benefit.  
+- Any approach that results in **>20 % invalid programs** in the evaluation (e.g., random sampling, excessive branching).  
+
+### Suggested Concrete Strategies (try one or combine)
+
+1. **Direct Hexagonal Grid Generation**  
+   - Compute the number of rows `R` and columns `C` needed to guarantee ≥ N points (where N is the target count, e.g., 26).  
+   - Use vertical spacing `h = spacing * sqrt(3)/2` and horizontal spacing `spacing`.  
+   - Offset every other row by `spacing/2` to create the hex pattern.  
+
+2. **Uniform Scaling to Fit the Unit Square**  
+   - After generating the raw grid, compute the bounding box of all points.  
+   - Determine the maximal uniform scaling factor `s ≤ 1` that keeps the outermost circles fully inside the square (account for radius).  
+   - Apply the scaling and translate the pattern so the minimum x and y become `radius`.  
+
+3. **Adaptive Spacing Search (binary search)**  
+   - Define a function `feasible(spacing)` that builds the grid, scales it, and checks all constraints.  
+   - Perform a binary search on `spacing` between a lower bound (0) and an upper bound (≈ 1) to find the largest spacing that remains feasible.  
+   - This yields the maximal possible radius while guaranteeing validity.  
+
+4. **Post‑generation Pruning (if extra points)**  
+   - If the grid yields more than the required number of circles, drop the farthest points from the centre or use a deterministic pattern (e.g., remove points from the outermost rows) to reach exactly N without breaking symmetry.  
+
+5. **Explicit Constraint Checks**  
+   - After constructing `centers` and `radii`, run a vectorised check:  
+     ```python
+     dists = np.linalg.norm(centers[:, None, :] - centers[None, :, :], axis=2)
+     np.fill_diagonal(dists, np.inf)
+     assert np.all(dists >= radii[:, None] + radii[None, :])
+     ```  
+   - Also verify `centers.min(axis=0) >= radii` and `centers.max(axis=0) <= 1 - radii`.  
+   - If any assertion would fail, reduce the spacing and recompute (handled by the binary search).  
+
+### Implementation Requirements
+
+- **Only modify/define functions inside the evolve block**: `construct_packing()` and any helper functions it calls.  
+- Keep the public signature exactly: `def construct_packing() -> Tuple[np.ndarray, np.ndarray]:`.  
+- Use **NumPy** for all array operations; avoid external libraries.  
+- Keep the code **compact** (no unnecessary imports, globals, or I/O).  
+- Ensure the function always returns a **valid packing** for the target number of circles (the evaluation will test several values, so the algorithm should adapt to any `N` you choose internally).  
+
+### Reminder
+
+- **Do not** include the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` markers in your output.  
+- **Do not** output any code outside the evolve block.  
+- Follow the above strategies and constraints precisely to produce a high‑scoring, valid solution.

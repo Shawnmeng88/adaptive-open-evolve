@@ -1,0 +1,77 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code‑Evolution Block**
+
+You are to generate **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+- **Do NOT** output the markers themselves.  
+- **Do NOT** include any imports, global constants, `run_packing()`, or any other code that lies outside the evolve block.  
+- The surrounding harness will automatically merge your output with the preserved sections.
+
+### Objective
+Rewrite and improve the functions inside the evolve block, focusing on `construct_packing()` and any private helper functions it uses, so that when `run_packing()` is executed:
+
+1. **Validity = 1.0** – every circle is completely inside the unit square and no two circles overlap.  
+2. **Combined score** (the metric used by the evaluator, typically the sum of radii or a weighted sum) is maximised as much as possible.
+
+### Mandatory Output‑Format Instruction (must be obeyed)
+- **Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+- **Do NOT include the markers themselves** or any surrounding code.  
+
+### What to Keep (successful ideas from the best version)
+- Use a **hexagonal lattice** to generate an initial dense set of candidate centers.  
+- Compute **optimal radii** for those centers via a **linear programming** formulation (`scipy.optimize.linprog`).  
+- Enforce constraints:
+  * `r_i ≤ distance to each of the four square edges`.
+  * `r_i + r_j ≤ distance between centers i and j` for every pair (non‑overlap).  
+- After solving the LP, **filter out circles with negligible radius** (e.g., `r < 1e-6`).  
+
+### What Must Be Avoided (previous failures)
+- **Skipping the LP step** or using a heuristic that does not guarantee feasibility – this caused validity failures.  
+- **Allowing circles to be placed outside the unit square** (e.g., forgetting the edge‑distance constraints).  
+- **Using a fixed “step” size** that does not adapt to the desired number of circles; this resulted in too few points and low scores.  
+- **Returning raw lattice points without radius optimisation** – leads to overlapping circles.  
+
+### Suggested Strategies for Improvement
+1. **Dynamic Lattice Sizing**  
+   - Compute the required lattice spacing from the target number of circles `n`.  
+   - Generate enough lattice points to comfortably exceed `n` after radius filtering.  
+
+2. **Robust LP Formulation**  
+   - Build the constraint matrix `A_ub` and vector `b_ub` efficiently using NumPy broadcasting.  
+   - Use the `highs` method (`method='highs'`) for speed and numerical stability.  
+   - Set the objective to **maximize the sum of radii** (`c = -np.ones(m)`) because `linprog` minimizes.  
+
+3. **Post‑Processing Cleanup**  
+   - After solving, discard circles with radius below a tiny tolerance.  
+   - Optionally, **re‑run a second LP** on the retained circles to tighten radii after removal of near‑zero circles.  
+
+4. **Numerical Safeguards**  
+   - Clip radii to be non‑negative (`np.maximum(r, 0)`).  
+   - Ensure the final list of circles respects the unit‑square bounds with a small epsilon margin.  
+
+5. **Optional Greedy Refinement (if time permits)**  
+   - Sort circles by radius descending.  
+   - Iteratively attempt to **increase** each radius while maintaining feasibility (simple line‑search against nearest neighbors and edges).  
+   - This can boost the combined score without breaking validity.  
+
+### Implementation Checklist
+- Keep the function signatures unchanged; only modify bodies.  
+- Preserve any existing docstrings or comments that are inside the evolve block.  
+- Ensure the returned value from `construct_packing()` matches the expected format (e.g., a list of `(x, y, r)` tuples).  
+- Do not introduce new external dependencies beyond `numpy` and `scipy.optimize`.  
+
+Follow these instructions precisely and output **only** the revised code segment. Good luck!

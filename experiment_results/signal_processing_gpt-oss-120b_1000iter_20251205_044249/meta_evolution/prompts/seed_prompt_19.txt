@@ -1,0 +1,129 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are to revise only the code that appears between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not output the markers themselves**, and do not add any other code (imports, helper definitions outside the block, or the surrounding `run_packing()` wrapper). The system will automatically splice your output into the preserved surrounding file.
+
+---
+
+### What You Must Do
+1. **Focus exclusively on `construct_packing()` and any helper functions defined inside the evolve block.**  
+   - Refactor, add, or remove logic *only* within this region.  
+   - Do **not** touch any code outside the block (global constants, main entry point, etc.).
+
+2. **Output ONLY the revised source code** that belongs between the two markers. No extra text, explanations, or markers.
+
+3. **Preserve the function signatures** that the rest of the program expects:
+   ```python
+   def construct_packing(items: List[Item], bins: List[Bin]) -> PackingResult:
+       ...
+   ```
+   Any new helper you introduce must be defined **inside** the evolve block and be called from `construct_packing()`.
+
+---
+
+### What You Must **Avoid**
+- **Aggressive, unconstrained rewrites** that change the return type, argument list, or remove required imports.  
+- **Leaving the block empty** or returning `None`.  
+- **Introducing syntax errors** (unbalanced parentheses, missing colons, etc.).  
+- **Repeating the same pattern that caused previous failures** (e.g., a naïve greedy loop that never terminates or always produces an invalid packing).  
+
+If you are unsure about a change, keep the existing logic and make a small, incremental improvement.
+
+---
+
+### Concrete Strategies to Try
+
+1. **Hybrid Greedy + Look‑Ahead**  
+   - Sort `items` by decreasing volume (or weight) first.  
+   - For each item, iterate over `bins` in order of *remaining capacity* (largest first).  
+   - Before placing, simulate the placement and compute a simple heuristic score:  
+     `score = remaining_capacity_after - (average_remaining_capacity_of_other_bins)`.  
+   - Choose the bin with the **highest positive score**; if none are positive, fall back to the bin with the smallest leftover space that still fits the item.
+
+2. **Two‑Pass Packing**  
+   - **First pass:** Perform a standard best‑fit decreasing (BFD) to get an initial feasible packing.  
+   - **Second pass:** Run a local improvement sweep:
+     - For each item that is not in the “tightest” bin (i.e., the bin where its removal would free the most space), try moving it to another bin that can accommodate it and would reduce the overall waste.  
+     - Apply the move only if the total unused capacity across all bins decreases.
+
+3. **Bin Splitting Heuristic**  
+   - If an item does not fit in any existing bin, create a **new temporary bin** (clone of the smallest original bin) and place the item there.  
+   - After all items are placed, attempt to merge temporary bins back into original bins by moving their contents if capacity allows.
+
+4. **Safety Checks & Early Exit**  
+   - After each placement, verify that the bin’s used capacity does not exceed its limit.  
+   - If a placement would violate capacity, skip that bin and continue searching.  
+   - If no bin can accept the current item, invoke the “Bin Splitting Heuristic” (strategy 3) instead of failing outright.
+
+5. **Deterministic Tie‑Breaking**  
+   - When multiple bins have identical scores, pick the one with the **lowest index**. This keeps the algorithm deterministic and easier to test.
+
+6. **Clear Return Structure**  
+   - Build a `PackingResult` object (or the expected tuple/dict) only after all items have been processed successfully.  
+   - Populate fields such as `bin_assignments`, `total_waste`, and `success` consistently with the rest of the codebase.
+
+---
+
+### Example Skeleton (keep this structure, fill in the logic)
+
+```python
+def construct_packing(items, bins):
+    # 1️⃣ Sort items by size (largest first)
+    items_sorted = sorted(items, key=lambda it: it.volume, reverse=True)
+
+    # 2️⃣ Prepare mutable bin states
+    bin_states = [{ 'bin': b, 'used': 0, 'items': [] } for b in bins]
+
+    # 3️⃣ First‑pass: Best‑Fit Decreasing
+    for item in items_sorted:
+        # Find candidate bins that can hold the item
+        candidates = [
+            (i, bs) for i, bs in enumerate(bin_states)
+            if bs['used'] + item.volume <= bs['bin'].capacity
+        ]
+        if not candidates:
+            # No existing bin fits → create temporary bin (strategy 3)
+            # ... (implementation omitted here, you must fill it)
+            continue
+
+        # Score each candidate (look‑ahead heuristic)
+        best_idx, _ = max(
+            candidates,
+            key=lambda pair: (
+                (pair[1]['bin'].capacity - (pair[1]['used'] + item.volume))
+                - sum(
+                    other['bin'].capacity - other['used']
+                    for j, other in enumerate(bin_states) if j != pair[0]
+                )
+            )
+        )
+        # Place the item
+        bin_states[best_idx]['used'] += item.volume
+        bin_states[best_idx]['items'].append(item)
+
+    # 4️⃣ Second‑pass improvement (optional local moves)
+    # ... (you may implement a simple swap or move loop here)
+
+    # 5️⃣ Build and return the result in the expected format
+    assignments = { b['bin'].id: [it.id for it in b['items']] for b in bin_states }
+    total_waste = sum(b['bin'].capacity - b['used'] for b in bin_states)
+    return PackingResult(assignments=assignments, waste=total_waste, success=True)
+```
+
+*Replace the placeholder sections (`# ...`) with concrete code that follows the strategies above.*  
+
+Remember: **Only the code inside the evolve block will be kept**. Provide a syntactically correct, self‑contained implementation that respects the existing function signatures and returns a valid packing result.

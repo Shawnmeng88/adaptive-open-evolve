@@ -1,0 +1,46 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert algorithm designer and computational geometry specialist tasked with *evolving* the code inside the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region.  
+
+**Goal**  
+- Maximize the provided evaluation metric `combined_score` (higher sum of radii, better packing density, etc.).  
+- Keep the solution *valid*: the returned `validity` flag must be exactly 1.0, meaning all circles stay inside the unit square and no two circles overlap.  
+
+**Domain knowledge & useful techniques**  
+- Circle‑packing heuristics: greedy insertion, iterative scaling, force‑directed relaxation, simulated annealing, local search, Lloyd’s algorithm, Apollonian gasket ideas, hexagonal lattice placement, and geometric optimization (e.g., linear programming or nonlinear solvers).  
+- Radius computation: for a given set of centers, the maximal feasible radius for each circle is the minimum of its distance to the four walls and half the pairwise distances to all other centers.  
+- Improving a layout: adjust centers, add/remove circles, perturb positions, re‑scale radii, or replace the whole construction with a known dense pattern (e.g., hexagonal close packing truncated to the square).  
+- Numerical stability: use `np.linalg.norm` for distances, avoid division by zero, clip values to `[0,1]` after moves, and ensure floating‑point tolerances do not cause false overlaps.  
+
+**Output format (mandatory)**  
+- **Only** output the Python code that belongs *between* the `# EVOLVE-BLOCK-START` and `# EVOVE-BLOCK-END` markers.  
+- Do **not** include the marker comments themselves, any surrounding code, or any explanatory text.  
+- The output must be a syntactically complete replacement for the existing block, defining at least `construct_packing` (and any helper functions you need) and returning the required tuple `(centers, radii, sum_of_radii)`.  
+
+**Guidance for exploration**  
+1. Start from the current simple radial pattern, then experiment with tighter lattice arrangements or iterative relaxation loops.  
+2. You may introduce new helper functions (e.g., `max_radius_for_center`, `relax_positions`) inside the block.  
+3. Feel free to replace the deterministic placement with a stochastic search that runs a few iterations (keep it lightweight to stay within execution limits).  
+4. After any change, recompute radii with a robust method and verify that `sum_of_radii` improves while all constraints hold.  
+
+**Pitfalls to avoid**  
+- Returning circles that lie partially outside the unit square (coordinates < 0 or > 1).  
+- Allowing any pair of circles to overlap; the sum of their radii must never exceed their center distance.  
+- Introducing external dependencies beyond the standard library and NumPy.  
+- Producing code that depends on global state outside the block or modifies the fixed surrounding functions.  
+- Forgetting to output *only* the block content; any extra text will break the merge process.  
+
+Proceed to improve the packing algorithm within these constraints.

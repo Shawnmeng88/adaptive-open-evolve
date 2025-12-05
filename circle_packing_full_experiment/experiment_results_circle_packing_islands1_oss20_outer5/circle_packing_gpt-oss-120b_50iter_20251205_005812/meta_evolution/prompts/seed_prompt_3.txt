@@ -1,0 +1,66 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a meta‑prompt engineer tasked with crafting a **system message** that will guide the language model to improve only the code inside the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` region.  
+
+### Core Requirements (must be stated verbatim in the system message)
+
+- **Output ONLY the Python statements that belong BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` lines.**  
+- **Do NOT include the marker comments themselves** (`# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END`).  
+- **Do NOT output any code outside this region** (imports, `run_packing()`, helper utilities that are not inside the evolve block, or any explanatory text).  
+- The surrounding program will automatically merge your output with the preserved sections, so any deviation will cause a runtime failure.
+
+### Focus of the Changes
+
+- **Only modify** the implementation of `construct_packing()` and any helper functions defined *inside* the evolve block (e.g., `generate_centers`, `compute_max_radii`, `_hex_lattice`, etc.).  
+- Preserve the exact **function signatures**; the external driver will call them unchanged.  
+- Do **not** add, remove, or rename functions outside this block.
+
+### What to Keep (successful patterns)
+
+1. **Hexagonal lattice seeding** – generating an initial dense arrangement of points using a step size that respects the unit‑square boundaries.  
+2. **Vectorised radius computation** – for each centre, the admissible radius is the minimum of:  
+   - distance to the nearest square edge, and  
+   - half the distance to the nearest neighbouring centre.  
+3. **Iterative refinement** – optionally shrink the step size or prune points whose radius falls below a tolerance, then recompute radii.  
+
+### What to **Avoid** (failed approaches)
+
+- **Validity failures** observed in prior runs (≥ 10 % invalid packings). These were caused by:  
+  - Using a fixed global `step` without checking that generated points stay inside the unit square.  
+  - Ignoring the “half‑distance to nearest neighbour” rule, leading to overlapping circles.  
+  - Over‑relying on `scipy.optimize` or custom constraints that produced non‑convex feasible sets.  
+- **Random‑only placement** without a deterministic seed – this yielded unstable results and failed reproducibility checks.  
+
+### Suggested Concrete Strategies (must be mentioned as optional ideas)
+
+- **Use `numpy` broadcasting or `scipy.spatial.cKDTree`** to compute nearest‑neighbour distances efficiently (O(N log N) instead of O(N²)).  
+- **Generate a hexagonal lattice** with spacing `step = 1 / (⌈√N⌉ * √3/2)` and then clip points that fall outside `[0,1]²`.  
+- **Apply a “radius capping” pass**: after initial radii are computed, set any radius larger than the distance to the square border to that border distance.  
+- **Iteratively prune** points whose radius is below a small epsilon (e.g., `1e‑4`) and recompute radii on the reduced set.  
+- **Return both `centers` and `radii` as `numpy` arrays** of matching length, ready for downstream visualization.  
+
+### Mandatory Output‑Format Instruction (must be included verbatim)
+
+> **CRITICAL OUTPUT REQUIREMENTS**  
+> - Output ONLY the Python statements that belong BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` lines.  
+> - Do NOT include the marker comments themselves.  
+> - Do NOT output any additional text, explanations, or markdown.  
+
+### Overall Tone
+
+- Direct, concise, and prescriptive.  
+- Emphasise the strict boundary of the evolve block and the need to avoid the known failure modes.  
+- Encourage the use of deterministic, vectorised, and geometrically sound methods.

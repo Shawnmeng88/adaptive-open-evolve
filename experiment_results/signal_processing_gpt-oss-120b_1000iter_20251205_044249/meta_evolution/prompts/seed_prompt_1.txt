@@ -1,0 +1,73 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for `construct_packing()`**
+
+You are tasked with evolving the `construct_packing()` function (and any helper functions defined within the evolve block) to produce a correct and efficient packing algorithm. Follow **exactly** the rules below; any deviation will cause the program to be rejected.
+
+---
+
+### ✅ REQUIRED OUTPUT FORMAT
+- **Output ONLY the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.**
+- **Do NOT include the marker comments themselves.**
+- **Do NOT output any imports, top‑level statements, `run_packing()` calls, or other code outside the evolve block.**  
+  The surrounding scaffold will be merged automatically.
+
+---
+
+### ❌ WHAT TO AVOID (these caused previous failures)
+- Writing code that exceeds the marker boundaries or adds extra lines outside the block.  
+- Leaving the function incomplete, returning `None`, or raising unhandled exceptions.  
+- Using overly aggressive shortcuts that ignore the problem constraints (e.g., returning a hard‑coded dummy packing).  
+- Repeating the same buggy pattern that led to 13 consecutive invalid programs.  
+- Adding global variables or side‑effects that are not defined in the original scaffold.  
+
+If any of the above occurs, the evaluation will mark the submission invalid.
+
+---
+
+### 🎯 GOAL OF `construct_packing()`
+Create a packing plan that:
+1. **Respects item dimensions** and the container’s size limits.  
+2. **Maximizes the number of items placed** (or meets the supplied objective metric).  
+3. **Returns a data structure** matching the original specification (e.g., a list of `(item_id, x, y, z, orientation)` tuples).  
+
+You may also modify or add **helper functions** inside the evolve block, but they must be fully self‑contained and called only from within `construct_packing()`.
+
+---
+
+### 💡 SPECIFIC STRATEGIES TO TRY
+1. **Greedy Bottom‑Left Fill** – Sort items by volume (largest first) and place each at the lowest‑possible coordinates that do not cause overlap.  
+2. **Space‑Subdivision (Binary Split)** – Keep a list of free rectangular prisms; after placing an item, split the occupied space into up to three new free prisms.  
+3. **Simple Backtracking** – If a placement fails, backtrack to the previous item and try an alternative orientation/position. Limit recursion depth to avoid exponential blow‑up.  
+4. **Orientation Enumeration** – For each item, generate all 6 axis‑aligned orientations and test them in the greedy loop.  
+5. **Collision Detection Helper** – Write a small function `intersects(a, b)` that checks axis‑aligned box overlap; use it to validate each candidate placement.  
+6. **Boundary Check Helper** – Write `fits_inside(box, container)` to ensure a candidate placement never exceeds container dimensions.  
+
+Pick **one** coherent approach (or combine two complementary ideas, e.g., greedy placement + backtracking fallback). Do **not** attempt to implement a full 3‑D bin‑packing solver with sophisticated heuristics; keep the logic clear, deterministic, and within the time limits of the evaluation environment.
+
+---
+
+### 🛠 IMPLEMENTATION CHECKLIST
+- [ ] All variables used are defined locally or passed as parameters.  
+- [ ] The function returns the exact type expected by the outer code (consult the original scaffold for the signature).  
+- [ ] No `print` statements or debugging output; the function must be pure.  
+- [ ] Edge cases (zero items, items larger than the container) are handled gracefully (e.g., skip or return an empty list).  
+- [ ] The code compiles without syntax errors and does not rely on external libraries beyond the Python standard library.  
+
+---
+
+### 📌 FINAL REMINDER
+Remember: **only the code inside the evolve block will be captured**. Anything outside the block will be discarded and will cause an invalid submission. Write concise, correct Python that fulfills the packing task using the strategies above. Good luck!

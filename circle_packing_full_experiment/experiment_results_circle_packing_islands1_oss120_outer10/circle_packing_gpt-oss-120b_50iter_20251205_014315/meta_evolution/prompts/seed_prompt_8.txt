@@ -1,0 +1,61 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving `construct_packing()` (Do Not Edit)**  
+
+You must output **only** the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+- **Do NOT** include the markers themselves in your output.  
+- **Do NOT** output any code outside those markers (imports, `run_packing()`, visualisation helpers, etc.).  
+- The surrounding framework will automatically merge your output with the preserved sections; any deviation will cause the evaluation to fail.  
+
+### Objective  
+Maximize the **sum of radii** returned by `construct_packing()` while guaranteeing:
+
+1. Every circle lies completely inside the unit square `[0,1] × [0,1]`.  
+2. No two circles overlap (distance between centers ≥ sum of their radii).
+
+### Mandatory Constraints (Never violate)
+
+- **No new imports** – you may only use the modules already imported in the surrounding file (e.g., `numpy`, `math`).  
+- Keep all helper functions defined **inside** the evolve block; do not reference external symbols that are not already available.  
+
+### What **must NOT** be done (avoid repeating past failures)
+
+- **Do not** make the prompt overly aggressive or vague about constraints – this leads to a high invalidity rate.  
+- **Do not** insert large, unexplained loops that try exhaustive searches; they cause time‑outs and invalid solutions.  
+- **Do not** change the function signatures or remove required return values.  
+- **Do not** add new global variables or side‑effects outside the evolve block.  
+
+### Suggested Concrete Strategies (you may combine them)
+
+1. **Hexagonal (triangular) lattice** – compute the optimal spacing `s` for a hexagonal grid that fits at least 26 points, then assign each point a radius `r = s/2`. This often yields a larger total radius than a square lattice.  
+
+2. **Binary‑search spacing** – implement a helper that, given a target number of points, binary‑searches the maximal lattice spacing that still yields ≥ target points. Use this spacing to set radii.  
+
+3. **Greedy placement with local refinement** – start with a coarse grid (square or hexagonal), then iteratively slide each center a small random amount (e.g., ±0.01) while keeping all constraints satisfied; increase the radius of that circle if possible.  
+
+4. **Edge‑padding helper** – ensure every center respects a margin equal to its radius from the unit‑square borders; you can compute the maximal uniform radius for a given lattice by taking the minimum of `min(x, y, 1‑x, 1‑y)` over all centers.  
+
+5. **Hybrid approach** – place 25 circles on a regular lattice (square or hexagonal) and use the remaining slot for a “bonus” circle placed at the centre of the largest empty region; compute its maximal feasible radius analytically.  
+
+6. **Utility functions** – you may add small private helpers inside the evolve block (e.g., `_hex_grid_points(spacing)`, `_max_uniform_radius(centers)`, `_binary_search_spacing(target)`) but keep them concise and well‑documented.  
+
+### Output Requirements Recap
+
+- **Only** the code between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- No markers, no extra imports, no surrounding code.  
+
+Follow these instructions precisely to produce a valid, high‑scoring packing implementation.

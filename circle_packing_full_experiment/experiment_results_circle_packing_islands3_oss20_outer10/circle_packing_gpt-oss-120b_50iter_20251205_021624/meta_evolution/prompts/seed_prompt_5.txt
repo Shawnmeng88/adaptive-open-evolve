@@ -1,0 +1,56 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM PROMPT – Guidance for Evolving the Packing Code**
+
+You may edit **only** the code that appears between the markers  
+`# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+**OUTPUT REQUIREMENTS (DO NOT VIOLATE)**
+- Output **only** the Python code that belongs inside those markers.  
+- **Do not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+- **Do not** output any imports, `run_packing()`, or other code outside the evolve block.  
+- The surrounding file will automatically merge your output with the preserved sections.
+
+**PRIMARY OBJECTIVE**  
+Create a `construct_packing()` function (and any helper functions you modify or add) that returns a NumPy array of shape `(26, 2)` – the (x, y) centers of 26 circles packed inside the unit square. The solution must be **fully valid** (`validity = 1.0`) and achieve the highest possible **combined_score** (sum of radii).
+
+**WHAT TO KEEP FROM PREVIOUS SUCCESS**
+- Build a regular 5 × 5 grid (25 circles) as a solid baseline.  
+- Use the existing `compute_max_radii(centers, max_iter=…, eps=…)` routine to obtain the maximal radii for any set of centers.  
+- Deterministically place the 26th circle at a location that maximizes the total sum of radii when recomputed with `compute_max_radii`.
+
+**WHAT TO AVOID (FAILED APPROACHES)**
+- **Do not** remove or ignore geometric constraints (e.g., allowing circles to leave the unit square).  
+- **Do not** replace the constraint handling with a vague “step” or “avoid” heuristic that does not guarantee non‑overlap.  
+- **Do not** rely on random sampling without a deterministic fallback; randomness caused validity failures in earlier attempts.  
+- **Do not** drop the iterative refinement (`max_iter`, `eps`) that ensures radii converge to a feasible packing.
+
+**SUGGESTED STRATEGIES FOR IMPROVEMENT**
+1. **Grid‑based baseline** – generate the 5 × 5 lattice points with a small margin (e.g., `np.linspace(margin, 1‑margin, 5)`).  
+2. **Candidate generation for the 26th circle** – evaluate a fine mesh (e.g., 0.01‑spaced) over the unit square, discard points that are closer than a tiny epsilon to any grid point, and compute the resulting total radii using `compute_max_radii`. Choose the point with the highest total.  
+3. **Local refinement** – after selecting the best candidate, perform a few gradient‑free local searches (e.g., Nelder‑Mead or simple coordinate descent) around that point, always re‑evaluating `compute_max_radii` and keeping improvements that preserve validity.  
+4. **Boundary safety** – enforce `margin = max_initial_radius` (or a small safety value) when generating candidates so that the final radii never push a circle outside `[0,1]`.  
+5. **Determinism** – set a fixed random seed if any stochastic element is used, but prefer fully deterministic loops to guarantee reproducibility and avoid hidden validity bugs.  
+6. **Performance guard** – cap the number of candidate evaluations (e.g., 10 000) to keep runtime reasonable while still exploring enough of the space to improve the score.
+
+**IMPLEMENTATION NOTES**
+- Keep the signature `def construct_packing():` unchanged.  
+- Return a NumPy array `centers` of shape `(26, 2)`.  
+- If you add helper functions, place them **inside** the evolve block and ensure they are referenced only from `construct_packing`.  
+- Preserve existing docstrings and comments where helpful, but feel free to add new ones that clarify the new logic.
+
+**REMINDER**  
+Only the code between the evolve markers will be inserted back into the full program. Follow the output format strictly, or the evaluation will fail. Good luck!

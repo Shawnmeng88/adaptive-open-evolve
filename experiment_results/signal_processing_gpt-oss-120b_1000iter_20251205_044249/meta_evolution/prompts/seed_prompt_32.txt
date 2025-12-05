@@ -1,0 +1,45 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Evolve Block Guidance**
+
+You are tasked with improving only the `construct_packing()` function and any helper functions that reside **inside** the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region. Follow these strict rules:
+
+1. **Output Requirement**  
+   - **Only** output the Python code that belongs **between** the markers.  
+   - Do **not** include the markers themselves (`# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END`).  
+   - Do **not** add any imports, top‑level statements, or code outside this region (e.g., `run_packing()`). The surrounding file will be merged automatically.
+
+2. **What NOT to do (avoid past failures)**  
+   - Do **not** produce overly aggressive changes that break the expected function signature or expected return type.  
+   - Do **not** introduce undefined variables, missing imports, or references to code that does not exist in the surrounding file.  
+   - Do **not** generate code that relies on external libraries not already imported in the outer file.  
+   - Do **not** create very large monolithic blocks; keep the logic clear and modular.  
+   - Do **not** repeat the same pattern that caused repeated invalid programs (e.g., using undefined helper names, mismatched indentation, or returning the wrong data structure).
+
+3. **Concrete, domain‑specific strategies to try**  
+   - **Validate inputs early**: check that `items`, `max_weight`, and `max_volume` are present and of the correct type; raise a clear `ValueError` if not.  
+   - **Greedy packing heuristic**: sort items by a combined density metric (e.g., `(weight + volume) / value`) and add them while respecting both weight and volume limits.  
+   - **Fallback exact check**: after the greedy pass, attempt a simple back‑track (depth‑first) limited to the remaining few items to see if a better fit is possible without exponential blow‑up.  
+   - **Helper functions**: create small, well‑named helpers such as `_fits(item, current_weight, current_volume, max_weight, max_volume)` and `_select_next(items, used_indices)` to keep the main function readable.  
+   - **Return format**: always return a tuple `(packed_items, total_weight, total_volume, total_value)` where `packed_items` is a list of the original item objects (or their indices) that were successfully placed.  
+   - **Deterministic output**: avoid randomness unless a seed is explicitly passed; this ensures reproducibility for the evaluator.  
+   - **Docstring and comments**: include a concise docstring describing the algorithm and brief inline comments for each logical step.  
+
+4. **Safety checks**  
+   - Ensure that the function never exceeds the provided `max_weight` or `max_volume`.  
+   - If no items can be packed, return an empty list and zeros for weight, volume, and value.  
+
+Follow these instructions precisely. Your output must be syntactically correct Python code that fits directly into the existing evolve block.

@@ -1,0 +1,135 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are to modify only the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not output the markers themselves** and **do not include any code outside that region** (imports, `run_packing()`, etc.). The system will automatically splice your output into the preserved surrounding code.
+
+### Core Task
+Improve the `construct_packing()` function and any helper functions defined inside the evolve block so that they correctly build a feasible packing plan for the given items and containers.
+
+### Mandatory Output Rules (must be obeyed)
+- **Output ONLY the code** that should replace the existing contents between the markers.  
+- **Do NOT** include the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines.  
+- **Do NOT** add, remove, or modify any code outside the evolve block.  
+
+Violating these rules will cause the program to be rejected.
+
+### What Must NOT Be Done (avoid these failures)
+- **Do not** write overly aggressive or speculative code that ignores the existing data structures (e.g., redefining `Item` or `Container`).  
+- **Do not** produce code that is syntactically invalid, contains undefined names, or relies on external libraries not already imported.  
+- **Do not** create deep, uncontrolled recursion that can cause a stack overflow for moderate‑size inputs.  
+- **Do not** leave placeholder `pass` statements or `TODO` comments; every path must be executable.  
+- **Do not** change the function signatures of `construct_packing` or its helpers; keep the public API identical.  
+
+### Concrete Strategies to Try (use one or combine several)
+
+1. **Greedy First‑Fit with Backtracking**  
+   - Sort items by decreasing volume (or weight) to place the largest items first.  
+   - Iterate over containers, trying to fit the current item using a helper `can_place(item, container, state)`.  
+   - If an item cannot be placed in any container, backtrack: remove the last placed item and try the next container option.  
+   - Limit backtracking depth by aborting early when the remaining free volume across all containers is insufficient for the remaining items.
+
+2. **State‑Tracking Helper Functions**  
+   - `can_place(item, container, state) → bool` – checks volume/weight limits and any custom constraints.  
+   - `add_item(item, container, state) → None` – updates the mutable `state` (e.g., `state['used_vol'][cid]`).  
+   - `remove_item(item, container, state) → None` – reverts the changes made by `add_item`.  
+   Using these helpers keeps `construct_packing` readable and isolates side‑effects.
+
+3. **Iterative Packing Loop with Early Exit**  
+   - Use a `while unplaced_items:` loop rather than recursion.  
+   - Inside the loop, attempt to place the next item; if no container can accommodate it, break and return the best‑so‑far packing (or raise a clear “No feasible packing” exception).  
+   - This avoids recursion limits and makes debugging easier.
+
+4. **Memoization of Failed Sub‑states**  
+   - Store a frozenset of `(item_ids, container_usage)` that has already been proven unsolvable.  
+   - Before trying a placement, check the memo; if the state is cached, skip the expensive trial.  
+   - This dramatically reduces duplicate work for inputs with many similar items.
+
+5. **Robust Edge‑Case Handling**  
+   - If `items` is empty, return an empty packing list immediately.  
+   - If any single item exceeds *all* container capacities, raise a descriptive `ValueError`.  
+   - Validate that container capacities are positive numbers before the main loop.
+
+6. **Clear Documentation & Type Hints**  
+   - Add a concise docstring to `construct_packing` describing the algorithm, its inputs, and its return value.  
+   - Use Python type hints for all parameters and return types to help the evaluator catch mismatches early.
+
+### Example Skeleton (you may adapt and flesh out)
+
+```python
+def construct_packing(items: List[Item], containers: List[Container]) -> PackingResult:
+    """
+    Build a feasible packing using a greedy first‑fit with limited backtracking.
+    Returns a PackingResult (or raises ValueError if impossible).
+    """
+    # 1️⃣ Sort items by decreasing volume (or weight)
+    sorted_items = sorted(items, key=lambda i: i.volume, reverse=True)
+
+    # 2️⃣ Initialise mutable state tracking used volume/weight per container
+    state = {
+        "used_vol": {c.id: 0 for c in containers},
+        "used_wt":  {c.id: 0 for c in containers},
+        "placements": [],                     # list of (item.id, container.id)
+    }
+
+    # 3️⃣ Helper memo for failed states
+    failed_states: Set[frozenset] = set()
+
+    # 4️⃣ Main packing loop (iterative with explicit backtrack stack)
+    stack: List[Tuple[int, List[Tuple[int, int]]]] = [(0, [])]  # (next_item_index, current_placements)
+
+    while stack:
+        idx, placements = stack.pop()
+        if idx == len(sorted_items):
+            # All items placed – fill result and return
+            state["placements"] = placements
+            return build_result_from_state(state, containers)
+
+        item = sorted_items[idx]
+        placed = False
+
+        for container in containers:
+            if can_place(item, container, state):
+                # Record placement
+                add_item(item, container, state)
+                new_placements = placements + [(item.id, container.id)]
+
+                # Encode current sub‑state for memoization
+                sub_state_key = frozenset(new_placements)
+                if sub_state_key not in failed_states:
+                    stack.append((idx + 1, new_placements))
+                else:
+                    # Previously proven dead‑end – skip
+                    remove_item(item, container, state)
+                    continue
+
+                placed = True
+                # Do NOT break here; we push all viable branches onto the stack
+                # to allow limited backtracking later.
+                remove_item(item, container, state)
+
+        if not placed:
+            # No container could accept this item – mark this sub‑state as dead
+            dead_key = frozenset(placements)
+            failed_states.add(dead_key)
+
+    # If we exit the loop, no feasible packing was found
+    raise ValueError("No feasible packing exists for the given items and containers.")
+```
+
+You may restructure the above, add missing helper implementations, and adjust the algorithm (e.g., switch to pure recursion if you prefer) as long as you respect the rules above.
+
+**Remember:** Only output the final, syntactically correct Python code that should replace the content between the markers. No extra text, no markers, no surrounding code. Good luck!

@@ -1,0 +1,46 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a meta‑prompt engineer tasked with guiding the LLM to evolve **only** the `construct_packing()` function (and any helper functions defined inside the evolve block).  
+
+### Core Rules (must be obeyed for every generation)
+
+1. **Output ONLY the code that belongs between the markers** `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+2. **Do NOT include the markers themselves** in your response.  
+3. **Do NOT output any code outside those markers** – no imports, no `run_packing()`, no global variables, no comments that lie outside the block.  
+4. **Do NOT modify any other part of the file** (functions, classes, constants) that are outside the evolve block.  
+5. **Do NOT produce empty or placeholder implementations** – the function must remain runnable and return a value of the same type as before.  
+
+### What to avoid (explicitly forbidden)
+
+- **Aggressive rewrites that remove existing logic** or change the public signature of `construct_packing()`.  
+- **Introducing new imports or external dependencies** inside the evolve block.  
+- **Leaving the block empty or containing only `pass`.**  
+- **Repeating the same failed pattern** that caused the previous 13/13 invalid programs (e.g., deleting the function body, adding syntax errors, or violating the output format).  
+
+### Suggested concrete strategies
+
+- **Incremental refactor:** Keep the current algorithmic flow, but improve readability: rename ambiguous variables, add short inline comments, and factor repetitive code into tiny private helpers *still inside the block*.  
+- **Edge‑case handling:** Add explicit checks for empty inputs, `None` values, or out‑of‑range indices, returning a sensible default that matches the original return type.  
+- **Performance tweak:** If the original uses a naïve nested loop, consider replacing it with a single‑pass dictionary lookup or using `itertools` constructs that do not require new imports.  
+- **Maintain type consistency:** Preserve the original return type (e.g., a list of `PackingItem` objects). If you introduce a new helper, annotate its parameters and return type clearly.  
+- **Preserve side‑effects:** If the original function mutates a passed‑in container, ensure the new code does the same or explicitly returns a new container while documenting the change.  
+
+### Formatting reminder (must be reiterated)
+
+- **Your response must consist solely of the Python code that belongs inside the evolve block.**  
+- **Do not prepend or append any text, explanations, or markers.**  
+
+Follow these guidelines precisely to produce a valid, runnable modification of `construct_packing()` that improves the implementation without breaking the surrounding system.

@@ -1,0 +1,94 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for Circle Packing (Improved)**  
+
+You are a meta‑prompt engineer tasked with guiding the model to enhance only the functions inside the *evolve block* of a circle‑packing program. The surrounding code (imports, `run_packing()`, visualisation utilities, etc.) is fixed and will be merged automatically, so **do not reference or modify anything outside the evolve block**.
+
+---
+
+### ❗ Mandatory Output Rules (must be obeyed exactly)
+
+1. **Output ONLY the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+2. **Do NOT include the markers themselves** in your response.  
+3. **Do NOT output any additional text, explanations, comments outside the code, or code outside those boundaries.**  
+4. The system will insert your snippet into the existing file, preserving all other sections unchanged.
+
+---
+
+### 🎯 Goal  
+
+Create a **deterministic** arrangement of **26 circles** inside the unit square that satisfies all geometric constraints (no overlap, all circles fully inside the square). The solution should be reproducible across runs and achieve a higher validity score than the current best (0.8880).
+
+---
+
+### 📌 What to KEEP (successful ideas)
+
+- **Hexagonal lattice foundation** – start from a compact hex‑grid pattern; it gives high packing density.  
+- **Iterative spacing refinement** – generate a small set of candidate spacings, evaluate feasibility, and pick the best.  
+- **Radius computation from nearest‑neighbor distances** – use `np.linalg.norm` on the centre array to derive the maximal equal radius for a given layout.  
+- **Deterministic ordering** – sort centre coordinates (e.g., by x then y) before radius calculation to guarantee reproducibility.
+
+---
+
+### 🚫 What to AVOID (failed approaches)
+
+- **Randomised placement** or any use of `np.random` that introduces nondeterminism.  
+- **Global optimisation loops that exceed a reasonable iteration budget** (they caused time‑outs and validity failures).  
+- **Hard‑coded radius values** that do not adapt to the actual centre configuration – they led to overlap or circles spilling outside the unit square.  
+- **Returning more or fewer than 26 circles** – the evaluator expects exactly 26 centre‑radius pairs.  
+
+---
+
+### 🛠 Suggested Strategies (concrete, domain‑specific)
+
+1. **Generate a base hex‑grid** covering the unit square with a configurable `spacing`.  
+   - Compute the required number of rows/columns so that the grid fully contains the square.  
+   - Apply the classic “offset every other row” rule to achieve the hexagonal pattern.
+
+2. **Trim excess points** deterministically:  
+   - Keep only the first 26 points after sorting by `(x, y)`.  
+   - If the trimmed set leaves large gaps, optionally shift the whole grid by a small deterministic offset (e.g., `spacing/2` in both axes) before trimming.
+
+3. **Compute the maximal uniform radius** that satisfies both non‑overlap and boundary constraints:  
+   - For each centre, compute the distance to the four square edges; the radius must be ≤ the minimum of those distances.  
+   - For each pair of centres, compute half their Euclidean distance; the radius must be ≤ the minimum of all such half‑distances.  
+   - The final radius is the minimum of the edge‑based and pair‑based limits.
+
+4. **Validate and fallback**:  
+   - If the derived radius is ≤ 0 (meaning the spacing is too large or points lie too close to the border), automatically reduce `spacing` by a deterministic factor (e.g., multiply by `0.95`) and recompute.  
+   - Iterate this deterministic refinement a maximum of **5** times; this bound prevents runaway loops and respects the time budget.
+
+5. **Return the result** as two NumPy arrays: `centers` of shape `(26, 2)` and `radii` of shape `(26,)`. Ensure the arrays are `np.float64` for consistency with the rest of the codebase.
+
+---
+
+### 📄 Expected Code Structure (inside the evolve block)
+
+```python
+def construct_packing():
+    """Return deterministic centres and radii for 26 circles in the unit square."""
+    # 1. Initialise a reasonable spacing (e.g., 0.15) – deterministic constant.
+    # 2. Loop up to 5 times:
+    #    a. Build a hexagonal grid with the current spacing.
+    #    b. Trim to the first 26 points after sorting.
+    #    c. Compute the maximal feasible radius.
+    #    d. If radius > 0, break and return; else reduce spacing.
+    # 3. Return np.array(centers), np.full(26, radius)
+```
+
+You may also define private helpers such as `_hex_grid(spacing)`, `_max_feasible_radius(centers)`, and `_trim_to_n(centers, n)` inside the evolve block. **All helper functions must be defined within the same block** and adhere to the same deterministic, non‑random principles.
+
+Remember: **Only output the code between the markers, nothing else.**

@@ -1,0 +1,57 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a code‑evolution assistant tasked with improving **only** the `construct_packing()` function and any helper functions that reside inside the `# EVOLVE‑BLOCK-START` … `# EVOLVE‑BLOCK-END` region.  
+
+### What you must do
+- **Output ** **only** the Python code that belongs **between** the markers `# EVOLVE‑BLOCK-START` and `# EVOLVE‑BLOCK-END`.  
+- **Do not** include the marker lines themselves, any import statements, the surrounding `run_packing()` driver, or any other code outside that block.  
+- Preserve the existing function signatures and any variables that are referenced elsewhere in the file.  
+
+### What you must NOT do
+- Do **not** write a completely new program or replace the whole file – only edit the code inside the evolve block.  
+- Do **not** make the prompt overly aggressive or ambiguous; vague “make it faster” statements without concrete steps lead to invalid programs.  
+- Do **not** introduce syntax errors, undefined names, or break the contract of the existing API.  
+- Do **not** repeat the same faulty pattern that caused repeated failures (e.g., removing required arguments, returning the wrong type, or adding stray indentation).  
+
+### Guidance for a successful improvement
+1. **Maintain correctness first**  
+   - Ensure `construct_packing()` always returns a tuple `(packed_items, remaining_capacity)` matching the expected types used by `run_packing()`.  
+   - Validate inputs at the start of the function (e.g., check that `items` is a list of `(weight, value)` pairs and that `capacity` is a non‑negative number). Return early with sensible defaults if validation fails.
+
+2. **Use a clear, deterministic algorithm**  
+   - Implement a classic **0/1 knapsack DP** (or a greedy approximation if the problem size is large) that is easy to reason about and does not rely on hidden global state.  
+   - Keep the DP table small by using a 1‑dimensional list of length `capacity + 1`.  
+   - After the DP pass, reconstruct the selected items in a deterministic loop so the output order is stable.
+
+3. **Handle edge cases explicitly**  
+   - `capacity == 0` → return an empty list and zero remaining capacity.  
+   - Empty `items` list → same as above.  
+   - Items whose weight exceeds `capacity` should be ignored automatically by the DP logic.
+
+4. **Add helpful inline comments** (but keep them short) to explain each step, making future evolution easier.
+
+5. **Performance considerations**  
+   - If `capacity` is very large (e.g., > 10,000) and the number of items is modest, fall back to a **value‑based DP** to keep memory usage reasonable.  
+   - Avoid recursion; use iterative loops only.
+
+6. **Testing hook**  
+   - At the end of the block, you may include a small `if __name__ == "__main__":` test snippet **inside** the evolve block to sanity‑check the function, but do not import or call external modules.
+
+### Mandatory output format reminder
+- **Only** output the code that belongs between `# EVOLVE‑BLOCK-START` and `# EVOLVE‑BLOCK-END`.  
+- **Do not** output the marker lines themselves or any surrounding code.  
+
+Proceed to rewrite `construct_packing()` (and any helper it calls) following the above concrete guidelines.

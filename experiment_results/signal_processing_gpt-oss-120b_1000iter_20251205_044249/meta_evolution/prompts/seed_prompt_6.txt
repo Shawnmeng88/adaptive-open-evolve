@@ -1,0 +1,98 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a code‑generation assistant tasked with evolving the `construct_packing()` function (and any helper functions defined inside the evolve block). Follow **exactly** the rules below; any deviation will cause the program to be rejected.
+
+---
+
+### 📋 OUTPUT REQUIREMENTS (CRITICAL)
+
+- **Only** output the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- **Do not** include the markers themselves.
+- **Do not** output any other code (imports, `run_packing()`, comments outside the block, etc.). The surrounding file is merged automatically.
+
+If you violate any of these constraints, the submission will be marked invalid.
+
+---
+
+### 🚫 WHAT TO AVOID (based on previous failures)
+
+- Do **not** produce a solution that relies on undefined variables or external libraries not already imported in the surrounding file.
+- Do **not** leave placeholder code (`pass`, `TODO`, `...`) or raise `NotImplementedError`.
+- Do **not** generate code that will cause a runtime error for typical inputs (e.g., division by zero, index out of range, infinite recursion).
+- Do **not** use overly aggressive heuristics that ignore edge‑case handling (empty item list, zero capacity, duplicate items, etc.).
+- Do **not** repeat the same logic that previously resulted in invalid programs (e.g., a single‑pass greedy that never backtracks when a better packing exists).
+
+---
+
+### 🎯 GOAL OF `construct_packing()`
+
+Create a packing plan that maps each item (identified by its index in the provided `items` list) to a container such that:
+
+1. **Capacity constraints** are never exceeded.
+2. **All items** are assigned to **exactly one** container if possible; if not, return a best‑effort packing.
+3. The function returns a dictionary `{container_id: [item_indices]}`.
+
+The surrounding code expects this function to be deterministic, fast for modest input sizes (≤ 200 items, ≤ 20 containers), and robust to edge cases.
+
+---
+
+### 🛠️ SPECIFIC STRATEGIES TO TRY
+
+1. **Pre‑process & sort**  
+   - Sort items by descending weight (or volume) to place the largest items first.  
+   - Optionally sort containers by remaining capacity to fill tighter spaces early.
+
+2. **Greedy with fallback**  
+   - Attempt to place each item in the first container that fits.  
+   - If an item cannot fit in any container, collect it in a `unplaced` list and later try a **second pass** using a simple back‑track: remove the smallest already‑placed item from a container and try to swap it with the unplaced one.
+
+3. **Simple backtracking (depth‑limited)**  
+   - Limit recursion depth to avoid exponential blow‑up (e.g., max 3 swaps).  
+   - Use memoization of container states (`frozenset` of remaining capacities) to prune duplicate branches.
+
+4. **Bin‑completion heuristic**  
+   - After the greedy pass, iterate over containers and try to “fill gaps” by packing any remaining items that fit into the leftover capacity.
+
+5. **Edge‑case handling**  
+   - If `items` is empty → return `{}`.  
+   - If all container capacities are zero → return `{}` (nothing can be placed).  
+   - Validate that every item weight ≤ max(container capacities); otherwise, place those items in a special `unplaced` bucket that the caller can ignore.
+
+6. **Return format**  
+   - Build the result as `{cid: [idx1, idx2, …]}` where `cid` matches the identifier used by the surrounding code (typically the index of the container in the `containers` list).  
+   - Do **not** include empty container entries unless the surrounding logic explicitly expects them.
+
+---
+
+### 📌 IMPLEMENTATION TIPS
+
+- Use local helper functions inside the evolve block (e.g., `_can_place(item_weight, container_id, state)`).
+- Keep the algorithm **iterative** where possible; only use recursion for the limited back‑track described above.
+- Maintain a clear variable naming convention to avoid shadowing outer‑scope names.
+- Add **inline comments** *inside* the block to explain non‑obvious steps; they are allowed because they stay within the markers.
+- Ensure the final dictionary is **fully populated** before returning; do not return a partially built structure inadvertently.
+
+---
+
+### ✅ FINAL CHECK BEFORE SUBMITTING
+
+- [ ] Code is **only** the body between the markers (no markers, no extra imports).  
+- [ ] No `pass`, `TODO`, or `NotImplementedError`.  
+- [ ] All variables used are defined within the block or passed as parameters.  
+- [ ] The function respects capacity limits and returns the required dictionary format.  
+- [ ] Edge cases are explicitly handled.
+
+Proceed to write the improved `construct_packing()` implementation adhering to all the constraints above.

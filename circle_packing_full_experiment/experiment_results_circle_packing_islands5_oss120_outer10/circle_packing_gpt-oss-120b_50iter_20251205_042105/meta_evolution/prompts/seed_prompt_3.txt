@@ -1,0 +1,78 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution (Evolve Block)**  
+
+You are an expert in computational geometry and numerical optimization. **Your task is to replace ONLY the code that lies between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.** All surrounding infrastructure (imports, the `run_packing()` driver, result handling, etc.) is fixed and will be merged automatically.
+
+### 📋 REQUIRED OUTPUT FORMAT  
+- **Output ONLY the Python code that belongs BETWEEN the two markers.**  
+- **Do NOT include the markers themselves** (`# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END`).  
+- **Do NOT output any code outside that region** (no imports, no helper definitions that already exist elsewhere).  
+- The system will automatically insert your snippet into the existing file.
+
+### 🎯 OBJECTIVE  
+Write a `construct_packing()` implementation (and any helper functions that live inside the evolve block) that:
+
+1. Returns **exactly three objects** in this order:  
+   - `centers` – an `(N, 2)` NumPy array with all coordinates in the closed unit square `[0, 1]`.  
+   - `radii` – a length‑`N` NumPy array of non‑negative radii.  
+   - `sum_radii` – a Python `float` equal to `float(radii.sum())`.  
+
+2. **Maximizes** the combined score (large total radii + high packing density) **while guaranteeing** `validity == 1.0`. The evaluation will reject any solution that violates the unit‑square bounds, allows circles to overlap, or produces a `validity` < 1.0.
+
+### 🚫 WHAT TO AVOID (previous failures)  
+- **Do NOT use a naive grid spacing that leaves large gaps** (e.g., a 5×5 lattice with radius 0.1 that leaves >20 % of the square empty). This caused a 20 % validity failure in earlier attempts.  
+- **Do NOT rely on a 1/6 spacing lattice** that produced a 16.7 % validity failure.  
+- **Do NOT generate circles that touch or cross the square boundary**; all centers must stay at least `radius` away from the edges.  
+- **Do NOT employ exhaustive global optimization** that is computationally prohibitive for the fixed runtime budget.  
+
+### 🔧 SUGGESTED STRATEGIES (use one or combine)  
+
+1. **Hexagonal close‑packing core**  
+   - Place a central hexagonal lattice of circles with spacing `s = sqrt(3) * r` where `r` is the target radius.  
+   - Choose `r` so that the lattice fits comfortably inside the unit square (e.g., `r ≈ 0.07`).  
+   - This yields a packing density ≈ 0.9069 for the interior region.
+
+2. **Edge‑buffer augmentation**  
+   - After the core lattice, fill the four margins (top, bottom, left, right) with a staggered row of circles whose radii are reduced proportionally to the distance from the nearest edge.  
+   - Compute the maximal admissible radius for each margin circle as `min(r_core, distance_to_edge)` to keep validity.
+
+3. **Corner‑cap circles**  
+   - Add up to four small circles in the corners, each tangent to two edges and to the nearest margin circle.  
+   - Solve the tangent condition analytically: for a corner at `(0,0)`, if the nearest margin circle has center `(x, y)` and radius `r_m`, the corner radius `r_c` satisfies `sqrt((x - r_c)**2 + (y - r_c)**2) = r_m + r_c`.  
+   - This boosts the total sum of radii without compromising validity.
+
+4. **Iterative radius equalization**  
+   - Start with the positions from steps 1‑3 and set all radii to a common initial value `r0`.  
+   - Perform a few inexpensive passes: for each circle, shrink its radius to the minimum of its current radius and the distances to all neighboring circles and to the square edges (minus a tiny epsilon).  
+   - This “relaxation” quickly eliminates any residual overlaps while preserving most of the area.
+
+5. **Vectorized distance checks**  
+   - Use NumPy broadcasting to compute pairwise center distances and enforce `dist >= r_i + r_j` in a single pass.  
+   - This ensures the code runs fast enough for the evaluation environment.
+
+### 📐 IMPLEMENTATION GUIDELINES  
+- Keep the function **self‑contained**: any helper you write must be defined inside the evolve block and referenced only from `construct_packing()`.  
+- Use **NumPy** for all array operations; avoid Python loops where a vectorized alternative exists.  
+- Return `sum_radii` as `float(radii.sum())` (not a NumPy scalar).  
+- Include **inline comments** explaining each major step (core lattice, margin fill, corner caps, relaxation) – this helps the grader understand your logic.  
+
+### 🏁 SUCCESS CRITERIA  
+- The returned packing passes the strict validity test (`validity == 1.0`).  
+- The combined score (sum of radii + density) is higher than the previous best (≈ 0.9377).  
+- All output format rules are obeyed exactly.  
+
+**Produce only the code snippet described above.**

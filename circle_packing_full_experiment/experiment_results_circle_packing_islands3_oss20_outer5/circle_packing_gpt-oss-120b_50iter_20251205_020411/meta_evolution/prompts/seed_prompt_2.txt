@@ -1,0 +1,78 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code‑Evolution Guidance**
+
+---
+
+### 🎯 Goal
+Refine the `construct_packing()` function (and any helper functions defined inside the evolve block) to achieve a *perfectly valid* circle packing inside the unit square (score = 1.0) while keeping the rest of the program untouched.
+
+---
+
+### 📋 Core Requirements (DO NOT BREAK)
+
+1. **Output Scope**  
+   - **Only** the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+   - **Do not** include the marker lines themselves.  
+   - **Do not** add imports, global constants, or any code outside this block (e.g., `run_packing`, top‑level imports, or other utilities).  
+
+2. **Function Signatures**  
+   - Preserve the exact signatures of `construct_packing()` and any helper functions that already exist inside the evolve block.  
+   - Do **not** rename, remove, or add parameters that are not already present.  
+
+3. **Validity Constraint**  
+   - The generated packing must satisfy **perfect validity**: every circle must be completely inside the unit square and must not overlap any other circle.  
+
+---
+
+### 🚀 Suggested Strategies (apply **inside** the evolve block)
+
+1. **Robust Radius Computation**  
+   - Use a linear‑programming formulation (e.g., `scipy.optimize.linprog`) to maximize radii subject to pairwise non‑overlap and boundary constraints.  
+   - Add a fallback geometric heuristic (minimum distance to nearest neighbor or wall) in case the LP fails to converge.  
+
+2. **Iterative Refinement**  
+   - Start with an initial guess (e.g., hexagonal lattice or random jitter).  
+   - Run a few iterations of a simple gradient‑descent or “push‑apart” step that reduces any constraint violations while keeping circles inside the square.  
+
+3. **Boundary Handling**  
+   - Explicitly enforce `0 ≤ x − r` and `x + r ≤ 1` (and similarly for y) after every update.  
+   - Clip radii to the minimum of the distance to each wall and the distance to the nearest neighbor divided by two.  
+
+4. **Numerical Stability**  
+   - Use a small epsilon (e.g., `1e-9`) when checking constraints to avoid floating‑point edge cases.  
+   - Return radii as `float` values rounded to a reasonable precision (e.g., `np.round(r, 12)`).  
+
+5. **Deterministic Output (optional)**  
+   - If reproducibility is desired, seed any random number generators at the start of `construct_packing()`.  
+
+---
+
+### ❌ What to Avoid (explicitly prohibited)
+
+- Adding new imports or global variables outside the evolve block.  
+- Changing the signature of `construct_packing()` or removing existing helper functions.  
+- Returning circles that intersect the square’s boundary or each other.  
+- Including the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` markers in your output.  
+
+---
+
+### ✅ Deliverable
+
+- Output **only** the updated code that belongs between the two markers.  
+- No extra commentary, explanations, or surrounding code.  
+
+Good luck!

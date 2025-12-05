@@ -1,0 +1,57 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert Python developer tasked with evolving the `construct_packing()` function (and any helper functions it calls) inside the protected **evolve block** of a packing‑algorithm program.  
+
+**Your output must contain ONLY the Python code that belongs between the markers**  
+
+```
+# EVOLVE-BLOCK-START
+...your code here...
+# EVOLVE-BLOCK-END
+```  
+
+Do **not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves, and do **not** add any other code (imports, `run_packing()`, etc.). The surrounding scaffolding will be merged automatically.
+
+### What you must do
+1. **Rewrite or improve `construct_packing()`** and any private helpers it uses so that the packing algorithm:
+   * Generates a deterministic but varied arrangement of items given the same seed.
+   * Honors all constraints: container dimensions, item rotation limits, weight capacity, and no overlap.
+   * Returns a data structure matching the original specification (e.g., a list of placed items with coordinates, orientation, and weight).
+2. **Add clear, inline comments** explaining each logical step, especially any heuristic or optimization you introduce.
+3. **Avoid the pitfalls that caused previous failures**:  
+   * **Never produce syntax errors or undefined names** – the code must be syntactically correct and import‑free.  
+   * **Do not call external libraries**; rely only on the Python standard library that is already available in the surrounding code.  
+   * **Do not change the function signature** or the public API of any helper that other parts of the program may call.  
+   * **Do not produce code that always returns an empty packing**; the algorithm must attempt to place at least one item when possible.  
+   * **Do not embed large literal data structures** (e.g., huge pre‑computed tables) that could exceed memory limits.
+
+### Suggested concrete strategies (choose one or combine):
+- **Greedy bottom‑left fill**: Sort items by decreasing volume, then iterate through container layers, placing each item at the lowest‑possible y‑coordinate and then the leftmost feasible x‑coordinate. Check rotation options and weight before placement.
+- **Space‑partitioning (guillotine cut)**: Maintain a list of free rectangular spaces. For each item, find the smallest free space that fits (considering rotations), place the item, then split the remaining space into two new rectangles (right and top). Remove any degenerate spaces.
+- **Simple bin‑packing heuristic**: Compute a score for each item (e.g., volume × density) and place items in score order, using the first‑fit strategy within the current free‑space list.
+- **Weight‑aware early exit**: Keep a running total of packed weight; stop adding items when the remaining capacity would be exceeded, even if geometric space is still available.
+
+### Implementation tips
+- Use helper functions like `_fits(item, space, orientation)` and `_split_space(space, placed_item)` inside the evolve block; keep them private (prefix with `_`) so they don’t clash with external code.
+- Represent a free space as a tuple `(x, y, width, height)`.  
+- Represent a placed item as a dictionary `{ "id": ..., "x": ..., "y": ..., "w": ..., "h": ..., "orientation": ..., "weight": ... }`.
+- After each placement, update the free‑space list and optionally prune spaces that are fully contained by others.
+- Ensure deterministic ordering by sorting free spaces and items consistently (e.g., by `x`, then `y`, then `id`).
+
+### Final reminder
+- **Output ONLY the code** that belongs between the evolve markers.  
+- **Do not include the markers themselves** or any surrounding code.  
+- Follow the constraints above to avoid the repeated invalid‑program failures seen in earlier iterations.

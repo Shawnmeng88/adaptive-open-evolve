@@ -1,0 +1,66 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for `construct_packing()`**
+
+You are tasked with improving the `construct_packing()` function (and any helper functions defined inside the evolve block) so that the packing algorithm works correctly and efficiently. **Only modify code that appears between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers**. Do **not** include the markers themselves or any code outside that region in your response.
+
+### Mandatory Output Format
+- **Output ONLY the code** that belongs between the markers.
+- Do **not** output the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines.
+- Do **not** output any imports, the `run_packing()` wrapper, or other surrounding code.
+
+The system will automatically merge your output with the preserved surrounding code.
+
+### What NOT to Do (previous failures)
+- Do **not** produce code that fails to compile or raises syntax errors.
+- Do **not** leave unfinished placeholders (e.g., `pass`, `TODO`, or `...`).
+- Do **not** remove required function signatures or change their names.
+- Do **not** add new top‑level statements outside the evolve block (imports, global variables, etc.).
+- Do **not** submit the same code repeatedly without substantive changes.
+
+### Focus Areas for `construct_packing()`
+1. **Input Validation** – Ensure the function checks that the list of items and the container dimensions are well‑formed (non‑empty, correct types, positive sizes). Return a clear error or empty packing if validation fails.
+2. **Deterministic Packing Logic** – Implement a simple, reliable algorithm (e.g., first‑fit decreasing, shelf‑packing, or a grid‑based approach) that:
+   - Sorts items by a heuristic (volume or max dimension) to improve placement success.
+   - Iterates over container rows/columns and places each item at the first location that fits without overlap.
+   - Updates a placement list with `(item_id, x, y, z)` coordinates.
+3. **Overlap Prevention** – Write a helper `boxes_overlap(box1, box2)` that returns `True` if two axis‑aligned boxes intersect. Use it to reject placements that would cause collisions.
+4. **Boundary Checks** – Verify that each placed item stays completely inside the container bounds.
+5. **Return Structure** – The function must return a list of placement dictionaries (or tuples) matching the original interface expected by `run_packing()`. Preserve the order of the original items where possible.
+
+### Suggested Helper Functions (inside the evolve block)
+- `def validate_items(items, container): ...` – returns `True`/`False` or raises a descriptive exception.
+- `def sort_items(items): ...` – returns items ordered by decreasing volume or longest side.
+- `def find_position(item, placed, container): ...` – scans the container grid (step size can be 1 unit) and returns a viable `(x, y, z)` or `None`.
+- `def boxes_overlap(a, b): ...` – geometric overlap test.
+
+### Concrete Strategy to Try
+1. **Validate** inputs first; if invalid, return `[]`.
+2. **Sort** items by descending volume.
+3. **Initialize** an empty list `placements = []`.
+4. For each `item` in the sorted list:
+   - Call `find_position(item, placements, container)`.
+   - If a position is found, append a placement record to `placements`.
+   - If no position exists, skip the item (or stop early if you prefer a “fail‑fast” policy).
+5. **Return** `placements` after processing all items.
+
+### Additional Tips
+- Use integer arithmetic for coordinates to avoid floating‑point precision issues.
+- Keep the algorithm simple; a brute‑force grid scan is acceptable as long as it terminates quickly for typical test sizes.
+- Include inline comments explaining each step; this helps the evaluator understand your logic.
+- Ensure the function’s signature and return type exactly match what the surrounding code expects.
+
+**Remember:** Only output the revised code between the evolve markers, adhering strictly to the format rules above.

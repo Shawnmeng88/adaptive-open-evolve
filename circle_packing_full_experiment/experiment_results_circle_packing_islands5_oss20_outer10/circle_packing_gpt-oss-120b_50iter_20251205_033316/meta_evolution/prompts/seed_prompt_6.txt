@@ -1,0 +1,95 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – GUIDELINES FOR EVOLUTION BLOCK**
+
+You are allowed to edit **only** the code that appears between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...
+# EVOLVE-BLOCK-END
+```  
+
+When you respond, **output ONLY the Python code that belongs inside those markers** – do **not** include the markers themselves, any import statements, or any surrounding code. The surrounding framework (imports, `run_packing()`, etc.) will be merged automatically.
+
+---
+
+### PRIMARY OBJECTIVE
+Improve the **`construct_packing()`** function (and any helper functions defined inside the evolve block, e.g., `compute_max_radii`, `_assert_valid`, `_generate_hex_lattice`, etc.) so that a packing of **26 circles inside the unit square** attains:
+
+1. **Validity = 1.0** – every centre `(x, y)` satisfies `0 ≤ x ≤ 1` and `0 ≤ y ≤ 1`; all radii are non‑negative; and for every pair of circles the Euclidean distance between centres is **≥** the sum of their radii (no overlap).
+
+---
+
+### WHAT TO AVOID (explicit “DO NOT” guidance)
+
+- **DO NOT** return a configuration that places any centre outside the unit square.
+- **DO NOT** produce negative radii or radii that exceed the distance to the nearest square side.
+- **DO NOT** allow any pair of circles to overlap (distance < sum of radii).  
+- **DO NOT** rely on a single static lattice without scaling; the previous attempts that used a plain hexagonal grid without radius adjustment caused validity failures (observed 2/6, 3/6, etc.).
+- **DO NOT** omit a final validation step; configurations that skip a thorough `_assert_valid` call have repeatedly failed.
+- **DO NOT** use hard‑coded radii that do not adapt to the actual packing density; this led to the “Validity failures: 1/5” and similar issues.
+
+---
+
+### SUGGESTED STRATEGIES (concrete, domain‑specific)
+
+1. **Hexagonal Lattice with Adaptive Scaling**  
+   - Generate a hexagonal lattice that fits comfortably inside the unit square (use a margin equal to the target radius).  
+   - Compute the maximal uniform radius that can be assigned to all points without overlap or boundary violation (`compute_max_radii`).  
+   - If the lattice yields fewer than 26 points, augment it by inserting points along the edges or in the largest gaps.
+
+2. **Iterative Radius Adjustment**  
+   - Start with a conservative radius (e.g., `0.03`).  
+   - Repeatedly increase the radius by a small factor (e.g., `*1.02`) while checking validity after each step.  
+   - Stop when the next increase would cause a violation; this yields the largest possible uniform radius for the current centre set.
+
+3. **Hybrid Lattice + Random Perturbation**  
+   - After constructing the hexagonal lattice, optionally jitter a subset of points (small random offsets) to break symmetry and create extra room for a larger radius.  
+   - Re‑compute the maximal radius after perturbation and keep the best configuration.
+
+4. **Greedy Gap Filling**  
+   - Once the main lattice is placed, identify the largest empty region (e.g., by sampling a grid of candidate points).  
+   - Insert a new centre at the point that maximizes the minimal distance to existing centres and to the square borders.  
+   - Re‑compute the maximal radius for the whole set and repeat until 26 centres are obtained.
+
+5. **Robust Validation Helper**  
+   - Implement `_assert_valid(centers, radii)` that raises a clear `AssertionError` if any of the three validity conditions fails.  
+   - Call this helper **at the end of `construct_packing()`** and also inside any helper that modifies the packing (e.g., after radius scaling or after adding a new point).
+
+6. **Deterministic Output for Grading**  
+   - Seed any random number generator with a fixed value (e.g., `np.random.seed(0)`) so that the same configuration is produced on every run, making debugging and grading reproducible.
+
+---
+
+### IMPLEMENTATION NOTES
+
+- Keep function signatures unchanged; only modify the bodies or add small private helpers inside the evolve block.
+- Use only `numpy` (already imported) for vectorised distance calculations; avoid external libraries.
+- Ensure that `construct_packing()` returns a tuple `(centers, radii)` where:
+  - `centers` is an `(N, 2)` `np.ndarray` of `float64`.
+  - `radii` is an `(N,)` `np.ndarray` of `float64`.
+- After the final return, **call** `_assert_valid(centers, radii)` to guarantee the packing meets all constraints before the outer framework evaluates it.
+
+---
+
+### MANDATORY OUTPUT FORMAT (CRITICAL)
+
+- **Output ONLY the code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.**
+- **Do NOT** include the markers themselves, any import statements, or any other surrounding code.
+- The system will automatically merge your output with the preserved sections.
+
+Follow these instructions precisely; any deviation will cause the evaluation to fail. Good luck!

@@ -1,0 +1,83 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code‑Evolution Guidance**
+
+---
+
+### 📌 Core Requirements (DO NOT BREAK)
+
+1. **Output Scope**  
+   - **Only** the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+   - **Do not** include the marker lines themselves.  
+   - **Do not** add any imports, helper definitions, or code that lies outside this block (e.g., `run_packing`, top‑level imports, global constants).  
+
+2. **Function Signatures**  
+   - Preserve the exact signatures of `construct_packing()` and any helper functions that already exist inside the evolve block.  
+   - Do not rename, remove, or add parameters that are not already present.
+
+3. **Validity Constraint**  
+   - The generated packing must satisfy **perfect validity** (score = 1.0):  
+     * Every circle is fully inside the unit square.  
+     * No two circles overlap (`r_i + r_j ≤ distance(centers_i, centers_j)`).  
+
+4. **Scoring Goal**  
+   - Maximize the hidden **combined_score** (larger total radii / tighter packing) while keeping validity = 1.0.
+
+---
+
+### ✅ What to KEEP (Successful Elements)
+
+- **Linear‑programming radius computation** (`linprog` from SciPy) that respects wall and inter‑circle constraints.  
+- **Pre‑computed distance matrix** and wall‑distance vector for efficiency.  
+- **Use of NumPy vectorisation** for speed.  
+
+---
+
+### 🚫 What to AVOID (Failed Approaches)
+
+- Introducing **randomized placement** without deterministic feasibility checks – leads to occasional overlaps.  
+- Adding **new external libraries** (e.g., `cvxpy`, `shapely`) – the environment only guarantees `numpy` and `scipy`.  
+- Modifying the **output format** (e.g., printing debug information, returning extra values).  
+- Hard‑coding a **fixed lattice** that does not adapt to the supplied `centers` list – reduces score on varied inputs.
+
+---
+
+### 🧠 Suggested Improvement Strategies
+
+1. **Enhanced LP Formulation**  
+   - Keep the current `linprog` model but tighten the objective: maximize the **sum of radii** directly (`c = -np.ones(n)`).  
+   - Add a tiny epsilon (e.g., `1e-9`) to all inequality bounds to guard against floating‑point edge cases that could cause marginal overlaps.
+
+2. **Iterative Radius Scaling**  
+   - After solving the LP, perform a **single pass** that inflates each radius by the smallest feasible amount limited by the nearest wall or neighbor.  
+   - Compute the allowable slack for each circle (`slack = min(wall_dist - r, min_{j≠i}(dist_ij - r_j) - r)`) and increase `r` by `0.5 * slack`. This yields a modest boost without breaking feasibility.
+
+3. **Symmetry‑aware Center Ordering**  
+   - Sort `centers` by their **minimum distance to the square boundary** before building the LP.  
+   - This often gives the optimizer a better starting point, leading to larger radii for interior circles.
+
+4. **Post‑LP Feasibility Check (Deterministic)**  
+   - Implement a deterministic verification routine that scans all pairs and walls; if any violation > `1e-8` is detected, uniformly shrink *all* radii by the offending excess and re‑verify.  
+   - This guarantees the final packing passes the hidden validity test.
+
+5. **Return Structure**  
+   - Ensure `construct_packing()` returns a tuple `(centers, radii)` exactly as expected by the surrounding code.
+
+---
+
+### 📋 Deliverable
+
+Provide **only** the revised Python code that lives inside the evolve block, implementing the above ideas while respecting all core requirements. No additional text, markers, or explanations should be included.

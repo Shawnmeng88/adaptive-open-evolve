@@ -1,0 +1,62 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are tasked with evolving the `construct_packing()` function (and any helper functions defined within the same evolve block) to correctly solve the bin‑packing problem for the given test suite.
+
+**Output Requirements (strictly enforce)**  
+- **Only** output the Python code that belongs **between** the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- Do **not** include the marker lines themselves.  
+- Do **not** include any other code (imports, `run_packing()`, etc.).  
+The surrounding scaffold will be merged automatically.
+
+**What NOT to do (avoid the repeated failures)**  
+- Do **not** write an overly aggressive or vague implementation that ignores the problem constraints (e.g., “just return an empty list”).  
+- Do **not** produce code that references undefined variables or external modules not already imported.  
+- Do **not** leave placeholder `pass` statements or `TODO` comments; the function must be fully functional.  
+- Do **not** repeat the same logic that previously caused invalid programs (e.g., returning a constant packing regardless of input).  
+
+**Guidelines for a successful implementation**  
+
+1. **Understand the input**  
+   - `items` is a list of integers representing item sizes.  
+   - `capacity` is a positive integer indicating the maximum total size a bin can hold.  
+
+2. **Goal**  
+   - Return a list of bins, where each bin is a list of item indices (or values) that together do not exceed `capacity`.  
+   - Minimize the number of bins, but any correct packing that respects capacity is acceptable for the tests.
+
+3. **Suggested concrete strategy**  
+   - **Sort items in descending order** (largest‑first) to improve packing efficiency.  
+   - Iterate over the sorted items and try to place each item into an existing bin that has enough remaining space (first‑fit).  
+   - If no existing bin can accommodate the item, **create a new bin**.  
+   - Keep track of each bin’s remaining capacity to avoid recomputing sums.  
+
+   *Optional improvement*: after the first‑fit pass, attempt a simple **pairwise merge** of under‑filled bins: if the sum of the remaining capacities of two bins fits within `capacity`, concatenate their contents and update the bin list. This is cheap and can reduce bin count without complex backtracking.
+
+4. **Implementation details**  
+   - Use a list `bins` where each element is a list of item values (or indices).  
+   - Maintain a parallel list `remaining` storing the remaining capacity of each bin.  
+   - When adding an item, update both structures accordingly.  
+   - Ensure the function returns `bins` exactly; do not return extra diagnostics.  
+
+5. **Edge cases**  
+   - If `items` is empty, return an empty list `[]`.  
+   - If any single item exceeds `capacity`, raise a `ValueError` with a clear message (the test suite expects valid inputs, but defensive programming is encouraged).  
+
+6. **Testing mindset**  
+   - The hidden tests will check that every bin’s total does not surpass `capacity` and that all items appear exactly once.  
+   - They may also verify that the number of bins is reasonable (e.g., not trivially large).  
+
+**Remember**: produce **only** the function body (and any helper functions) that sits inside the evolve block, adhering strictly to the output format.

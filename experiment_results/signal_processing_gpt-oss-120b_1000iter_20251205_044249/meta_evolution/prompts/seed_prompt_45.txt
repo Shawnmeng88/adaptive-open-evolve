@@ -1,0 +1,84 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for `construct_packing()`**
+
+You are tasked with evolving the `construct_packing()` function (and any helper functions defined inside the evolve block) to produce a correct, efficient packing algorithm. **Only the code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers will be accepted**. Follow these rules exactly:
+
+---
+
+### Mandatory Output Format
+1. **Output ONLY the Python code that should replace the existing contents between the markers.**  
+2. **Do NOT include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.**  
+3. **Do NOT output any other code, comments, or explanatory text outside the block** (e.g., imports, `run_packing()`, docstrings for the outer file, etc.).  
+4. The system will automatically merge your output with the surrounding preserved code.
+
+If you break any of these formatting rules, the submission will be rejected.
+
+---
+
+### What NOT to Do (explicitly forbidden)
+- **Do not** write a completely new program that ignores the existing function signature or helper structure.  
+- **Do not** produce code that relies on unavailable external libraries or non‑standard modules.  
+- **Do not** include `print` statements, debugging output, or interactive prompts.  
+- **Do not** return placeholder values (e.g., `None`, `[]`, or hard‑coded dummy data).  
+- **Do not** attempt to solve the problem by brute‑force enumeration of all possible packings without pruning; this leads to timeouts and invalid programs.  
+- **Do not** repeat the same logic that previously resulted in invalid programs (e.g., unguarded recursion, missing base cases, or undefined variables).  
+
+---
+
+### Success Criteria
+Your implementation must:
+- Respect the original function signature: `def construct_packing(items, max_weight, max_volume):` (or the exact name used in the block).  
+- Return a data structure that the surrounding code expects (typically a list of selected item indices or a packing object).  
+- Honor both weight and volume constraints for every returned packing.  
+- Prefer higher total value (or the metric defined elsewhere) while staying within constraints.  
+- Run in polynomial time for typical input sizes used in the evaluation harness (avoid exponential blow‑up).  
+
+---
+
+### Suggested Strategies (choose **one** and implement it cleanly)
+
+1. **Greedy Value‑to‑Resource Ratio**  
+   - Compute a combined ratio `value / (weight + volume)` for each item.  
+   - Sort items descending by this ratio.  
+   - Iterate, adding an item only if it does not exceed `max_weight` **and** `max_volume`.  
+
+2. **Two‑Dimensional Dynamic Programming (DP) with Space Optimization**  
+   - Use a DP table `dp[w][v]` storing the maximum achievable value for weight ≤ w and volume ≤ v.  
+   - Iterate over items, updating the table backwards to avoid reuse.  
+   - After filling the table, backtrack to reconstruct the selected items.  
+   - Optimize memory by keeping only two rows (current/previous) or using a dictionary for sparse states.
+
+3. **Branch‑and‑Bound Depth‑First Search**  
+   - Sort items by descending value‑to‑resource ratio to improve bounding.  
+   - Recursively explore “take” / “skip” decisions, maintaining running totals of weight, volume, and value.  
+   - Prune a branch if adding the next item would exceed either constraint **or** if the optimistic upper bound (current value + sum of remaining items’ values) cannot beat the best solution found so far.  
+   - Store the best solution globally and return it after the search completes.
+
+4. **Hybrid Greedy‑DP**  
+   - First run the greedy ratio method to obtain a feasible baseline solution.  
+   - Use the baseline value as an initial lower bound for a DP or branch‑and‑bound routine, allowing aggressive pruning.  
+
+Pick the approach that you can implement concisely and correctly within the block. Write clean, well‑structured code: define any small helper functions **inside** the evolve block, use clear variable names, and include minimal inline comments if they aid readability (they are part of the allowed code).
+
+---
+
+### Final Reminder
+- **Only** the code that belongs between the markers will be kept.  
+- **Do not** add any extra text, explanations, or markers.  
+- Ensure the function works with the surrounding harness without modification.  
+
+Good luck!

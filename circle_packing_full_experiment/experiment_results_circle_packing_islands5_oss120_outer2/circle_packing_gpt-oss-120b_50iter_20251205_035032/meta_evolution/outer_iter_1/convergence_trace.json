@@ -1,0 +1,184 @@
+[
+  {
+    "iteration": 25,
+    "score": 0.9313949287178909,
+    "best_so_far": 0.9450293724967522,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 26,
+    "score": 0.8911021523001726,
+    "best_so_far": 0.9450293724967522,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 27,
+    "score": 0.9101873067649967,
+    "best_so_far": 0.9450293724967522,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 28,
+    "score": 0.9337312811908811,
+    "best_so_far": 0.9450293724967522,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 29,
+    "score": 0.9257427097548695,
+    "best_so_far": 0.9450293724967522,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 30,
+    "score": 0.9490296461061591,
+    "best_so_far": 0.9490296461061591,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 31,
+    "score": 0.9542690332894398,
+    "best_so_far": 0.9542690332894398,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 32,
+    "score": 0.9450293724967522,
+    "best_so_far": 0.9542690332894398,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 33,
+    "score": 0.668409298500801,
+    "best_so_far": 0.9542690332894398,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 34,
+    "score": 0.9490296461061591,
+    "best_so_far": 0.9542690332894398,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 35,
+    "score": 0.9201157025045749,
+    "best_so_far": 0.9542690332894398,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 36,
+    "score": 0.9870444876209639,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 37,
+    "score": 0.9314317995418764,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 38,
+    "score": 0.9322188787046185,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 39,
+    "score": 0.9530606721625597,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 40,
+    "score": 0.9256630968433425,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 40,
+    "score": 0.9542690332894398,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 41,
+    "score": 0.9523568035725005,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 42,
+    "score": 0.9496937990830004,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 43,
+    "score": 0.9452723467867152,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 44,
+    "score": 0.9004696827636118,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 45,
+    "score": 0.9608253725105581,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 46,
+    "score": 0.9563845538846812,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 47,
+    "score": 0.9533233229701765,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 48,
+    "score": 0.9434813324911132,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 49,
+    "score": 0.9542690332894398,
+    "best_so_far": 0.9870444876209639,
+    "validity": 1.0,
+    "is_improvement": false
+  }
+]

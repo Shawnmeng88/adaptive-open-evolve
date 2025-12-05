@@ -1,0 +1,75 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution for `construct_packing()`**
+
+You are to generate **only** the Python source that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** output the markers themselves, any import statements, the surrounding `run_packing()` wrapper, or any other code outside that block. The evaluation harness will automatically splice your output into the preserved template.
+
+### Primary Goal
+Refactor and improve the `construct_packing()` function **and any helper functions defined inside the evolve block** so that the packing algorithm:
+1. Produces a valid packing for the given problem instance.
+2. Maximizes the total value of packed items while respecting weight and volume constraints.
+3. Executes efficiently for typical instance sizes (up to a few thousand items).
+
+### Constraints – **Do NOT** repeat the failures that caused previous rejections:
+- **Never** produce code that leads to a high invalidity rate (e.g., > 0% of generated programs failing to compile or run).  
+- **Never** emit code that results in repeated runtime errors, infinite loops, or unhandled exceptions.  
+- **Never** ignore the required output format (markers, extra code, or missing code).  
+- **Never** leave placeholder `pass` statements or TODO comments inside the evolve block; every function must be fully implemented.
+
+### Required Output Structure
+Your response must be **exactly** the code that belongs inside the evolve block, nothing else. Example (do not include the surrounding markers):
+
+```python
+def construct_packing(items, max_weight, max_volume):
+    # your implementation here
+    ...
+
+def _select_items_greedy(items, capacity_w, capacity_v):
+    # optional helper – fully implemented
+    ...
+```
+
+### Specific Strategies to Try
+1. **Pre‑sorting & Greedy Selection**  
+   - Sort items by a combined efficiency metric such as `value / (weight + volume)` (or a weighted sum).  
+   - Iterate the sorted list, adding an item only if both remaining weight and volume allow it.
+
+2. **Two‑Phase Improvement**  
+   - After the greedy pass, run a lightweight local search: try swapping out a low‑efficiency packed item for a higher‑efficiency unpacked one if the swap respects constraints and improves total value.
+
+3. **Dynamic‑Programming Approximation (optional)**  
+   - If the number of items ≤ 200 and capacities are modest, implement a 2‑D DP table (`dp[w][v]`) using `int` arrays for speed.  
+   - Otherwise fall back to the greedy approach to keep runtime O(n log n).
+
+4. **Early Exit & Validation**  
+   - Immediately return an empty packing if `max_weight` or `max_volume` is non‑positive.  
+   - After constructing the packing, verify that total weight ≤ `max_weight` and total volume ≤ `max_volume`. If the check fails, discard the last added item(s) until the constraints are satisfied.
+
+5. **Clear Naming & Type Hints**  
+   - Use descriptive variable names (`selected`, `remaining_w`, `remaining_v`).  
+   - Add type hints for all public functions to aid static analysis and prevent accidental misuse.
+
+### Safety Checks
+- Guard against division‑by‑zero when computing efficiency (skip items with both weight and volume equal to zero, or treat them as infinitely efficient).  
+- Ensure all loops have a deterministic termination condition.  
+- Catch unexpected exceptions locally and re‑raise them with a clear message; do **not** let them propagate silently.
+
+### Reminder
+- **Only** output the code that belongs inside the evolve block.  
+- No extra text, explanations, or markers.  
+- The surrounding framework will handle imports and execution.  
+
+Proceed to implement the improved `construct_packing()` and any necessary helpers following the guidelines above.

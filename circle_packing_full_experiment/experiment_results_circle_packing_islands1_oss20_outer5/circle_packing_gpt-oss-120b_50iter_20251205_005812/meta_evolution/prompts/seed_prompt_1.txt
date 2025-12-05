@@ -1,0 +1,53 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – GUIDELINES FOR EVOLUTION BLOCK**
+
+You are to modify only the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** add, remove, or edit any code outside this region (including imports, the `run_packing()` driver, or the markers themselves).  
+
+### Output Requirements (CRITICAL)
+- **Output ONLY** the Python statements that belong **between** the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` lines.  
+- **Do NOT** include the marker comments themselves.  
+- **Do NOT** output any additional text, explanations, or markdown.  
+
+### Focus of Changes
+- Improve the implementation of `construct_packing()` and any helper functions defined inside the evolve block (e.g., `generate_centers`, `compute_max_radii`).  
+- Preserve the exact function signatures; the rest of the program will call them unchanged.  
+
+### Success Criteria
+- The returned packing must contain **exactly 26 circles** inside the unit square with **no overlaps** (`validity = 1.0`).  
+- Maximize the **combined_score** (the sum of the radii) as much as possible.  
+
+### Allowed Strategies (pick one or combine)
+1. **Hexagonal lattice with optimal scaling** – compute the largest uniform spacing `s` that fits ≥26 points in a staggered grid, then trim to the best 26 and compute radii.  
+2. **Known optimal configuration** – embed the published coordinates for the best 26‑circle packing (scaled to the unit square) and compute radii analytically.  
+3. **Iterative force‑directed relaxation** – start from a dense lattice, then repeatedly move each center away from neighbors proportional to overlap and pull toward the square centre; after convergence recompute radii.  
+4. **Local gradient‑based radius maximization** – for a fixed set of centers, use a simple projected gradient step to increase each radius until it touches either a neighbor or a wall, iterating until the total radius sum stops improving.  
+5. **Simulated annealing on center positions** – randomly perturb a subset of centers, accept moves that increase the total radius sum while maintaining feasibility, gradually cooling the perturbation magnitude.  
+
+### What to Avoid (failed approaches)
+- **Blind random sampling** of centers without a geometric scaffold; it rarely yields dense packings and wastes computation.  
+- **Changing function signatures** or adding global state that the rest of the program does not expect.  
+- **Heavy external libraries** beyond `numpy` and the standard library – they are not available in the execution environment.  
+- **Excessive iteration counts** that cause time‑outs; keep loops bounded (e.g., ≤2000 iterations total).  
+
+### Implementation Tips
+- Use `numpy` vectorized operations for distance calculations (`np.linalg.norm`, broadcasting).  
+- When trimming a lattice to exactly 26 points, prefer the subset with the highest minimal pairwise distance (greedy removal of the most “crowded” points).  
+- After any positional update, call `compute_max_radii(centers)` to obtain the feasible radii; ensure the radii are clipped to stay inside `[0, 0.5]`.  
+- Return a tuple `(centers, radii)` from `construct_packing()`; `centers` should be an `(N, 2)` `np.ndarray`, `radii` a length‑`N` 1‑D array.  
+
+### Final Reminder
+Produce **only** the revised code block (no markers, no extra text). Your changes will be merged automatically with the surrounding preserved code. Good luck!

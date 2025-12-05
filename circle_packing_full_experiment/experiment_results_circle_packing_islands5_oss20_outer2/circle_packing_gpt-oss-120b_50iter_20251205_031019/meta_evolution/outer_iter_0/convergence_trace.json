@@ -1,0 +1,198 @@
+[
+  {
+    "iteration": 0,
+    "score": 0.36423689449571406,
+    "best_so_far": 0.36423689449571406,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 1,
+    "score": 0.9108159392789369,
+    "best_so_far": 0.9108159392789369,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 2,
+    "score": 0.7893738140417458,
+    "best_so_far": 0.9108159392789369,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 3,
+    "score": 0.7400379506641368,
+    "best_so_far": 0.9108159392789369,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 4,
+    "score": 0.6717267552182163,
+    "best_so_far": 0.9108159392789369,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 4,
+    "score": 0.7893738140417458,
+    "best_so_far": 0.9108159392789369,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 5,
+    "score": 0.6755218216318786,
+    "best_so_far": 0.9108159392789369,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 6,
+    "score": 0.7015287049046898,
+    "best_so_far": 0.9108159392789369,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 7,
+    "score": 0.857685009487666,
+    "best_so_far": 0.9108159392789369,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 7,
+    "score": 0.9108159392789369,
+    "best_so_far": 0.9108159392789369,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 8,
+    "score": 0.6717267552182163,
+    "best_so_far": 0.9108159392789369,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 9,
+    "score": 0.9297912713472487,
+    "best_so_far": 0.9297912713472487,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 10,
+    "score": 0.9108159392789369,
+    "best_so_far": 0.9297912713472487,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 11,
+    "score": 0.6207333829927222,
+    "best_so_far": 0.9297912713472487,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 12,
+    "score": 0.8647098839071947,
+    "best_so_far": 0.9297912713472487,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 13,
+    "score": 0.7427350213231679,
+    "best_so_far": 0.9297912713472487,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 14,
+    "score": 0.9297912713472487,
+    "best_so_far": 0.9297912713472487,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 15,
+    "score": 0.7137280174673015,
+    "best_so_far": 0.9297912713472487,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 16,
+    "score": 0.9108159392789369,
+    "best_so_far": 0.9297912713472487,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 17,
+    "score": 0.9297912713472487,
+    "best_so_far": 0.9297912713472487,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 18,
+    "score": 0.857685009487666,
+    "best_so_far": 0.9297912713472487,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 19,
+    "score": 0.8693785008619277,
+    "best_so_far": 0.9297912713472487,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 20,
+    "score": 0.0,
+    "best_so_far": 0.9297912713472487,
+    "validity": 0.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 21,
+    "score": 0.7205382787877574,
+    "best_so_far": 0.9297912713472487,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 22,
+    "score": 0.9502264448738713,
+    "best_so_far": 0.9502264448738713,
+    "validity": 1.0,
+    "is_improvement": true
+  },
+  {
+    "iteration": 23,
+    "score": 0.8660754478223001,
+    "best_so_far": 0.9502264448738713,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 24,
+    "score": 0.8638916523492166,
+    "best_so_far": 0.9502264448738713,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 25,
+    "score": 0.9297912713472487,
+    "best_so_far": 0.9502264448738713,
+    "validity": 1.0,
+    "is_improvement": false
+  }
+]

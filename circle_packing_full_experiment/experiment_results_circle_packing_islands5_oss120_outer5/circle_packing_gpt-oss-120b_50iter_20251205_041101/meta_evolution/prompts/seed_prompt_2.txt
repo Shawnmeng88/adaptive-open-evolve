@@ -1,0 +1,82 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for Evolving the Packing Algorithm**
+
+You are to modify **only** the functions that appear between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` comments in the supplied script. The rest of the file (imports, `run_packing()`, visualisation, etc.) is frozen and will be merged automatically.
+
+### Mandatory Output Rules  
+1. **Output ONLY the Python code that belongs between the markers.**  
+2. **Do NOT include the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines themselves.**  
+3. **Do NOT output any code outside that region** (no imports, no `run_packing()`, no top‑level statements).  
+4. The system will splice your answer into the original file; any extra text, markers, or whitespace outside the code block will cause a runtime error.
+
+### Goal  
+For `n = 26` circles inside the unit square, construct a packing that maximises the total area (or equivalently the sum of radii) while satisfying **all** constraints:
+- Each circle must lie completely inside the unit square.
+- No two circles may overlap (distance between centers ≥ sum of radii).
+- All radii must be strictly positive.
+
+### What **must NOT** be done (avoid these failure modes)  
+- Returning radii that are zero or negative (causes validity failures).  
+- Ignoring the square border when computing maximal radii.  
+- Using a naïve “assign radius = min distance to nearest neighbor / 2” without also limiting by the border; this frequently yields overlapping circles.  
+- Introducing new global variables or imports inside the evolve block; the block must remain self‑contained with the existing imports (e.g., `numpy as np`).  
+- Changing the signatures of `construct_packing` or any helper functions that are called elsewhere.
+
+### Suggested Improvement Strategies (you may combine any of them)  
+
+1. **Vectorised Distance Computation**  
+   - Use `np.linalg.norm` on a broadcasted difference matrix to obtain all pairwise distances in one call.  
+   - This makes the “min distance to any other centre” step both fast and less error‑prone.
+
+2. **Robust Max‑Radius Calculation**  
+   - Implement a helper `compute_max_radii(centers)` that returns, for each centre, the **minimum** of:  
+     a) distance to the nearest square edge, and  
+     b) half the distance to the nearest other centre.  
+   - Clip the result to a small positive epsilon (e.g., `1e-6`) to guarantee positivity.
+
+3. **Iterative Relaxation / Projection**  
+   - Start with a random set of centres (uniform in `[0,1]²`).  
+   - Repeatedly compute radii with `compute_max_radii`, then **shrink** any radii that violate the border or overlap constraints by a factor (e.g., `0.99`).  
+   - Stop when the change in total radius sum falls below a tolerance or after a fixed number of iterations.
+
+4. **Multiple Random Restarts**  
+   - Run the relaxation loop for several independent random initialisations (e.g., 10‑20).  
+   - Keep the configuration with the highest total radius sum.  
+   - This mitigates getting stuck in poor local optima.
+
+5. **Optional Simulated‑Annealing Adjustment**  
+   - After the relaxation phase, perform a lightweight simulated‑annealing step: perturb a random centre by a small Gaussian offset, recompute radii, and accept the move if the total radius sum improves or with a probability that decays with temperature.  
+   - Keep the temperature schedule simple (e.g., geometric decay) and limit to a few hundred proposals to stay within runtime limits.
+
+6. **Safety Checks Before Return**  
+   - Verify that every radius > 0.  
+   - Verify that `np.all(distances >= radii[i] + radii[j] - 1e-9)` for all `i != j`.  
+   - Verify that each centre lies in `[radius, 1‑radius]` for both coordinates.  
+   - If any check fails, fall back to the best‑so‑far configuration from the random‑restart pool.
+
+7. **Maintain Function Signatures**  
+   - `def construct_packing(n: int = 26) -> Tuple[np.ndarray, np.ndarray]:` must return `(centers, radii)` as NumPy arrays.  
+   - Any helper you add must be defined **inside** the evolve block and called from `construct_packing`; do not alter external code.
+
+### Implementation Checklist  
+- [ ] Use only `numpy` (already imported) – no new imports.  
+- [ ] Keep all new helper functions inside the evolve block.  
+- [ ] Preserve the original `construct_packing` signature.  
+- [ ] Return `centers` as an `(n, 2)` array and `radii` as a length‑`n` array.  
+- [ ] Include the safety‑check block before the final `return`.  
+
+Follow these guidelines precisely. Your output should be a clean, self‑contained snippet that will be inserted between the markers, ready to compile and run without further modification.

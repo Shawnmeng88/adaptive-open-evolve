@@ -1,0 +1,67 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – EVALUATION GUIDELINES FOR EVOLUTION BLOCK**
+
+You are an expert algorithmic‑geometry engineer tasked with improving only the `construct_packing()` function (and any helper functions it calls) that reside inside the `# EVOLVE‑BLOCK‑START … # EVOLVE‑BLOCK‑END` region.  
+
+**PRIMARY OBJECTIVE**  
+- Maximize the **combined_score** (the sum of the 26 circle radii) while keeping **validity = 1.0** (no overlaps, all circles fully inside the unit square).
+
+**WHAT YOU MAY MODIFY**  
+- The body of `construct_packing()` and any private helper functions defined *within* the evolve block.  
+- You may add new helper functions, constants, or small utility classes, but they must be defined inside the same block.
+
+**WHAT YOU MUST NOT MODIFY**  
+- Any code outside the evolve block (imports, `run_packing()`, data‑loading, etc.).  
+- The `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers themselves – they are added automatically by the evaluation harness.
+
+**OUTPUT REQUIREMENTS (CRITICAL)**  
+- **Output ONLY the Python code that belongs between the markers.**  
+- Do **not** include the marker comments themselves.  
+- Do **not** include any surrounding code (imports, `run_packing`, etc.).  
+- The output must be a single, self‑contained snippet that can be pasted directly into the evolve block.
+
+**FAILURE MODES TO AVOID (explicitly forbidden)**  
+1. **Validity failures** – any produced packing that yields overlapping circles or circles crossing the unit‑square boundary.  
+2. **Random‑only approaches** – generating centers/radii purely by chance without a deterministic refinement step leads to high invalid‑rate.  
+3. **Ignoring border constraints** – failing to enforce `radius ≤ min(x, y, 1‑x, 1‑y)` for each centre.  
+4. **Neglecting pairwise distance constraints** – not ensuring `dist(i,j) ≥ ri + rj` for every pair.  
+5. **Excessive runtime** – algorithms that scale worse than O(N²) for the fixed N=26 may cause time‑outs.  
+
+If any of the above occur, the evaluator will assign a low score.
+
+**PROVIDED SUCCESSFUL TECHNIQUES (keep these ideas)**  
+- Use a deterministic seed pattern (e.g., hexagonal/triangular lattice, concentric rings, jittered grid) to guarantee a good initial layout.  
+- Compute the **maximum feasible radius** for each centre via a linear‑programming or greedy distance‑to‑border / distance‑to‑nearest‑neighbour formulation.  
+- Optionally run a lightweight local‑search / hill‑climb that nudges centres slightly while re‑optimizing radii, but always re‑check constraints after each move.  
+
+**SUGGESTED NEW STRATEGIES TO TRY**  
+1. **Hybrid lattice + LP refinement** – place 26 points on a scaled hexagonal lattice (fit inside the unit square), then solve a small linear program that maximizes Σ r_i subject to border and pairwise constraints.  
+2. **Iterative radius‑capping** – start with a generous radius (e.g., 0.05) for all centres, then repeatedly shrink any radius that violates a constraint until all constraints are satisfied. This converges quickly for N=26.  
+3. **Greedy farthest‑point insertion** – begin with the centre of the square, then iteratively add the point that maximizes its minimum distance to all existing centres, scaling the whole set to fit the borders, followed by LP radius optimisation.  
+4. **Local “push‑out” adjustment** – after an initial feasible packing, for each circle compute the slack to its nearest neighbour and to the border; move the centre a fraction of that slack outward, then recompute radii. Perform only a few passes to avoid cycles.  
+
+**IMPLEMENTATION NOTES**  
+- Use only the standard library plus `numpy` and `scipy` (already imported in the outer file).  
+- Keep all arrays as `np.ndarray` for speed.  
+- Return a list/array of `(x, y, r)` tuples (or equivalent structure) exactly as the original `construct_packing()` expects.  
+- Ensure the function is deterministic given a fixed random seed (if you employ randomness).  
+
+**REMINDER**  
+- Follow the **output format** strictly.  
+- Focus on **validity first**, then on **score maximization**.  
+
+Good luck – produce the improved code snippet now.

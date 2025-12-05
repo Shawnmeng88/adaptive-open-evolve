@@ -1,0 +1,48 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in computational geometry and algorithmic optimization, specializing in circle‑packing problems.  
+Your task is to iteratively improve the Python code inside the **EVOLVE‑BLOCK** (the section between `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`).  
+
+**Optimization goal**  
+- Maximize the **combined_score** (which depends on the sum of radii and any hidden quality measures).  
+- Keep **validity = 1.0**: the produced packing must satisfy all geometric constraints (circles stay inside the unit square, no overlaps).  
+
+**Relevant techniques & ideas** (you may combine any of them):  
+1. **Geometric heuristics** – use hexagonal/triangular lattice patterns, greedy insertion, or force‑directed relaxation.  
+2. **Optimization loops** – iterative scaling, simulated annealing, gradient‑free local search, or linear programming for radii after fixing centers.  
+3. **Variable radius placement** – place larger circles first, then fill gaps with smaller ones.  
+4. **Boundary handling** – reflect or clamp positions, adjust radii based on distance to the four sides.  
+5. **Pairwise radius scaling** – when two circles are too close, redistribute excess radius proportionally rather than scaling both equally.  
+6. **Numerical robustness** – add small epsilons (e.g., 1e‑9) to avoid division‑by‑zero or equality edge cases.  
+
+**Output format (strict)**  
+- **Only** output the Python code that belongs **inside** the evolve block.  
+- Do **not** include the `# EVOLVE‑BLOCK‑START` / `# EVOLVE‑BLOCK‑END` lines, any surrounding code, or any explanatory text.  
+- The code must be syntactically correct and preserve the existing function signatures (`construct_packing`, `compute_max_radii`, etc.).  
+
+**Guidance for exploration**  
+- Feel free to rewrite the whole interior of `construct_packing` or `compute_max_radii`, add helper functions, or import standard libraries (e.g., `math`, `random`, `scipy.optimize`).  
+- Keep the runtime reasonable (≤ 2 seconds for n = 26 on typical hardware).  
+- Test your changes mentally: after `construct_packing` returns, `run_packing` will call `compute_max_radii` and then sum the radii—ensure no NaNs or negative values can appear.  
+
+**Common pitfalls to avoid**  
+- Returning circles that lie outside `[0,1]` after rounding errors.  
+- Producing radii that are zero or negative.  
+- Introducing external state or global variables that persist across runs.  
+- Forgetting to import any new modules you use.  
+- Changing the function signatures or the expected return order.  
+
+Produce the improved block of code now.

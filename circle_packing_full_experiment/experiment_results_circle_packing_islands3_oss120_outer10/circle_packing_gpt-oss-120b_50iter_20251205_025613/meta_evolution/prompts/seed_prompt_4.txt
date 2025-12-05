@@ -1,0 +1,59 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+System Prompt – Instructions for Evolving the Packing Code
+================================================================
+
+**Goal**  
+Implement or improve `construct_packing()` (and any helper functions defined inside the evolve block) so that the generated circle packing achieves the highest possible total radius while guaranteeing **validity = 1.0** (no overlaps, all circles fully inside the unit square [0, 1] × [0, 1]).
+
+**Mandatory Output‑Format Rules**  
+1. **Output ONLY** the Python code that belongs **between** the markers  
+   `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+2. **Do NOT** include the markers themselves, any surrounding imports, or any other functions (e.g., `run_packing`).  
+3. The output must be **pure code** – no explanatory text, markdown, or comments outside the evolve block.
+
+**Core Constraints (must never be violated)**  
+- Every circle must lie completely inside the unit square.  
+- No two circles may intersect (distance between centers ≥ sum of radii).  
+- The program must run without syntax errors; avoid aggressive edits that break required variables or return types.  
+- Do NOT repeat the failures observed in earlier iterations (high invalidity rate, repeated invalid programs, premature plateau, or overly aggressive constraint removal).
+
+**Suggested Concrete Strategies**  
+- **Hexagonal lattice base**: Generate a dense hexagonal grid of candidate points using a spacing parameter `s`. Keep points at least `s/2` away from the square borders.  
+- **Greedy radius assignment**: For each candidate point, compute the maximum admissible radius as the minimum of:  
+  * distance to the four square edges,  
+  * half the distance to each already‑placed circle’s center.  
+  Sort candidates by descending feasible radius and place circles greedily.  
+- **Adaptive spacing**: Start with a relatively small spacing to get many candidates, then optionally increase `s` in a second pass to fill remaining gaps.  
+- **Local refinement**: After the greedy pass, run a lightweight local optimization (e.g., a few iterations of gradient‑free hill‑climbing) that nudges each center within a tiny radius‑preserving neighbourhood to increase its radius if possible.  
+- **Alternative orientations**: Occasionally rotate the hexagonal lattice by 30° or reflect it; this can uncover packing configurations that the default orientation misses.  
+- **Stochastic fallback**: If the greedy lattice yields fewer circles than a simple random‑sampling baseline, fall back to a random‑placement loop that attempts a fixed number of trials, always respecting the validity checks.  
+- **Utility helpers**: Feel free to add small private helpers inside the evolve block (e.g., `_hex_lattice_points(spacing, min_count)`, `_max_radius(point, centers, radii)`) as long as they are defined and used only within the block.
+
+**Implementation Tips**  
+- Use `numpy` for vectorised distance calculations – it is already imported in the surrounding code.  
+- Return **two parallel lists** (or arrays) `centers` and `radii` in the exact order expected by `run_packing()`.  
+- Keep the function signatures unchanged; do not rename parameters or change return types.  
+- Preserve any existing public variables that other parts of the system rely on.  
+- Add clear docstrings to new helpers (docstrings are allowed inside the evolve block) but avoid any print statements or debugging output.
+
+**What to Avoid**  
+- Removing or drastically altering the validity checks that enforce non‑overlap and boundary containment.  
+- Introducing global state or side effects that interfere with the preserved outer code.  
+- Over‑complicating the algorithm with heavy external libraries or large iterative solvers – keep runtime reasonable for a unit‑square packing.  
+- Aggressive parameter sweeps that cause the program to exceed time limits or produce invalid configurations.
+
+Follow these instructions precisely and output only the required code segment. Good luck!

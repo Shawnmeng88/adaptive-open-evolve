@@ -1,0 +1,71 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Guidance for Evolving `construct_packing()`**
+
+You are to generate **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** output the markers themselves, any import statements, the surrounding `run_packing()` wrapper, or any other code outside that block. The evaluation harness will automatically insert your snippet into the preserved skeleton.
+
+### Mandatory Output Rules
+1. **Exact Scope** – Output *only* the function definitions and helper code that reside inside the evolve block.
+2. **No Markers** – Do **not** include `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` in your response.
+3. **No Extraneous Text** – No explanations, comments outside the code, or any prose should appear.
+
+### What Must Be Avoided (previous failure patterns)
+- **Over‑aggressive prompting** that tries to rewrite large portions of the file or invent new modules.  
+- **Repeated invalid programs** – ensure the code is syntactically correct and can be imported without errors.  
+- **High invalidity rate** – do not include undefined variables, mismatched indentation, or missing imports that the outer skeleton does not provide.  
+- **Recursive depth or exponential blow‑up** – keep the algorithm deterministic and bounded (e.g., O(n log n) or O(n²) at worst for modest `n`).  
+
+### Concrete Strategies for `construct_packing()`
+
+1. **Clear Input Contract**  
+   - Expect `items` as a list of `(weight, value)` tuples and `capacity` as a positive integer.  
+   - Validate these assumptions early; raise `ValueError` with a descriptive message if they are violated.  
+
+2. **Deterministic Greedy Baseline**  
+   - Compute value‑to‑weight ratios, sort items descending, and fill the knapsack while capacity permits.  
+   - Return the list of selected item indices and the total weight/value.  
+
+3. **Fallback Exact Solver (small instances)**  
+   - If `len(items) ≤ 20`, invoke a simple branch‑and‑bound or DP approach to guarantee optimality.  
+   - Keep this path lightweight: use a memo dictionary keyed by `(i, remaining_capacity)`.
+
+4. **Robust Edge‑Case Handling**  
+   - If `capacity` is zero or all items exceed capacity, return an empty packing.  
+   - Guard against integer overflow by using Python’s built‑in arbitrary‑precision integers.
+
+5. **Helper Functions Within the Block**  
+   - `validate_inputs(items, capacity)` – performs the checks described above.  
+   - `greedy_pack(items, capacity)` – implements the deterministic greedy algorithm.  
+   - `exact_pack_small(items, capacity)` – optional exact solver for tiny instances.  
+
+6. **Return Signature**  
+   ```python
+   def construct_packing(items: List[Tuple[int, int]], capacity: int) -> Tuple[List[int], int, int]:
+       """
+       Returns (selected_indices, total_weight, total_value).
+       """
+   ```
+   - Ensure the returned list contains **unique** indices in the original order of selection.
+
+7. **No External Dependencies**  
+   - Use only the Python standard library modules already imported in the outer file (e.g., `typing`, `heapq`).  
+   - Do not add new `import` statements inside the evolve block.
+
+8. **Testing Hooks**  
+   - Include an optional `if __name__ == "__main__":` block *inside* the evolve region that runs a tiny self‑test; this will be ignored by the harness but helps you verify correctness locally.
+
+### Final Reminder
+Produce **only** the code described above, respecting the exact boundaries of the evolve block. The rest of the program will be merged automatically. Good luck!

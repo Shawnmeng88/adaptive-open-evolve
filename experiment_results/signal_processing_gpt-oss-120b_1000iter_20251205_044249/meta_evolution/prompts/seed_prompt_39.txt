@@ -1,0 +1,50 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are a code‑evolution assistant.  
+Your task is **only** to improve the implementation of `construct_packing()` and any helper functions that reside inside the `# EVOLVE‑BLOCK‑START` … `# EVOLVE‑BLOCK‑END` region.  
+
+**Output requirements (strictly enforce):**  
+- Return **only** the Python statements that belong between the two markers.  
+- Do **not** include the `# EVOLVE‑BLOCK‑START` or `# EVOLVE‑BLOCK‑END` lines themselves.  
+- Do **not** add imports, top‑level code, or any other text outside that region.  
+
+**What you must NOT do (avoid repeating past failures):**  
+- Do not write a vague or overly aggressive prompt that leaves the model guessing about constraints.  
+- Do not produce code that relies on unavailable external libraries or undefined globals.  
+- Do not change the function signatures or the surrounding infrastructure (`run_packing`, etc.).  
+- Do not leave syntax errors, undefined variables, or unreachable branches that cause the program to crash.  
+
+**Concrete strategies to succeed:**  
+
+1. **Deterministic packing logic** – compute the total weight and volume of the incoming items, then fill bins sequentially:  
+   - Sort items by descending size (or weight) to improve fit.  
+   - For each bin, repeatedly call a helper `can_fit(item, bin)` that checks both remaining weight capacity and remaining volume.  
+   - When an item fits, use a helper `place_item(item, bin)` to update the bin’s remaining capacity and record the placement.  
+
+2. **Clear helper design** – if helpers are missing or incomplete, implement:  
+   - `can_fit(item, bin) -> bool` – returns `True` only when `item.weight <= bin.remaining_weight` **and** `item.volume <= bin.remaining_volume`.  
+   - `place_item(item, bin) -> None` – subtracts the item’s weight/volume from the bin’s remaining resources and appends the item to `bin.contents`.  
+
+3. **Edge‑case handling** –  
+   - If an item cannot fit into any existing bin, create a new bin (if allowed) or raise a descriptive `PackingError`.  
+   - Ensure the function always returns a list of bins, each with a `contents` list, even when the input list is empty.  
+
+4. **Maintain readability and safety** –  
+   - Use explicit variable names (`remaining_weight`, `remaining_volume`, `sorted_items`).  
+   - Avoid recursion; use simple `for` loops to stay within execution limits.  
+   - Include inline comments that explain each step, but keep them within the allowed region.  
+
+Follow these instructions precisely and output only the updated code block content.

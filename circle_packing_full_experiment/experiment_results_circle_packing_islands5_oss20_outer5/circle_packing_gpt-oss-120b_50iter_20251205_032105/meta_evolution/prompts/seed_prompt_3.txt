@@ -1,0 +1,52 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidelines**
+
+You are to **modify only the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`** in the provided file.  
+
+### Mandatory Output Rules (absolute)
+- **Output ONLY** the Python statements that should replace the existing code **inside** that region.  
+- **Do NOT** output the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` lines.  
+- **Do NOT** include any imports, surrounding functions (e.g., `run_packing`), or explanatory text outside the block.  
+- The evaluation harness will automatically insert your output back into the original file; any deviation will cause a failure.
+
+### Focus of the Evolution
+- **Improve the `construct_packing()` function** and any helper functions defined within the evolve block.  
+- Preserve the overall algorithmic structure (use of NumPy, geometric calculations, iterative refinement), but enhance correctness, robustness, and packing efficiency.
+
+### What to Keep (successful strategies)
+- Use of NumPy arrays for vectorized distance calculations.  
+- The helper `_max_radius_for_center(pt, centers, radii)` that computes the feasible radius of a new circle constrained by the unit square and existing circles.  
+- The iterative scheme that refines a uniform radius (`_optimal_uniform_radius`) and then adjusts circles to fill gaps.
+
+### What to Avoid (previous failures)
+- **Validity failures** where circles extend outside the unit square or overlap: ensure every generated circle satisfies `0 ≤ x − r`, `x + r ≤ 1`, `0 ≤ y − r`, `y + r ≤ 1`, and pairwise distances ≥ sum of radii.  
+- **Off‑by‑one or rounding errors** that cause the final count of circles to be less than the target.  
+- Returning structures that are not plain NumPy arrays or lists of `(x, y, r)` tuples, as the evaluator expects this format.
+
+### Suggested Strategies to Try
+1. **Robust radius clipping**: After computing a candidate radius, explicitly clip it to the minimum distance to the square boundary (`min(x, y, 1‑x, 1‑y)`) before checking collisions.
+2. **Collision‑aware placement loop**: For each new center, iterate a small inner loop that reduces the radius until no overlap is detected, then break early if the radius falls below a tolerance (e.g., `1e-4`).
+3. **Adaptive point generation**: Start from a hexagonal lattice (`_hex_grid`) scaled to the current uniform radius, then perturb points randomly within a bounded radius to explore better packings.
+4. **Post‑processing cleanup**: After the main construction, scan the list of circles and remove any that are invalid or duplicate, then optionally re‑fit a few circles by maximizing their radius given the final set.
+5. **Early exit on stagnation**: If an iteration adds no new circles or the improvement in total area is below a threshold, stop the refinement to avoid unnecessary computation.
+
+### Implementation Checklist
+- All helper functions (`_max_radius_for_center`, `_compute_max_radii`, `_hex_grid`, `_optimal_uniform_radius`, etc.) must remain **defined inside** the evolve block and be callable by `construct_packing()`.  
+- `construct_packing(target_n: int = 26) -> List[Tuple[float, float, float]]` should return a list (or NumPy array) of `(x, y, r)` for **exactly** `target_n` circles when a feasible packing exists; otherwise return the largest feasible set found.  
+- Ensure deterministic behavior where possible (e.g., set a NumPy random seed at the start of the block) to aid reproducibility during evaluation.  
+
+Follow these instructions precisely. Your response must consist solely of the revised code that belongs inside the `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END` region. No extra text, comments outside the block, or marker lines are allowed.

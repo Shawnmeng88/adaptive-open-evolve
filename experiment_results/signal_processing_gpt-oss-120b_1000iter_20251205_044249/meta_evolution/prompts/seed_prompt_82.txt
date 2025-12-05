@@ -1,0 +1,71 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Message – Guidance for Evolving `construct_packing()`**
+
+You are asked to modify only the code that lies between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not** output the markers themselves, any import statements, or any surrounding boiler‑plate (e.g., `run_packing()`); the system will automatically splice your output into the existing file.
+
+### Mandatory Output Rules
+- **Output ONLY** the Python statements that belong inside the evolve block.
+- **Do NOT** include the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` comments.
+- **Do NOT** add any code outside the block (imports, helper definitions that already exist elsewhere, global variables, etc.).
+- The output must be a syntactically correct snippet that can be inserted directly.
+
+### What **must NOT** be done (previous failures)
+- Avoid aggressive rewrites that remove or drastically rename existing helper functions; this caused a high invalidity rate.
+- Do **not** introduce new top‑level definitions (e.g., new classes, global constants) inside the block.
+- Do **not** change the function signature of `construct_packing()` or any referenced helpers.
+- Do **not** produce code that relies on unavailable libraries or external files.
+- Do **not** leave placeholder comments like `# TODO` without concrete implementation.
+
+### Focus of the improvement
+Your task is to make `construct_packing()` more efficient, correct, and easier to evolve while staying within the existing architecture. The surrounding code expects the following behavior:
+
+1. **Input**: a list of `Item` objects (each with `weight`, `volume`, `value`, `category` attributes) and a `Container` specification (`max_weight`, `max_volume`).
+2. **Goal**: return a list of selected items that maximizes total value while respecting both weight and volume constraints.
+3. **Constraints**:
+   - Must respect the container limits exactly; exceeding either limit is invalid.
+   - Must preserve the original ordering of items when possible (stable selection).
+   - Must be deterministic for a given input (no random sampling unless seeded and reproducible).
+
+### Suggested concrete strategies
+1. **Dynamic Programming (DP) with 2‑D state**  
+   - Implement a DP table `dp[w][v]` storing the maximum value achievable for weight ≤ `w` and volume ≤ `v`.  
+   - Iterate items once, updating the table backwards to avoid reuse.  
+   - After DP, backtrack to reconstruct the selected items while preserving order.
+
+2. **Memory‑efficient DP**  
+   - If `max_weight * max_volume` is large, compress the DP using a dictionary keyed by `(weight, volume)` pairs that are reachable, pruning dominated states (i.e., keep only the best value for each weight‑volume combo).
+
+3. **Greedy fallback**  
+   - If DP would exceed a reasonable time/space threshold (e.g., `max_weight * max_volume > 5e6`), fall back to a greedy heuristic:
+     - Compute a score `value / (weight + volume)` for each item.
+     - Sort items by this score descending, then iterate in original order selecting items that fit.
+   - Ensure the greedy path still respects deterministic ordering.
+
+4. **Helper extraction**  
+   - Refactor any repeated logic (e.g., “fits in container”, “update best solution”) into small inner functions **inside** the evolve block; do not create new top‑level helpers.
+
+5. **Validation step**  
+   - After constructing the candidate list, verify weight and volume totals; if they exceed limits, prune the last added items until constraints are satisfied. This ensures safety against edge‑case DP bugs.
+
+### Implementation checklist
+- Keep the function signature unchanged: `def construct_packing(items: List[Item], container: Container) -> List[Item]:`
+- Use only standard library modules (`typing`, `functools`, `itertools`, `math`).
+- Return the selected items in the order they appear in the original `items` list.
+- Include inline comments explaining the DP state and the fallback heuristic.
+- Ensure the code runs in ≤ 2 seconds for typical test sizes (≈ 200 items, weight/volume limits ≤ 10 000).
+
+Follow these instructions precisely and output only the revised code block. Good luck!

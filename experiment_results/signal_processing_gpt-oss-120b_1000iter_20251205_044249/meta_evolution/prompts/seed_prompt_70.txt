@@ -1,0 +1,101 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidelines for Evolving `construct_packing()`**
+
+You are asked to improve only the code that lies between the markers  
+
+```
+# EVOLVE-BLOCK-START
+… your changes …
+# EVOLVE-BLOCK-END
+```  
+
+All other parts of the file (imports, `run_packing()`, etc.) are **preserved automatically** and must **not** be emitted.
+
+---
+
+### Mandatory Output Rules  
+1. **Emit ONLY the code that belongs between the two markers.**  
+2. **Do NOT include the `# EVOLVE‑BLOCK‑START` / `# EVOLVE‑BLOCK‑END` lines themselves.**  
+3. **Do NOT output any code outside that region** (no extra imports, no helper definitions that already exist elsewhere).  
+
+The system will splice your output into the original file, so any deviation will cause a merge error.
+
+---
+
+### What You MUST NOT DO (previous failures)  
+- **Do not** write a completely new `construct_packing()` that ignores the existing helper functions.  
+- **Do not** add new top‑level statements (e.g., `if __name__ == "__main__":`, prints, or test harnesses).  
+- **Do not** change the function signature or the names of existing helpers that other parts of the program rely on.  
+- **Do not** introduce syntax errors, undefined variables, or mismatched indentation.  
+- **Do not** repeat the same logic that previously produced invalid programs (e.g., returning raw lists instead of the required `PackingResult` dataclass).  
+
+Any of the above will cause the next iteration to be rejected.
+
+---
+
+### Target Improvements (domain‑specific)
+
+Your goal is to make `construct_packing()` **more efficient, robust, and easier to maintain** while respecting the existing architecture. Consider the following concrete strategies:
+
+1. **Early Validation**  
+   - Verify that `items` is non‑empty and that every item’s `weight` and `volume` are positive.  
+   - Return an empty `PackingResult` with a clear `error` field if validation fails.
+
+2. **Greedy Bin‑Packing with Sorting**  
+   - Sort items by a combined metric (e.g., `weight + volume`) in descending order before placement.  
+   - Iterate through sorted items, trying to fit each into the first bin that can accommodate it; if none can, open a new bin.
+
+3. **Use Helper Functions Effectively**  
+   - Call the existing `can_fit(item, bin)` helper to test feasibility.  
+   - Use `add_to_bin(item, bin)` to perform the insertion, ensuring side‑effects (e.g., updating remaining capacity) stay consistent.
+
+4. **Batch Processing for Large Item Sets**  
+   - If `len(items) > 1000`, split the list into chunks of 500 and pack each chunk independently, then merge the resulting bins.  
+   - This reduces per‑iteration overhead and keeps memory usage bounded.
+
+5. **Deterministic Tie‑Breaking**  
+   - When multiple bins can accept an item, choose the bin with the **least remaining capacity** after insertion.  
+   - Implement this with a simple `min` call on a list comprehension that filters feasible bins.
+
+6. **Return a Fully Populated `PackingResult`**  
+   - Populate `bins` (list of `Bin` objects), `total_weight`, `total_volume`, and set `error` to `None` on success.  
+   - Ensure the result matches the expected dataclass fields exactly.
+
+7. **Avoid Deep Recursion**  
+   - Use iterative loops only; do not introduce recursive packing strategies that could hit Python’s recursion limit on large inputs.
+
+8. **Performance Logging (optional, but keep inside the block)**  
+   - If a `debug` flag is passed via `kwargs`, append a small timing report to `result.debug_info` without affecting the main output.
+
+---
+
+### Example Skeleton (you must fill in the details)
+
+```python
+def construct_packing(items, bin_template, **kwargs):
+    # 1️⃣ Validate input
+    # 2️⃣ Sort items by combined metric
+    # 3️⃣ Iterate and place using helpers
+    # 4️⃣ Handle large inputs by chunking
+    # 5️⃣ Build and return PackingResult
+```
+
+Replace the comment lines with concrete, syntactically correct Python code that respects all the rules above.
+
+---
+
+**Remember:** Only the code between the markers will be kept. Keep the implementation self‑contained, use the existing helpers, and obey the output format strictly. Good luck!

@@ -1,0 +1,96 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Packing Code**
+
+You are to edit **only** the code that resides between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do not output the markers themselves**.  
+- **Do not include any code outside those markers** (imports, `run_packing()`, etc.).  
+- The surrounding file will automatically merge your output with the preserved sections.
+
+### Primary Objective
+Maximize the `combined_score` (sum of radii) for a packing of **exactly 26 non‑overlapping circles** inside the unit square **while keeping the solution fully valid** (`validity = 1.0`).
+
+### Required Functionality
+- **`construct_packing()`** must return a NumPy array of shape `(26, 2)` containing the (x, y) centers of the circles.  
+- Any helper functions you modify or add (e.g., `compute_max_radii`) must keep their original signatures and be callable by the existing `run_packing()` logic.  
+- `compute_max_radii(centers)` must compute for each center the largest radius that fits inside the square and does not intersect any other circle, returning a 1‑D NumPy array of length 26.
+
+### Strategies That **Must** Be Used
+1. **Hexagonal / Triangular Lattice Foundation** – start from a dense hexagonal grid scaled to fit 26 points inside the unit square. This lattice is provably more space‑efficient than a simple square grid.
+2. **Known Near‑Optimal Layout for 26 Circles** – incorporate the published coordinates (or a close approximation) for the optimal 26‑circle packing in a unit square. If you cannot recall the exact numbers, generate a hexagonal lattice and then **apply a small global scaling** to push the outermost circles to the square edges, increasing the achievable radius.
+3. **Iterative Radius Expansion** – after the initial placement, run a few deterministic refinement steps:
+   - Compute the limiting radius for each circle (`r_i = min(distance to square edges, half the distance to each neighbor)`).
+   - Identify the circle(s) with the smallest radius and **uniformly scale the entire configuration** outward until the smallest radius reaches the next limiting neighbor or edge.  
+   - Perform at most 3 refinement iterations; avoid heavy loops that could cause time‑outs.
+4. **Deterministic Geometry Only** – use only NumPy arithmetic and explicit loops; **do not rely on random sampling** or stochastic optimization (e.g., Monte‑Carlo, simulated annealing) because they caused validity failures in earlier attempts.
+5. **Explicit Edge Handling** – ensure every center stays at least `r` away from the square borders (`0 ≤ x ≤ 1`, `0 ≤ y ≤ 1`). Clamp or adjust coordinates after scaling if necessary.
+
+### What **Must NOT** Be Done (to avoid previous validity failures)
+- **Randomly generate centers** and hope they become valid after a post‑hoc fix. This produced overlapping circles in 33 % of past runs.  
+- **Add or remove circles**; the function must always output exactly 26 centers.  
+- **Modify the signatures** of `construct_packing` or `compute_max_radii`.  
+- **Introduce external dependencies** beyond NumPy (e.g., SciPy, CVXOPT) – the sandbox only guarantees NumPy.  
+- **Use infinite or excessively large loops**; keep the algorithm O(n²) with n = 26 and limit any iterative refinement to a constant small number of passes.  
+- **Return radii larger than the geometric limits** (e.g., exceed the distance to the nearest neighbor or edge); this will be caught by the validator and set validity < 1.
+
+### Suggested Implementation Outline (you may adapt it)
+
+```python
+def construct_packing():
+    """
+    Build a dense hexagonal lattice for 26 points, then uniformly scale it
+    so that the outermost circles touch the unit‑square boundaries.
+    Returns:
+        centers (np.ndarray): shape (26, 2) with x,y coordinates in [0,1].
+    """
+    # 1. Generate a hexagonal lattice covering a slightly larger square.
+    # 2. Trim or select the first 26 points (the lattice naturally yields 27;
+    #    drop the farthest corner point).
+    # 3. Compute the maximal uniform scaling factor that keeps all points
+    #    inside the unit square while maximizing the minimal inter‑point
+    #    distance.
+    # 4. Apply the scaling and translate if needed so the pattern is centered.
+    # 5. Return the final (26,2) array.
+```
+
+```python
+def compute_max_radii(centers):
+    """
+    For each center, compute the largest radius that fits inside the unit
+    square and does not intersect any other circle.
+    """
+    n = centers.shape[0]
+    # distance to the four edges
+    edge_dist = np.minimum.reduce([centers[:,0], 1-centers[:,0],
+                                   centers[:,1], 1-centers[:,1]])
+    # pairwise distances
+    diff = centers[:, None, :] - centers[None, :, :]   # shape (n,n,2)
+    dists = np.linalg.norm(diff, axis=2)
+    # nearest neighbor distance (ignore self‑distance)
+    nearest = np.partition(dists, 1, axis=1)[:,1]
+    # feasible radius is half the nearest‑neighbor distance, capped by edge distance
+    radii = np.minimum(edge_dist, nearest/2.0)
+    return radii
+```
+
+You may add small deterministic helper functions (e.g., `_hex_lattice`, `_scale_to_square`) **inside** the evolve block, but keep everything self‑contained and NumPy‑only.
+
+### Final Reminder
+- **Output only the code lines that belong between the markers**.  
+- **Do not include the markers themselves**.  
+- The rest of the program will be merged automatically.
+
+Good luck – produce a dense, valid, and high‑scoring packing!

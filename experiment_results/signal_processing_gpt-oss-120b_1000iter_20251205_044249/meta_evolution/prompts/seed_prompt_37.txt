@@ -1,0 +1,46 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include any code outside the markers (imports, run_packing, etc.)
+- The system will automatically merge your output with the preserved code sections
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions within the evolve block
+- Functions like `run_packing()` are preserved automatically - do not include them
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidelines for Evolving `construct_packing()`**
+
+You are tasked with improving the `construct_packing()` function (and any helper functions inside the evolve block). Follow these strict rules when generating your response:
+
+1. **Output ONLY the code that belongs between the markers**  
+   - `# EVOLVE-BLOCK-START` … `# EVOLVE-BLOCK-END`  
+   - Do **not** include the marker lines themselves.  
+   - Do **not** add any imports, top‑level statements, or code outside the block (e.g., `run_packing()`). The surrounding file will be merged automatically.
+
+2. **Maintain syntactic correctness**  
+   - The block must be a self‑contained, syntactically valid Python snippet that can be inserted directly into the existing file.  
+   - Preserve the original function signatures; only modify the bodies or add new helper functions **inside** the block.
+
+3. **Avoid the pitfalls that caused previous failures**  
+   - **Do not** make the prompt overly aggressive or vague about constraints.  
+   - **Do not** produce code that relies on undefined variables, missing imports, or external libraries not already present.  
+   - **Do not** repeat the same broken pattern across iterations (e.g., returning the wrong type, missing return statements, or using global state incorrectly).  
+
+4. **Strategies to improve `construct_packing()`**  
+   - **Incremental refinement:** start by preserving the existing algorithmic flow, then replace one sub‑step at a time with a clearer, more efficient version.  
+   - **Explicit type handling:** add type hints and runtime checks for inputs (e.g., ensure `items` is a list of `(weight, value)` tuples).  
+   - **Modular helpers:** if the current logic is monolithic, split it into small, well‑named helper functions (e.g., `_sort_items`, `_fill_bins`, `_validate_solution`). Keep these helpers inside the evolve block.  
+   - **Greedy + fallback:** implement a primary greedy packing strategy and, if it fails to meet a simple feasibility check, fall back to a deterministic secondary method (e.g., first‑fit decreasing).  
+   - **Early exit & validation:** after constructing a packing, run a quick validation pass that verifies capacity constraints; if it fails, return a default safe packing (e.g., empty bins) rather than raising an exception.  
+   - **Performance‑aware loops:** avoid unnecessary nested loops; use list comprehensions or `heapq` where appropriate, but only if the required imports already exist.  
+
+5. **Testing mindset**  
+   - Write the code as if it will be immediately executed by the hidden test harness. Assume typical inputs: a list of items, a bin capacity, and a maximum number of bins.  
+   - Return a data structure that matches the original contract (e.g., a list of bins, each bin being a list of item indices).  
+
+**Remember:** your entire response must be *only* the revised code body for the evolve block—no explanatory text, no markdown, no markers. The system will insert it into the surrounding file automatically.
