@@ -1,0 +1,68 @@
+# Prompt Type: C
+# Outer Iteration: 1
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – Evolve Block Guidelines**
+
+---
+
+### ✅ What to Deliver  
+- **Only** the Python source that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do not** output the markers themselves, nor any surrounding code such as `run_packing()` or `visualize()`.  
+- The submitted snippet must be **self‑contained**: every name that your code calls (functions, classes, constants, imports) has to be defined **inside** this block.  
+
+### 📦 Imports  
+- `numpy as np` and `scipy.optimize.linprog` are already available globally, but you may add additional imports (e.g., `from scipy.optimize import minimize`, `itertools`, etc.) inside the block if needed.  
+
+### 🎯 Objective  
+Create or improve the routine that builds the circle‑packing configuration. The solution must:
+
+1. **Maximize the combined score** (large total radii + high density).  
+2. **Maintain validity = 1.0** – every circle must stay completely inside the unit square `[0,1]×[0,1]` and must not intersect any other circle.  
+
+### 🚀 Proven Algorithmic Strategies (use any combination that fits)  
+- **Linear‑programming bound**: formulate a linear program that computes the largest feasible radius for each predefined centre under the non‑overlap and boundary constraints; use the result as a tight upper bound or as starting radii.  
+- **Greedy expansion**: iterate over the centres in a deterministic order, assign each the maximum radius allowed by the already‑placed circles and the square edges, updating the feasible region after each placement.  
+- **Iterative refinement**: after an initial feasible assignment, apply a small‑scale numerical optimizer (e.g., `scipy.optimize.minimize` with bounds) to increase radii while constantly re‑checking the constraints.  
+- **Local perturbation**: randomly jitter radii within a safe margin and accept changes only if they improve the total score and keep the configuration valid.  
+- **Geometric pruning**: pre‑compute pairwise distance limits between centres and the square borders to quickly reject impossible radius choices, reducing the search space for the optimizer.  
+
+### ❌ Approaches That Lead to Failures (avoid)  
+- **Directly assigning the distance to the nearest neighbour** without subtracting the neighbour’s radius – this often yields overlapping circles.  
+- **Using unconstrained optimizers** (e.g., `scipy.optimize.fmin`) that ignore the non‑overlap or boundary constraints; they produce invalid packings and cause a validity drop.  
+- **Relying on random placement without a repair step** – the resulting configuration frequently violates the unit‑square limits or creates intersections.  
+- **Hard‑coding a fixed radius** for all centres; this rarely achieves a high score and may violate the boundary for points near the edges.  
+
+### 🛠 Implementation Tips  
+- **Encapsulate helper logic** (distance calculations, feasibility checks, LP formulation, refinement loops) as small functions or inner classes inside the block.  
+- **Return a single data structure** (e.g., two `np.ndarray`s: one for centre coordinates, one for radii) that the outer code will pass to the visualizer.  
+- **Validate continuously**: after any radius update, assert that `radius >= 0`, `center ± radius` stays within `[0,1]`, and that `np.linalg.norm(c_i - c_j) >= r_i + r_j` for all pairs.  
+- **Keep performance reasonable**: the problem size is modest (≈ 20–30 circles), so an O(N²) feasibility check inside loops is acceptable.  
+
+### 📜 Mandatory Output‑Format Reminder  
+- **Output ONLY the Python code that belongs between the evolve markers.**  
+- **Do NOT** include the markers themselves, nor any surrounding scaffolding (`run_packing()`, `visualize()`, etc.).  
+- **All identifiers you use must be defined inside this block**; otherwise a `NameError` will occur.  
+
+---  
+Follow these guidelines to craft a robust, high‑scoring packing routine. Good luck!

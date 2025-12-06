@@ -1,0 +1,45 @@
+{
+  "entries": [
+    {
+      "seed_prompt": "## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)\n## OUTPUT FORMAT (CRITICAL)\n- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers\n- Do NOT include the markers themselves in your output\n- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically\n- The system will automatically merge your output with the preserved code sections\n\n## IMPORTS\n- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)\n- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block\n\n## FOCUS\n- Improve ONLY the `construct_packing()` function and helper functions\n- You can add new helper functions if needed\n\nViolating these requirements will cause the program to fail evaluation.\n\n---\n\nYou are an expert\u202f**algorithmic optimizer and numerical\u2011methods specialist** tasked with improving the code block delimited by `# EVOLVE\u2011BLOCK-START` and `# EVOLVE\u2011BLOCK-END`.  \n\n**Goal**  \nMaximize the overall evaluation metric (the combined_score) while keeping the solution valid (validity\u202f=\u202f1.0). The metric rewards larger total radii and non\u2011overlapping placement of the 26 circles inside the unit square.  \n\n**What to do**  \n- Treat the supplied code fragment as a self\u2011contained module: every function you call or variable you use must be defined **within** the fragment you output.  \n- You may redesign the construction logic, introduce new helper routines, or replace existing calculations, but you must not rely on any identifiers that are defined outside the evolve block.  \n- Focus on strategies that increase the achievable radii:  \n  * Analytical geometry (e.g., hexagonal/triangular lattice, circle\u2011in\u2011square packing, iterative scaling).  \n  * Optimization techniques: linear programming, nonlinear programming, constrained convex optimization, or simple iterative heuristics (e.g., gradient\u2011based radius expansion, simulated annealing, greedy placement).  \n  * Exploit symmetry to reduce computation and improve uniformity.  \n  * Use vectorized NumPy operations for speed and numerical stability.  \n- Ensure all circles remain fully inside the unit square and no two circles overlap.  \n- Return the three required objects in the exact order: an array of shape (26,\u202f2) with centre coordinates, an array of 26 radii, and the scalar sum of radii.  \n\n**Output format**  \n- **Only** output the Python code that belongs between the two marker lines.  \n- Do **not** include the marker comments themselves.  \n- Do **not** output any surrounding code, explanations, or markdown.  \n\n**Exploration guidance**  \n- Experiment with different initial layouts (e.g., concentric rings, staggered rows, or a dense lattice) and then refine radii using a global optimizer.  \n- You may implement a simple iterative \u201cincrease\u2011until\u2011collision\u201d loop that repeatedly scales all radii up to the nearest constraint, then adjusts offending circles.  \n- If you choose an optimizer (e.g., `scipy.optimize.minimize`), formulate the problem with inequality constraints that enforce border distances and pairwise non\u2011overlap.  \n\n**Common pitfalls to avoid**  \n- Referring to functions, constants, or variables that are defined only outside the evolve block.  \n- Returning objects in the wrong order or with incorrect shapes.  \n- Allowing any radius to become negative or exceed the distance to the square\u2019s edges.  \n- Introducing non\u2011deterministic behavior that could cause occasional invalid solutions (e.g., random seeds without fixing them).  \n- Forgetting to cap coordinates after any transformation; all centres must stay within `[0,\u202f1]`.  \n\nFollow these instructions precisely and produce the updated code fragment that improves the packing quality while satisfying all constraints.",
+      "outer_iteration": 0,
+      "timestamp": "2025-12-06T13:31:46.110301",
+      "was_improvement": true,
+      "key_changes": null,
+      "metrics": {
+        "convergence_rate": 6.482254473633667,
+        "final_best_score": 0.9256038966697128,
+        "iterations_to_plateau": 6,
+        "total_valid": 6,
+        "total_invalid": 0,
+        "stuck_patterns": [],
+        "successful_strategies": [
+          "Made 2 improvements",
+          "Iteration 1: +0.5614 (changes: unknown)",
+          "Iteration 0: +0.3642 (changes: unknown)"
+        ]
+      }
+    },
+    {
+      "seed_prompt": "## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)\n## OUTPUT FORMAT (CRITICAL)\n- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers\n- Do NOT include the markers themselves in your output\n- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically\n- The system will automatically merge your output with the preserved code sections\n\n## IMPORTS\n- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)\n- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block\n\n## FOCUS\n- Improve ONLY the `construct_packing()` function and helper functions\n- You can add new helper functions if needed\n\nViolating these requirements will cause the program to fail evaluation.\n\n---\n\n**System Prompt \u2013 Instructions for the Evolution Block**\n\nYou are to generate **only** the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  \n- **Do not** include the marker lines themselves.  \n- **Do not** include calls to `run_packing()` or `visualize()` \u2013 those are added automatically elsewhere.  \n- The code you output will be merged with the surrounding framework, so it must be a **self\u2011contained** module: every name you reference (functions, classes, constants, imports) must be defined **within** the block you produce.\n\n### What to Achieve\nCreate a construction routine for packing exactly 26 circles inside the unit square that:\n\n1. **Guarantees validity** (no overlaps, all circles fully inside the square).  \n2. **Maximises the total sum of radii** (the combined_score metric).  \n\n### Proven Strategies to Use\n- **Hexagonal lattice scaffold**: generate candidate centre points on a dense hexagonal grid that fits inside the unit square.  \n- **Linear\u2011programming radius optimisation**: with the centres fixed, formulate a linear program that maximises the sum of radii while enforcing:\n  * non\u2011negativity of each radius,\n  * boundary constraints (`x_i - r_i \u2265 0`, `x_i + r_i \u2264 1`, same for `y`),\n  * pairwise separation constraints (`\u2016c_i\u2011c_j\u2016 \u2265 r_i + r_j`), which are linear because the centres are known.\n- **Local refinement** after the LP solution: apply a small, gradient\u2011free perturbation (e.g., random jitter followed by re\u2011solving the LP) to escape any plateau caused by the rigid lattice.\n\n### Pitfalls to Avoid\n- **Rigid geometric templates** (e.g., a single central circle with concentric rings) tend to leave large unused corners and limit the total radius sum.  \n- **Using only a static scaffold without any post\u2011LP adjustment** quickly reaches a performance ceiling; the LP cannot increase radii beyond the geometry imposed by the fixed centres.  \n- **Leaving any referenced name undefined** will cause runtime errors; ensure every helper routine you call is included in the block.\n\n### Implementation Guidance\n- You may import additional standard libraries (e.g., `random`, `math`) inside the block as needed.  \n- Use `numpy` and `scipy.optimize.linprog` (already available) for vectorised calculations and the linear program.  \n- Structure the code so that the main entry point (the construction routine) returns two arrays: `centers` (shape\u202f(26,\u202f2)) and `radii` (shape\u202f(26,)).  \n- Include any auxiliary functions (grid generation, LP building, jitter refinement, etc.) that the main routine relies on.\n\n**Remember:** the only output you provide is the code between the evolve markers, fully self\u2011contained, adhering to the format rules above.",
+      "outer_iteration": 1,
+      "timestamp": "2025-12-06T13:32:46.478098",
+      "was_improvement": false,
+      "key_changes": "condensed by 254 chars",
+      "metrics": {
+        "convergence_rate": 6.482254473633667,
+        "final_best_score": 0.9256038966697128,
+        "iterations_to_plateau": 6,
+        "total_valid": 6,
+        "total_invalid": 0,
+        "stuck_patterns": [],
+        "successful_strategies": [
+          "Made 1 improvements",
+          "Iteration 0: +0.9256 (changes: unknown)"
+        ]
+      }
+    }
+  ],
+  "best_convergence_rate": 6.482254473633667,
+  "best_prompt_index": 0
+}

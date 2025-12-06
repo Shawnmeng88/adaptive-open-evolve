@@ -1,0 +1,76 @@
+# Prompt Type: C
+# Outer Iteration: 3
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – EVOLUTION BLOCK INSTRUCTION**
+
+You are tasked with generating the code that will replace the contents of the evolution block (the region between `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`). Follow **all** of the rules below precisely.
+
+---
+
+### 1. OUTPUT FORMAT (CRITICAL)
+- **Only** output the Python code that belongs *inside* the evolution block.  
+- **Do not** include the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers themselves.  
+- **Do not** include any calls to `run_packing()`, `visualize()`, or other outer‑framework functions; those are added automatically.  
+- The code you provide will be merged with the surrounding framework, so it must be a **self‑contained** replacement for the block.
+
+### 2. IMPORTS
+- You may add additional import statements if required (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available; do not re‑import them unless you need a different submodule.
+
+### 3. FUNCTIONAL REQUIREMENTS
+- The primary goal is to improve the routine that **constructs the circle‑packing configuration** (the routine that creates the list of circle centers and radii).  
+- You may create new helper functions, but **every function that your code calls must be fully defined inside this block**. Missing definitions will cause a runtime error.  
+- Do **not** reference any external variables or functions that are not defined here.
+
+### 4. SUCCESSFUL APPROACHES TO BUILD ON
+- **Dense candidate generation**: start with a fine regular grid of points inside the unit square and treat each grid point as a potential circle center.  
+- **Linear‑programming relaxation**: formulate a linear program that maximizes the total radius sum (or a surrogate objective) subject to pairwise non‑overlap constraints expressed as linear inequalities on radii. Use the pre‑available `linprog` solver to obtain a feasible set of radii, then round or adjust them to satisfy the true quadratic constraints.  
+- **Iterative refinement**: after the LP solution, run a short local optimization (e.g., `scipy.optimize.minimize` with a smooth penalty for overlaps) to push circles toward a denser packing while keeping them inside the unit square.  
+- **Symmetry exploitation**: for moderate numbers of circles, arranging points in a near‑grid pattern and then perturbing them slightly often yields high scores.  
+
+### 5. WHAT TO AVOID (FAILED STRATEGIES)
+- **Pure random sampling** without any subsequent feasibility correction leads to a high proportion of invalid packings (overlap or out‑of‑bounds circles).  
+- **Direct nonlinear optimization from random starts** tends to get stuck in poor local minima and frequently exceeds the allowed runtime.  
+- **Hard‑coded radius values** that ignore the geometry of neighboring circles cause many validity failures (the system reported 20 % and 16.7 % invalid packs in recent attempts).  
+- **Leaving any called helper undefined**—the framework will raise a `NameError` and the solution will be rejected.
+
+### 6. ALGORITHMIC GUIDELINES FOR MAXIMIZING THE SCORE
+1. **Generate a regular grid** of candidate positions (e.g., `np.linspace(0.05, 0.95, k)` for both axes, where `k` is chosen so that `k²` exceeds the required number of circles).  
+2. **Select the first N candidates** (where N is the problem’s circle count) as the initial centers.  
+3. **Set up a linear program**:
+   - Variables: radii `r_i` for each selected center.  
+   - Objective: maximize `∑ r_i` (or a weighted sum that encourages uniform size).  
+   - Constraints:  
+     - For each pair (i, j): `r_i + r_j ≤ distance(center_i, center_j)`.  
+     - For each circle i: `r_i ≤ min(x_i, 1‑x_i, y_i, 1‑y_i)` to stay inside the unit square.  
+4. **Solve the LP** with `linprog`. If the solver fails, fall back to a simple uniform radius equal to the smallest distance to a boundary or neighbor.  
+5. **Post‑process** the LP radii:
+   - Clip any negative values to zero.  
+   - Optionally run a few iterations of a smooth penalty minimization (`scipy.optimize.minimize`) to reduce any residual overlaps caused by the linear relaxation.  
+6. **Return the final arrays** of centers and radii in the format expected by the outer framework.
+
+### 7. FINAL REMINDER
+- **All code must be syntactically correct** and self‑contained within the block.  
+- **Do not include any narrative text, comments about the instruction set, or the marker lines themselves**.  
+- The only output of this assistant should be the Python code ready to be inserted between the evolution markers.

@@ -1,0 +1,78 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You are to produce **only** the Python source that will replace the code placed between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+**MANDATORY OUTPUT FORMAT**  
+- Output **exactly** the code that belongs between the markers; do **not** include the markers themselves.  
+- Do **not** include any calls to `run_packing()` or `visualize()` – those are added automatically outside the block.  
+- The snippet you provide must be **self‑contained**: every routine that your code invokes must be defined somewhere within this block.  
+
+**IMPORTS**  
+You may add any import statements you need (e.g., `from scipy.optimize import linprog`, `from scipy.optimize import minimize`, etc.).  
+`numpy` as `np` and `scipy.optimize.linprog` are already available, but you may import additional modules if useful.
+
+---
+
+### WHAT TO IMPLEMENT
+
+1. **Packing Construction Strategy**  
+   - Begin with a **diverse initial layout** of 26 points inside the unit square. Effective methods include:
+     * A regular lattice (e.g., a 5 × 5 grid plus a central point) **augmented** with a far‑point sampling step to spread points more uniformly.  
+     * Random perturbations of the lattice to break symmetry early.  
+   - For any fixed set of centres, **solve a linear program** that maximizes the sum of radii subject to:
+     * Non‑negativity of each radius.  
+     * Each radius ≤ distance from its centre to each of the four square edges.  
+     * For every pair of centres, the sum of their radii ≤ Euclidean distance between the centres.  
+   - Use the LP solution to obtain the current radii.
+
+2. **Iterative Refinement (Simulated‑Annealing‑style)**  
+   - Repeatedly select a single centre and propose a small move drawn from a zero‑mean Gaussian distribution.  
+   - **Gradually shrink** the Gaussian standard deviation over the course of the search (e.g., exponential decay).  
+   - After each tentative move, re‑solve the LP to obtain new radii and compute the objective (total radius sum).  
+   - **Accept** the move only if the objective improves; otherwise reject it and keep the previous configuration.  
+   - Continue for a fixed budget of iterations or until improvements cease.
+
+3. **Helper Utilities**  
+   - Functions to compute pairwise distances, generate far‑point samples, and perform the LP formulation should be defined inside the block.  
+   - Any random‑number generation must use a deterministic seed (e.g., `np.random.default_rng(seed)`) so that the overall program remains reproducible.
+
+4. **Robustness Requirements**  
+   - Ensure **all parentheses, brackets, and indentation** are balanced; the code must parse without syntax errors.  
+   - Every function you call must be defined in this block—do not rely on external definitions other than the permitted imports.  
+   - Avoid returning partially‑filled data structures; always return a complete list/array of centre coordinates and the matching radii.
+
+---
+
+### WHAT TO AVOID (based on past failures)
+
+- **Leaving the code incomplete** (missing closing parentheses, unfinished function bodies, or dangling statements).  
+- **Using only a deterministic grid** without any stochastic perturbation; this leads to early stagnation and low scores.  
+- **Calling undefined helpers** or assuming the outer environment provides them.  
+- **Over‑constraining the LP** with redundant or contradictory inequalities that cause infeasibility.  
+- **Neglecting to shrink the perturbation step size**, which prevents convergence to a refined solution.  
+- **Relying on a single LP solve** for the entire search; re‑solving after each move is essential for exploiting the relaxation at every step.
+
+---
+
+### FINAL REMINDER
+
+Your output must be a **single, self‑contained Python code block** that implements the above strategy (or an even better one you devise) while obeying all formatting and completeness rules. The outer infrastructure (`run_packing()`, `visualize()`) will be inserted automatically and must not appear in your submission.

@@ -1,0 +1,71 @@
+# Prompt Type: C
+# Outer Iteration: 4
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You are to generate **only** the Python source that will replace the code placed between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+- **Do not** output the markers themselves.  
+- **Do not** include any calls to the outer driver functions (e.g., `run_packing()`, `visualize()`). Those are added automatically outside the block.  
+- The snippet you provide must be **self‑contained**: every routine that your code invokes must be defined somewhere within this block.  
+
+**IMPORTS**  
+You may add any `import` statements you need (e.g., `from scipy.optimize import linprog`, `from scipy.optimize import minimize`, etc.).  
+`numpy` as `np` and `scipy.optimize.linprog` are already available from outside the block, but you may re‑import them if you wish.
+
+**FOCUS OF IMPROVEMENT**  
+- Concentrate on the construction routine that creates the initial set of circle centres and computes their radii.  
+- You may add helper utilities (e.g., for sampling points, solving linear programs, performing local search, or managing step‑size schedules).  
+
+**WHAT HAS WORKED WELL**  
+- Starting from a deterministic grid (e.g., a 5×5 lattice plus the centre) provides a solid baseline.  
+- Formulating a linear program that maximises the sum of radii while enforcing (a) each radius ≤ distance to the four square edges and (b) pairwise non‑overlap constraints (`r_i + r_j ≤ distance(i, j)`) yields a feasible, high‑quality packing.  
+- A refinement phase that moves one centre at a time with a Gaussian perturbation, accepts only moves that keep the linear program feasible, and gradually reduces the perturbation magnitude (simulated‑annealing style) further improves the total radius.  
+- Explicitly stating all constraints in the optimisation model helps the solver and improves robustness.  
+
+**WHAT TO AVOID**  
+- Purely deterministic ring‑based layouts or other overly regular patterns tend to produce low scores and limit exploration.  
+- Introducing syntax errors (unmatched parentheses/brackets, missing commas, etc.) will abort the entire run. Double‑check that every opening symbol has a matching closing one.  
+- Allowing moves that violate the feasibility of the optimisation model will cause invalid packings and score penalties. Ensure any perturbation is tested for feasibility before acceptance.  
+
+**RECOMMENDED STRATEGY**  
+1. **Initialisation**  
+   - Generate a well‑spread set of centres. You may combine a regular grid with a far‑point sampling technique to increase spatial diversity.  
+2. **Linear‑Program Solving**  
+   - Build the LP that maximises the total radius under the boundary and non‑overlap constraints. Solve it using `scipy.optimize.linprog`.  
+3. **Iterative Refinement**  
+   - Loop for a fixed budget of iterations:  
+     a. Randomly select a centre and propose a small Gaussian displacement (step size governed by a decaying schedule).  
+     b. Re‑solve the LP with the updated centre set.  
+     c. Accept the move only if the new LP is feasible and the objective (total radius) improves; otherwise reject and keep the previous state.  
+   - Optionally, after a certain number of accepted moves, perform a short gradient‑free local search (e.g., Nelder‑Mead) on the most promising centres to fine‑tune positions.  
+4. **Output**  
+   - Return the final arrays of centres and radii in the format expected by the surrounding code.  
+
+**MANDATORY OUTPUT FORMAT INSTRUCTION**  
+- Output **only** the code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the markers themselves or any surrounding driver code.  
+- Ensure that every function or class you call is defined within this block.  
+
+Follow these guidelines carefully to produce a robust, high‑scoring packing implementation.

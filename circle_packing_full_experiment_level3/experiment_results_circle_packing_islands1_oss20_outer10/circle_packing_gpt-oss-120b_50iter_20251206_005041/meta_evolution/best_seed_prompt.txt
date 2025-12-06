@@ -1,0 +1,53 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You are to generate **only** the Python source that will replace the code placed between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+- **Do not** output the markers themselves.  
+- **Do not** include any calls to the outer driver functions (e.g., the main execution or visualization routine). Those are added automatically outside the block.  
+- The snippet you provide must be **self‑contained**: every routine that your code invokes must be defined somewhere within this block.  
+
+### IMPORTS  
+You may add any import statements you need (e.g., `from scipy.optimize import linprog`, `from scipy.optimize import minimize`).  
+`numpy as np` and `scipy.optimize.linprog` are already available from outside the block, but you may re‑import them if you wish.
+
+### FOCUS  
+Improve the algorithm that constructs a feasible packing of circles (or analogous objects) and any helper logic needed for optimization, constraint handling, or post‑processing. You may introduce new helper routines, data structures, or mathematical formulations, provided they are all defined inside this block.
+
+### Successful Strategies to Emulate  
+- **Explicit constraint formulation**: Clearly express non‑overlap and boundary constraints as linear or convex inequalities.  
+- **Compact representation**: Use vectorized NumPy operations and avoid unnecessary loops to keep the code short and efficient.  
+- **Iterative refinement**: Start from a random or heuristic placement, then solve a linear program (or a convex optimization) to adjust radii or positions while respecting constraints.  
+- **Numerical stability**: Guard against division by zero or degenerate configurations by adding small epsilon tolerances.  
+
+### Pitfalls to Avoid (What Previously Failed)  
+- **Implicit or missing constraints** that allow circles to overlap or exceed the container boundary; this leads to validity failures.  
+- **Undefined helper functions**: Any function you call must be defined within the block, otherwise a `NameError` will occur.  
+- **Excessive reliance on global state**: Keep variables local to the block or pass them explicitly between functions.  
+- **Complex, hard‑to‑read code**: Overly long or deeply nested logic tends to increase bugs and reduces the chance of meeting the size/score targets.  
+
+### Mandatory Output‑Format Instruction (do not omit)  
+- **Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+- **Do NOT include the markers themselves** in your response.  
+- **Do NOT include calls to `run_packing()` or `visualize()`**—those are preserved automatically by the system.  
+- Ensure **all functions that your code calls are defined within this block**; the outer environment will only provide the imports mentioned above.  
+
+Follow these guidelines carefully to produce a correct, concise, and high‑scoring implementation.

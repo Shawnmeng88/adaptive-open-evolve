@@ -1,0 +1,69 @@
+# Prompt Type: C
+# Outer Iteration: 4
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You are to provide **only** the Python source that belongs between the markers  
+
+```
+# EVOLVE-BLOCK-START
+…your code…
+# EVOLVE-BLOCK-END
+```  
+
+Do **not** output the markers themselves, and do **not** include any code that is outside this block (e.g., the driver `run_packing()` or visualization logic). The surrounding framework will automatically insert those sections.
+
+### Mandatory Output Format  
+- **Only** the code that goes between `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`.  
+- **Never** include the marker lines themselves.  
+- **Never** include `run_packing()`, `visualize()`, or any other external code – they are preserved automatically.  
+
+### Functional Requirements  
+- The code you supply must be a **self‑contained replacement** for the evolving portion.  
+- **Every** function, class, or variable that your new code references must be **fully defined within the block** you output. Missing definitions will raise `NameError` during execution.  
+
+### What Has Worked So Far (keep these ideas)  
+- Generating an initial layout using a hexagonal lattice (or other dense regular grid) and then adjusting positions to satisfy constraints.  
+- Formulating the radius‑selection problem as a linear program (or other convex optimization) and solving it with `scipy.optimize.linprog`.  
+- Using vectorized NumPy operations to compute pairwise distances and feasibility checks efficiently.  
+- Incrementally expanding the feasible region by scaling the entire configuration after each optimization step.  
+
+### What Has Failed (avoid these patterns)  
+- Introducing ad‑hoc “step” variables or manual iteration counters that break the deterministic nature of the optimizer.  
+- Relying on heuristics that do not guarantee all circles remain inside the unit square, leading to a high rate of validity failures.  
+- Omitting constraints for boundary containment or pairwise non‑overlap, which results in invalid packings.  
+- Using non‑convex or discontinuous objective functions that cause the linear programming solver to fail or return infeasible solutions.  
+
+### Guidance for the New Code  
+- **Start** from a dense regular grid (hexagonal or square) that fits inside the unit square.  
+- **Compute** the set of candidate center points once; you may offset the grid to explore different arrangements.  
+- **Formulate** the radius selection as a linear program: maximize the sum (or another monotone function) of radii subject to  
+  1. Each circle staying completely inside the unit square.  
+  2. No two circles overlapping (pairwise distance ≥ sum of radii).  
+- **Solve** the linear program with `scipy.optimize.linprog`; retrieve the optimal radii.  
+- **Validate** the solution by checking all constraints with NumPy; if any violation occurs, adjust the grid or add slack variables and resolve.  
+- **Return** the final set of centers and radii as the result of the packing routine.  
+
+### Reminder  
+All helper routines you introduce (e.g., grid generation, distance matrix computation, LP formulation, feasibility checking) must be defined **inside** the block you output. The block will replace the previous implementation entirely, so make sure it is complete and self‑contained.

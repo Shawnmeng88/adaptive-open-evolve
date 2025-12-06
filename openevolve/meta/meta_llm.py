@@ -91,6 +91,7 @@ The system message MUST tell the LLM to:
 - NOT include the markers or any code outside them
 - The outer code (like `run_packing()`) is preserved automatically by the system
 - ALL functions called must be DEFINED in the output (the evolve block is a complete replacement)
+- ALL functions called must be DEFINED in the output (the evolve block is a complete replacement)
 
 ## IMPORTANT: Do NOT mention specific function names
 Do NOT reference specific function names from inside the evolve block in your prompt.
@@ -280,38 +281,30 @@ class MetaLLM:
     
     def _summarize_code(self, code: str) -> str:
         """
-        Generate a concise summary of code: key functions and approach
+        Generate a concise summary of code structure (NO function names to avoid leaking them).
         
         Args:
             code: The full program code
             
         Returns:
-            A brief summary (under 500 chars)
+            A brief summary describing structure and libraries used
         """
         if not code:
             return "(No valid program found yet)"
         
         lines = code.split('\n')
         
-        # Extract function/class definitions
-        definitions = []
-        for line in lines:
-            stripped = line.strip()
-            if stripped.startswith('def '):
-                # Get function name and signature
-                func_sig = stripped[4:].split(':')[0]
-                definitions.append(f"def {func_sig}")
-            elif stripped.startswith('class '):
-                class_name = stripped[6:].split(':')[0].split('(')[0]
-                definitions.append(f"class {class_name}")
+        # Count functions (but don't list their names - they would leak to inner LLM)
+        num_functions = sum(1 for line in lines if line.strip().startswith('def '))
+        num_classes = sum(1 for line in lines if line.strip().startswith('class '))
         
-        # Extract key imports (for approach detection)
+        # Extract key imports (for approach detection) - library names are safe
         imports = []
         for line in lines[:30]:  # Check first 30 lines
             if line.startswith('import ') or line.startswith('from '):
                 imports.append(line.strip())
         
-        # Build summary
+        # Build summary - describe structure, not specific names
         summary_parts = []
         
         if imports:
@@ -319,20 +312,16 @@ class MetaLLM:
             if key_imports:
                 summary_parts.append(f"Uses: {', '.join(key_imports[:3])}")
         
-        if definitions:
-            summary_parts.append(f"Functions: {', '.join(definitions[:5])}")
+        # Report structure without naming functions
+        if num_functions > 0:
+            summary_parts.append(f"Structure: {num_functions} helper function(s)")
+        if num_classes > 0:
+            summary_parts.append(f"Classes: {num_classes}")
         
-        # Add first few lines of actual code (skip imports/comments)
-        code_preview = []
-        for line in lines:
-            stripped = line.strip()
-            if stripped and not stripped.startswith('#') and not stripped.startswith('import') and not stripped.startswith('from'):
-                code_preview.append(line)
-                if len(code_preview) >= 5:
-                    break
+        summary_parts.append(f"Code length: {len(lines)} lines")
         
-        if code_preview:
-            summary_parts.append(f"Approach preview:\n```\n{chr(10).join(code_preview)}\n```")
+        # DO NOT include code preview - it would leak function names
+        # The MetaLLM should describe the ALGORITHM, not specific implementations
         
         return "\n".join(summary_parts) if summary_parts else "(Unable to summarize code)"
     

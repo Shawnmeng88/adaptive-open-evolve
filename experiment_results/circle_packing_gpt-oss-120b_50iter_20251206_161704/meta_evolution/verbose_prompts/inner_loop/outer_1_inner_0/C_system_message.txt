@@ -1,0 +1,108 @@
+# Prompt Type: C
+# Outer Iteration: 1
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for the Evolve Block**
+
+**Output Requirements (must be obeyed exactly)**
+- Produce **only** the Python code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` markers themselves.  
+- Do **not** output calls to `run_packing()` or `visualize()` – those are added automatically.  
+- The surrounding code (imports, driver, visualisation, etc.) will be merged with whatever you output.  
+
+**Function Definition Rule**
+- Every function that your code calls must be **fully defined** within the block you output. No external references are allowed.
+
+**Algorithmic Guidance – What Has Worked Well**
+1. **Grid‑based initialization** – start with a moderate‑size uniform lattice of candidate centre positions (e.g., a 5 × 5 grid plus the square centre). This provides a diverse yet structured set of points that are easy to manipulate.  
+2. **Linear‑programming radius assignment** – for any fixed set of centre coordinates, formulate a linear program that maximises the sum of radii while enforcing:
+   - non‑overlap constraints between every pair of circles,
+   - containment constraints for each circle inside the unit square.
+   Solving this LP yields the globally optimal radii for the current layout.  
+3. **Multi‑restart stochastic perturbation** – repeat the whole process many times. For each restart, randomly perturb the initial grid points (e.g., add Gaussian noise bounded by a small radius) before solving the LP. Keep the best feasible solution across all restarts.  
+4. **Seeding with dense‑packing patterns** – occasionally replace the purely random perturbation with a deterministic pattern derived from known dense packings (hexagonal/triangular lattices, concentric rings, etc.). This injects high‑quality structures that can be further refined by the stochastic phase.  
+5. **Local relocation phase** – after obtaining radii from the LP, perform a short local search that moves individual centres slightly (using simulated‑annealing or gradient‑based steps) and re‑solves the LP. Accept moves only if the new total radius improves and the layout remains feasible. This allows the algorithm to escape configurations limited by the original grid.  
+
+**What to Avoid (failed patterns)**
+- **Truncated or incomplete statements** – ensure every line is syntactically complete; missing parentheses, commas, or line continuations will cause runtime errors.  
+- **Hard‑coded fixed grids without perturbation** – relying solely on a static lattice quickly saturates the search space and limits further improvements.  
+- **Leaving undefined helpers** – any helper you call must be present in the block; otherwise the merged program will raise a `NameError`.  
+
+**Implementation Checklist**
+- Include any needed imports (e.g., `import numpy as np`, `from scipy.optimize import linprog`).  
+- Define helper utilities for:
+  * generating the initial lattice,
+  * applying bounded random perturbations,
+  * building and solving the linear‑program for radii,
+  * evaluating feasibility (boundary and overlap checks),
+  * performing the optional local relocation/search.
+- Implement the main construction routine that orchestrates the multi‑restart loop, keeps the best feasible layout, and returns the final list of centre coordinates and radii.  
+
+Follow these directions precisely, respect the output format, and ensure every referenced function is defined inside the block. Good luck!
+
+---
+
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **geometric_pattern** (best score: 0.3642)
+    Places a central circle and a surrounding ring of circles using a simple deterministic geometry without optimization.
+  - **grid_lp_simple_search** (best score: 0.8653)
+    Starts from a 5×5 grid plus a centre point, computes maximal feasible radii via a linear program, and applies a modest stochastic local search to move centers.
+  - **grid_lp_multi_restart** (best score: 0.8852)
+    Uses the same grid initialization and linear‑programming radius maximization but runs many independent stochastic restarts with aggressive perturbations to escape local optima.
+
+### Best Result (score: 0.8852):
+  **Main Idea:** Combine a regular grid of candidate centre positions with a linear‑programming routine that maximizes the total radius, then repeatedly perturb the centres in many independent runs to discover better configurations.
+  **Placement:** Initial centres are placed on a uniform 5×5 lattice plus the square centre; each restart randomly perturbs these positions before recomputing radii.
+  **Radius:** For a fixed set of centres, a linear program is solved that maximizes the sum of radii while enforcing non‑overlap between circles and containment within the unit square.
+  **Constraints:** The linear program guarantees that all radii satisfy the non‑overlap and boundary constraints; any layout that violates feasibility after perturbation is discarded and the LP is resolved.
+
+### Score Improvements:
+  - Iter 1: +0.5011 - Replaced the naive geometric pattern with a grid layout, added linear‑programming radius optimization and a simple stochastic local search.
+  - Iter 10: +0.0199 - Introduced aggressive multi‑restart stochastic perturbations, increasing exploration of centre configurations.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Code snippets are truncated mid‑line, leading to syntax errors that prevent execution of the construction routine.
+  - Pattern 2: Reliance on a fixed grid limits the diversity of centre configurations, causing diminishing returns after the initial improvement.
+
+### Novel Discoveries:
+  - Using a linear program to directly maximize the sum of radii for a given set of centre positions provides a fast, globally optimal radius assignment under the current layout.
+
+### Error Patterns:
+  - truncated_code: 2 occurrences
+    Likely cause: Automatic code generation was cut off before the end of statements, producing incomplete lines.
+  - syntax_error: 2 occurrences
+    Likely cause: Result of the truncation; missing parentheses or commas cause Python syntax failures.
+
+### Convergence Analysis:
+  - Trend: plateauing
+  - Best Score: 0.8852
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Introduce a centre‑relocation phase that uses gradient‑based or simulated‑annealing moves, allowing the optimisation to adjust positions jointly with radii rather than keeping a fixed grid.
+  - Replace the linear‑programming radius step with a non‑linear optimisation that simultaneously tunes centres and radii, enabling the algorithm to escape configurations where the grid limits feasible radii.
+  - Seed the stochastic search with patterns from known dense packings (e.g., hexagonal or triangular lattices) to provide higher‑quality initial centre sets before the multi‑restart phase.
+

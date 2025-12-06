@@ -1,0 +1,145 @@
+# Prompt Type: B
+# Outer Iteration: 2
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 2
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 6297 chars
+- Current best prompt length: 5137 chars
+
+## Convergence History:
+### Successful Patterns:
+- Change that helped: added 'step'; expanded by 511 chars
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9464
+- Valid: 10, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **Simple radial pattern** (1 attempts, struggled)
+    Places one central circle and a few circles on a fixed radius ring; no optimisation of radii.
+  - **Linear‑programming radius optimisation on fixed centres** (4 attempts, mixed)
+    Given a set of centre coordinates, formulates a linear program that maximises the sum of radii subject to border and non‑overlap constraints.
+  - **Structured grid / hexagonal lattice initial layout** (3 attempts, worked)
+    Generates centre positions on a regular rectangular grid or a hexagonal lattice inside the unit square before any optimisation.
+  - **Stochastic refinement with LP** (2 attempts, mixed)
+    Starts from a lattice, repeatedly perturbs centre positions by a small random step and resolves the LP to improve the total radius.
+  - **Direct hill‑climbing radius maximisation (no LP)** (1 attempts, worked)
+    Uses random perturbations of centres and recomputes the maximal feasible radii analytically (pairwise distance limits) instead of solving an LP each iteration.
+
+### Best Result (score: 0.9439):
+  **Main Idea:** Generate several diverse starting centre configurations (hexagonal lattice, regular grid, random spread) and run a stochastic hill‑climbing loop that repeatedly nudges the centres and recomputes the largest admissible radii, keeping the best layout found.
+  **Placement:** Multi‑start: a hex lattice, a uniform grid, and a random set of points respecting a small margin from the borders.
+  **Radius:** For each candidate centre set the radii are set to the minimum of the distance to the square edges and half the pairwise distances to all other centres (i.e. r_i = min(border_i, min_j ‖c_i‑c_j‖/2)).
+  **Constraints:** Borders are enforced by the per‑centre upper bound; non‑overlap is guaranteed because radii are limited to half the inter‑centre distances; any perturbation that would violate these limits is rejected.
+
+### Score Improvements:
+  - Iter 1: +0.4373 - Added linear‑programming computation of maximal radii for a fixed centre pattern.
+  - Iter 2: +0.0208 - Switched centre generation to a regular grid with corner removal, giving a more uniform spread.
+  - Iter 3: +0.0719 - Introduced a hexagonal lattice and a refinement loop with random perturbations + LP solving.
+  - Iter 7: +0.0141 - Tuned LP constraints and added small‑step refinement, marginally increasing total radius.
+  - Iter 10: +0.0356 - Combined several initial patterns and replaced the LP‑based refinement with a direct hill‑climbing radius update, yielding the highest score.
+
+### Stuck Patterns (AVOID THESE):
+  - Repeatedly truncated or incomplete code blocks (e.g., missing loop bodies, unfinished function definitions) that prevent the program from running.
+  - Heavy reliance on a single deterministic layout (central‑ring or simple grid) leading to early plateaus before a more diverse pattern is tried.
+
+### Novel Discoveries:
+  - The switch from solving a linear program at every refinement step to a direct analytical radius update while still using stochastic centre moves produced a noticeable jump in performance.
+
+### Error Patterns:
+  - Truncated / incomplete code: 7 occurrences
+    Likely cause: Generation cut‑off in the evolutionary system; lines are cut mid‑statement.
+  - Undefined helper functions (e.g., _refine_centers, _hex_lattice_initial): 4 occurrences
+    Likely cause: Helper utilities were introduced in later iterations but not included in earlier code snapshots.
+  - Duplicate imports: 3 occurrences
+    Likely cause: Copy‑paste of boilerplate when evolving new blocks.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.9439
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Implement a robust, reusable LP/convex‑optimisation routine (e.g., using scipy.optimize.linprog or cvxpy) and call it inside the hill‑climbing loop; this gives a guaranteed optimal radius set for each centre configuration and can be combined with stochastic moves.
+  - Introduce an adaptive simulated‑annealing schedule or evolutionary strategy that varies the perturbation step size based on recent improvement, helping the search escape local maxima that the simple fixed‑step hill‑climb may miss.
+  - Explore boundary‑aware hexagonal packings with variable spacing (tighten near the centre, loosen near the edges) and incorporate a post‑processing step that slides circles along the borders to utilise leftover space, borrowing ideas from known optimal circle‑packing constructions.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_2):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – Evolve Block Guidelines**
+
+You are to generate the complete contents that will replace the code between the markers `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`. **Do not** output the markers themselves, nor any surrounding code such as `run_packing()` or `visualize()`. The system will automatically insert your output into the existing file.
+
+### Mandatory Output Rules
+- **Only** the Python code that belongs between the two markers may be produced.
+- **Do not** include the marker lines, comments about the markers, or any extra text outside the code block.
+- Every function, class, or variable that you reference must be **fully defined** within the output you provide. Missing definitions will cause a `NameError`.
+- You may add import statements if additional libraries are required, but `numpy as np` and `scipy.optimize.linprog` are already available.
+
+### Focus of the Evolution
+Improve the central packing construction routine and any helper utilities it uses. Your goal is to increase the total summed radius of the circles packed inside the unit square for the given number of circles.
+
+### Successful Strategies to Emulate
+1. **Diverse Initial Layouts** – generate several distinct sets of centre coordinates (e.g., a hexagonal lattice, a regular rectangular grid, and a random spread respecting a small margin from the borders). Starting from multiple configurations helps avoid early plateaus.
+2. **Analytical Radius Computation** – for any fixed set of centres, compute each radius as the minimum of:
+   - the distance to the four square edges, and  
+   - half of the Euclidean distance to every other centre.  
+   This guarantees non‑overlap and respects the boundary without needing an external optimizer.
+3. **Stochastic Hill‑Climbing Refinement** – repeatedly perturb centre positions by a small random offset, recompute the radii analytically, and keep the modification only if the total summed radius improves.  
+   - Use an adaptive step size: shrink the perturbation magnitude when recent improvements stall, and occasionally reset to a larger step to escape local optima.
+4. **Multi‑Start Loop** – run the hill‑climbing process independently for each initial layout, retain the best overall result, and optionally perform a short final polishing pass on that best configuration.
+
+### Pitfalls to Avoid
+- **Incomplete Code** – ensure all loops, conditionals, and function bodies are fully written; truncated statements will cause syntax errors.
+- **Undefined Helpers** – do not call any helper that you have not defined inside the evolve block. If you introduce a new utility (e.g., a function that builds a lattice), provide its complete implementation.
+- **Over‑Reliance on a Single Layout** – using only one deterministic pattern (such as a central ring) limits exploration and typically yields lower scores.
+- **Excessive Solver Calls** – repeatedly solving a linear program at every refinement step adds overhead without improving results compared to the direct analytical radius update described above.
+
+### Implementation Advice
+- Structure the code with a clear main function that orchestrates the multi‑start generation, the hill‑climbing refinement, and the final selection.
+- Keep helper utilities small and focused (e.g., a function to generate a hex lattice, one to compute radii, one to perform a single stochastic move).
+- Use NumPy vectorised operations wherever possible for speed, especially when calculating pairwise distances.
+- Include a simple random‑seed parameter to make results reproducible during testing, but allow the seed to be varied across starts for diversity.
+
+Follow these guidelines precisely, and the produced code will be merged correctly and have a higher chance of achieving an improved packing score.

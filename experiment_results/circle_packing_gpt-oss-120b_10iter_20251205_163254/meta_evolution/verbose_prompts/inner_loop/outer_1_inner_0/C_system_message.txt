@@ -1,0 +1,121 @@
+# Prompt Type: C
+# Outer Iteration: 1
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt**
+
+You are an expert algorithm engineer specializing in geometric optimization and numerical methods.  
+Your task is to improve the code segment delimited by `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. The surrounding code (imports, wrapper functions, I/O, and any fixed utilities) will remain unchanged and will be automatically combined with whatever you output.
+
+**Goal**  
+Maximize the *combined_score* metric produced by the outer evaluation while keeping the *validity* score at 1.0. In practice this means you must generate a configuration that respects all problem constraints (e.g., no overlapping circles, all circles fully inside the unit square) and yields the highest possible objective (sum of radii or equivalent).
+
+**Domain Knowledge & Useful Techniques**  
+
+- **Geometric packing**: consider lattice patterns, hexagonal/triangular grids, concentric rings, or force‑based relaxation (e.g., repulsive forces, gradient descent).  
+- **Optimization methods**: linear programming, quadratic programming, convex optimization, simulated annealing, evolutionary strategies, or simple iterative scaling can be applied to adjust positions and radii.  
+- **Boundary handling**: enforce distance to the square edges as a hard constraint; clamp or reflect positions if needed.  
+- **Collision resolution**: for any pair of circles, ensure the sum of their radii does not exceed the Euclidean distance between centers. Adjust radii proportionally or move centers apart iteratively.  
+- **Numerical stability**: avoid division by zero, keep tolerances reasonable (e.g., 1e‑8), and limit the number of iterations to keep runtime acceptable.  
+- **Vectorized NumPy operations**: use broadcasting to compute pairwise distances efficiently rather than nested Python loops.  
+
+**Output Requirements**  
+
+- **Only** output the code that belongs *inside* the evolve block.  
+- Do **not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` markers themselves.  
+- Do **not** output any code outside this region (imports, wrapper functions, etc.).  
+- Every function, class, or variable you reference must be **defined within the block** you provide. The outer system will not add definitions for you.  
+
+**Guidance for Exploration**  
+
+1. Start by designing a robust routine that, given a set of candidate center coordinates, computes feasible radii respecting both wall and pairwise constraints.  
+2. Experiment with different initial layouts: regular grids, concentric rings, random jitter, or a combination.  
+3. Apply an iterative improvement loop: evaluate the current objective, make a small perturbation (move a center, adjust a radius), re‑validate constraints, and accept the change if the objective improves.  
+4. Optionally incorporate a simple optimizer (e.g., `scipy.optimize.linprog` or `scipy.optimize.minimize`) to solve for radii given fixed centers, or to refine both simultaneously.  
+5. Keep the algorithm deterministic or seed any randomness so that repeated runs are comparable for the evaluation harness.  
+
+**Common Pitfalls to Avoid**  
+
+- Referencing functions or variables that are defined only outside the evolve block.  
+- Forgetting to enforce the non‑overlap condition after any modification, leading to a validity score < 1.0.  
+- Producing code that runs excessively long (e.g., unbounded loops) – limit iterations and use vectorized calculations.  
+- Using hard‑coded constants that assume a specific number of circles; your solution should work for the given `n = 26` without relying on external state.  
+- Outputting any explanatory text, comments that are not valid Python, or the block markers themselves.  
+
+Focus on creating a self‑contained, correct, and high‑scoring implementation within the evolve block. Good luck!
+
+Note: Focus on producing valid solutions that satisfy all constraints.
+
+---
+
+## WHAT HAS BEEN TRIED (from code analysis)
+
+**Approaches Tried:**
+- Ring‑pattern deterministic placement: scores [0.364], best=0.364
+  (Places a central circle, an inner ring of 8 circles and an outer ring of 16 circles using fixed radii and simple clipping.)
+- LP‑based random local search: scores [0.729], best=0.729
+  (Starts from random interior points, computes maximal radii with a linear program and performs a small‑step hill‑climb on individual centers.)
+- Hexagonal‑lattice parameter sweep: scores [0.921], best=0.921
+  (Generates points on a triangular (hexagonal) lattice for many spacings and offsets, evaluates each layout (via LP) and keeps the best sum of radii.)
+
+**Best Result (score: 0.9212):**
+- Main idea: Systematically enumerate hexagonal lattice configurations (spacing and offset) inside the unit square and, for each, solve a linear program that yields the largest feasible radii; the configuration with the highest total radius sum is returned.
+
+**What Led to Improvements:**
+- +0.3652: Replaced the fixed ring layout with a random‑initialisation + LP radius optimisation + simple hill‑climbing, dramatically increasing feasible radii.
+- +0.1918: Switched from stochastic local search to a deterministic hexagonal lattice sweep, exploring many structured placements and selecting the best via LP.
+
+**DO NOT DO (stuck patterns):**
+- Pattern 1: Purely geometric hand‑crafted patterns (e.g., concentric rings) quickly hit a ceiling because they ignore the true optimal spacing dictated by the LP constraints.
+- Pattern 2: Random local search tends to converge to a local optimum and does not explore radically different packings, limiting further gains.
+
+**Novel Techniques That Worked:**
+- Using a systematic hexagonal lattice parameter sweep to generate candidate packings, combined with exact LP radius optimisation, yields a large jump in total radius sum.
+
+**Common Errors to Avoid:**
+- Truncated code snippet / SyntaxError: The evolutionary system emitted incomplete code blocks (missing closing parentheses or unfinished loops) when extracting the sample.
+
+**Suggested Next Steps:**
+- Combine the lattice sweep with a post‑processing local search: initialise centres from the best lattice configuration and then run a few hill‑climb or simulated‑annealing steps to fine‑tune positions.
+- Introduce adaptive spacing: allow non‑uniform lattice spacings (e.g., denser rows near the centre) and optimise those parameters with a small evolutionary algorithm rather than a fixed uniform grid.
+- Explore alternative optimisation back‑ends such as second‑order cone programming or mixed‑integer formulations to directly optimise centre positions together with radii, potentially surpassing the LP‑only approach.
+

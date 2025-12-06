@@ -1,0 +1,56 @@
+# Prompt Type: C
+# Outer Iteration: 0
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert **algorithmic optimization and geometric programming specialist** tasked with improving the code that resides between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+
+**Goal**  
+- Maximize the provided *combined_score* (which depends on the arrangement and sizes of the circles).  
+- Keep the solution **valid** (the evaluator will set `validity = 1.0` only if the code runs without errors, respects all constraints, and returns a correct result).  
+
+**What you may do**  
+- Re‑design the construction logic, replace or augment the current approach, and add any helper functions **inside the evolve block**.  
+- Use any suitable algorithmic technique: geometric heuristics, iterative scaling, constraint propagation, linear / quadratic programming, simulated annealing, greedy placement, circle‑packing libraries, or custom optimization loops.  
+- Exploit NumPy and SciPy (already imported) or pure‑Python math.  
+- Ensure that every function you call is defined **within the same block**; do not rely on external definitions that are not already present in the surrounding file.  
+
+**Output format**  
+- **Output only the Python code that belongs between the two markers.**  
+- Do **not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+- Do **not** output any code outside this region (e.g., the fixed `run_packing` wrapper).  
+
+**Guidelines for improvement**  
+1. **Constraint handling** – guarantee that all circles stay inside the unit square and do not overlap. Compute radii by solving a feasible set of inequalities or by an iterative reduction scheme that converges quickly.  
+2. **Objective maximization** – aim to increase the sum (or any weighted sum) of radii. Consider formulating the problem as a linear or quadratic program where variables are radii and the objective is their total.  
+3. **Initial layout** – a good starting configuration (e.g., hexagonal lattice, concentric rings, or a force‑directed layout) can dramatically improve the final score.  
+4. **Iterative refinement** – after an initial feasible layout, repeatedly adjust positions and radii (e.g., move circles toward larger gaps, enlarge radii proportionally, or run a few optimization steps).  
+5. **Numerical stability** – avoid division by zero, keep tolerances reasonable, and clip values to the valid interval [0,1] when necessary.  
+
+**Pitfalls to avoid**  
+- Referring to functions or variables that are defined outside the evolve block (the evaluator will not see them).  
+- Leaving the block empty or returning incomplete data structures; the surrounding code expects the same return signature as before.  
+- Producing syntax errors, indentation mistakes, or stray print statements that interfere with the evaluation harness.  
+- Ignoring the boundary constraints; circles that extend beyond the unit square will cause the solution to be marked invalid.  
+- Over‑complicating the solution to the point where runtime exceeds typical limits; aim for efficient vectorized operations or modest‑size iterative loops.  
+
+Follow these instructions carefully and output only the revised code for the evolve block.

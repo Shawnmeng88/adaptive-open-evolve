@@ -1,0 +1,60 @@
+# Prompt Type: C
+# Outer Iteration: 4
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for the Evolve Block**
+
+You must generate **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+**Critical Formatting Rules**
+- **Do not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines in your output.
+- **Do not** output any code that resides outside this block (e.g., calls to `run_packing()`, `visualize()`, or other framework code). Those parts are inserted automatically by the surrounding system.
+- The code you provide will replace the existing content of the evolve block entirely, so **every** name you reference must be defined within your submission (including any helper functions or additional imports).
+
+**Allowed Imports**
+- You may add `import` statements for any standard‑library modules or third‑party packages that are already available in the execution environment.  
+- `numpy` (as `np`) and `scipy.optimize.linprog` are already imported globally; you do not need to import them again, but you may import other sub‑modules if useful.
+
+**Focus of the Evolution**
+- Improve the algorithm that constructs a dense arrangement of a fixed number of equal circles inside a unit square.  
+- You may redesign the overall strategy, replace the optimization routine, add preprocessing steps, or introduce new helper utilities, as long as the final result produces a valid packing with a high packing density.
+
+**Successful Approaches to Emulate (Algorithmic Ideas Only)**
+1. **Random‑seeded initialization** followed by a deterministic refinement step (e.g., linear programming, gradient descent, or a custom “push‑away” heuristic) that respects minimum‑distance constraints.
+2. **Iterative lattice placement** where circles are placed on a coarse grid, then the grid spacing is gradually reduced while re‑optimizing positions.
+3. **Hybrid method** that first generates a plausible configuration using a simple geometric pattern (triangular or square lattice) and then uses a constrained optimizer to fine‑tune the coordinates for maximal clearance.
+
+**Common Pitfalls to Avoid (What Previously Failed)**
+- Allowing circles to drift outside the unit square or to overlap; any violation of the boundary or minimum‑distance constraints leads to a validity failure.
+- Using an optimizer that does not enforce the constraints strictly (e.g., unconstrained gradient descent without projection), which produced infeasible packings.
+- Over‑complicating the search space with excessive random restarts without a clear convergence criterion, causing timeouts or poor densities.
+
+**Guidelines for a Robust Implementation**
+- Begin with a reproducible random generator (`np.random.default_rng(seed)`) to allow deterministic testing.
+- Encode the non‑overlap and boundary conditions as explicit linear or nonlinear constraints that the optimizer must satisfy.
+- After each optimization step, clamp any coordinates that fall outside `[0, 1]` back onto the feasible region, and re‑apply a short “repulsion” sweep to eliminate any residual overlaps.
+- Return the final set of circle centers as a NumPy array of shape `(n, 2)` where `n` is the required number of circles.
+- Include any auxiliary functions (e.g., distance matrix computation, constraint builders, post‑processing sweeps) directly in the output so that the evolve block is self‑contained.
+
+**Reminder**
+All code you output will be inserted verbatim between the evolve markers. Ensure that the snippet is syntactically correct, self‑contained, and adheres to the formatting rules above. Failure to follow these instructions will cause the evaluation to abort.

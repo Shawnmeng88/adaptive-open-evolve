@@ -1,0 +1,140 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 3616 chars
+- Current best prompt length: 4098 chars
+
+## Convergence History:
+### Successful Patterns:
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9645
+- Valid: 26, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Recommendations:
+  - Analysis failed - could not parse LLM response
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Improving the Packing Construction Block**
+
+You are tasked with writing **only** the Python code that belongs between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...
+# EVOLVE-BLOCK-END
+```  
+
+Do **not** include the markers themselves, and do **not** add any code outside this region (e.g., `run_packing()` or `visualize()`). The surrounding framework will automatically insert those parts.
+
+---
+
+### Mandatory Output Format  
+- **Only** the code that should appear inside the evolve block.  
+- No markers, no surrounding scaffolding, no explanatory text.  
+- Every function you call within this block must be **fully defined** here; otherwise a `NameError` will occur.  
+
+---
+
+### Core Objective  
+Create or refine the routine that generates a set of circles (centers and radii) to be placed inside the unit square **[0, 1] × [0, 1]**. The solution must satisfy two constraints:
+
+1. **Validity** = 1.0 – every circle lies completely inside the square and no two circles overlap.  
+2. **Score** – maximize the metric used by the outer evaluation (typically the sum of radii, total covered area, or a related aggregate).  
+
+Your code will be judged on the combined result of these two goals.
+
+---
+
+### Proven Strategies (keep these ideas)  
+
+- **Uniform Grid Baseline** – start with a regular square or rectangular lattice (e.g., spacing `s = 2·r`) where each circle has radius `r = s/2`. This guarantees non‑overlap and containment and provides a solid lower bound for the score.  
+
+- **Hexagonal (Triangular) Lattice** – after the grid baseline, improve density by offsetting every other row (or column) to form a hexagonal packing. The optimal spacing for a given radius `r` is `s_x = 2·r` horizontally and `s_y = √3·r` vertically. This arrangement yields a ~15 % higher coverage than a square grid.  
+
+- **Iterative Radius Inflation** – once a feasible layout is obtained, gradually increase all radii by a small factor (e.g., `Δr = 0.001`) while repeatedly checking the validity constraints. Stop when any circle would cross the boundary or intersect another circle.  
+
+- **Local Adjustment / Greedy Insertion** – after inflating existing circles, attempt to add extra circles in the largest remaining gaps. Compute candidate positions (e.g., centroids of uncovered rectangles or the circumcenters of three mutually tangent circles) and insert a new circle with the maximal radius that fits without violating constraints.  
+
+- **Simple Linear Programming / Optimization** – the problem can be expressed as a linear program that maximizes the sum of radii subject to linearized non‑overlap constraints (`|c_i - c_j| ≥ r_i + r_j`) and boundary constraints (`r_i ≤ min(x_i, y_i, 1‑x_i, 1‑y_i)`). Using `scipy.optimize.linprog` (already imported) to solve a relaxed version often yields a good initial guess for radii, which can then be rounded and refined with the geometric steps above.  
+
+- **Numerical Stability** – when checking distances, add a tiny epsilon (e.g., `1e‑9`) to avoid floating‑point edge cases that could falsely flag a valid configuration as invalid.  
+
+---
+
+### Pitfalls to Avoid (failed approaches)  
+
+- **Hard‑coded Circle Counts** – do not assume a fixed number of circles (e.g., exactly 26). The algorithm should work for any feasible count determined by the geometry, and it must not crash if the layout yields fewer or more circles.  
+
+- **Over‑reliance on Random Sampling** – pure random placement with rejection often fails to reach high scores within reasonable time and may produce invalid configurations due to missed tiny overlaps.  
+
+- **Using Undefined Helper Functions** – any auxiliary routine you call (distance checks, feasibility tests, radius update loops, etc.) must be defined within the block. Leaving a call to an external or missing function will cause a runtime error.  
+
+- **Neglecting Boundary Checks After Inflation** – increasing radii without re‑checking the containment condition leads to invalid solutions, dropping the validity flag to 0.  
+
+- **Excessive Computational Complexity** – nested loops over all pairs of circles in every iteration can become costly for larger counts. Prefer vectorized NumPy operations or early‑exit checks to keep execution time reasonable.  
+
+---
+
+### Implementation Guidance  
+
+1. **Structure** – you may define one main routine that builds the layout and any number of private helpers (e.g., distance matrix builder, feasibility validator, radius inflator).  
+
+2. **Data Representation** – return two NumPy arrays: `centers` of shape `(k, 2)` and `radii` of shape `(k,)`, where `k` is the number of circles placed.  
+
+3. **Algorithm Flow (suggested)**  
+   - Generate an initial hexagonal lattice covering the unit square.  
+   - Trim circles that would cross the boundary.  
+   - Apply an iterative inflation loop, increasing all radii uniformly until the first violation occurs, then back‑track to the last valid radius.  
+   - Optionally, run a greedy insertion pass to fill remaining gaps.  
+   - Perform a final validity sweep; if any violation is detected, slightly reduce the offending radii.  
+
+4. **Performance** – use NumPy broadcasting to compute pairwise distances efficiently (`np.linalg.norm` on stacked arrays or `scipy.spatial.distance.cdist`).  
+
+5. **Robustness** – encapsulate the entire construction in a `try/except` block that falls back to the simple grid baseline if any unexpected error occurs, guaranteeing a valid output.  
+
+Remember: the outer evaluation will automatically call your construction routine, then feed the resulting `centers` and `radii` to `run_packing()` and `visualize()`. Your sole responsibility is to produce a **self‑contained, valid, and high‑scoring** packing inside the evolve block.

@@ -1,0 +1,93 @@
+# Prompt Type: C
+# Outer Iteration: 3
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Circle‑Packing Code**
+
+---
+
+### 📋 Mandatory Output Requirements (must be obeyed)
+
+1. **Output ONLY** the Python source code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+2. **Do NOT** include the marker lines themselves, nor any surrounding code such as `run_packing()` or `visualize()`.  
+3. The system will automatically splice your output into the existing file; therefore **every identifier you call must be defined inside the block you provide**.  
+4. You may add additional `import` statements if needed, but remember that `numpy as np` and `scipy.optimize.linprog` are already available.
+
+---
+
+### 🎯 Focus of This Evolution Step
+
+- **Improve the core packing construction logic** and any helper utilities it relies on.  
+- You may introduce new helper routines (e.g., for distance computation, radius selection, feasibility checking, or linear‑programming based optimization).  
+- Aim for a method that reliably produces a valid arrangement of the required number of circles while respecting all geometric constraints.
+
+---
+
+### ✅ What Has Worked Well (keep these ideas)
+
+- **Pairwise Euclidean distance matrix**: computing a full distance matrix from a set of center coordinates is fast and convenient for constraint checks.  
+- **Linear‑programming formulation**: using `scipy.optimize.linprog` (or a similar LP solver) to maximize total radius or minimize overlap has yielded high‑quality packings.  
+- **Iterative refinement**: starting from a reasonable initial set of centers (e.g., random uniform sampling or a low‑discrepancy sequence) and then adjusting radii or positions via a small number of LP solves or simple gradient‑free updates improves feasibility.  
+- **Explicit feasibility filter**: after each candidate generation, verify that every circle lies within the container and that no pair violates the non‑overlap condition before accepting it.
+
+---
+
+### ❌ What Has Failed (avoid these pitfalls)
+
+- **Skipping validity checks**: allowing a candidate set of circles to pass without confirming container bounds or pairwise separation leads to “validity failures.”  
+- **Over‑constraining the LP**: adding redundant or overly strict constraints can make the problem infeasible, causing the optimizer to return no solution.  
+- **Inconsistent radius handling**: modifying radii without recomputing the distance matrix or without re‑validating constraints can produce impossible configurations.  
+- **Hard‑coded dimensions**: solutions that assume a specific number of circles or a fixed container size break when the target changes.
+
+---
+
+### 🛠️ Implementation Guidance
+
+1. **Distance Computation**  
+   - Provide a routine that accepts an `(N, 2)` array of centers and returns an `(N, N)` matrix of Euclidean distances.  
+   - Use broadcasting for efficiency; avoid explicit Python loops.
+
+2. **Radius Determination**  
+   - Design a method (e.g., LP‑based or heuristic) that, given the distance matrix, computes the largest possible radii that satisfy the non‑overlap constraints and stay inside the container.  
+   - Ensure the method returns a one‑dimensional array of radii aligned with the input order of centers.
+
+3. **Feasibility Verification**  
+   - Implement a check that confirms each circle’s center lies within the container (taking its radius into account) and that every pairwise distance exceeds the sum of their radii.  
+   - Return a Boolean flag or raise an informative error if the configuration is invalid.
+
+4. **Iterative Construction Loop**  
+   - Start from an initial set of centers (random, low‑discrepancy, or a simple grid).  
+   - Repeatedly apply the radius‑determination routine and the feasibility check.  
+   - If a step fails, perturb the centers slightly (e.g., jitter with a small Gaussian noise) and retry, limiting the number of attempts to avoid infinite loops.
+
+5. **Return Value**  
+   - The final function should output a tuple `(centers, radii)` where `centers` is an `(N, 2)` NumPy array and `radii` is a length‑`N` NumPy array, ready for downstream visualization or analysis.
+
+---
+
+### 📢 Reminder
+
+- **All functions, classes, and variables you reference must be defined within the code you output** (between the markers).  
+- Do **not** mention or rely on any identifiers that exist outside this block; the outer script will only import the code you provide.  
+
+Follow these instructions precisely to produce a robust, self‑contained improvement to the circle‑packing algorithm.

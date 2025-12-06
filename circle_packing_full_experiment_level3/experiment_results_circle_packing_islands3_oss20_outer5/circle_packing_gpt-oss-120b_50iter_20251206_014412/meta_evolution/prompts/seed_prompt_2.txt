@@ -1,0 +1,80 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for the Evolve Block**
+
+You are to produce **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+- **Do not** output the markers themselves.  
+- **Do not** output any code that lives outside this block (e.g., calls to `run_packing()` or `visualize()`).  
+- The surrounding framework will automatically insert your code into the full program.  
+
+**Output Requirements**  
+- Every function or class you call must be defined somewhere inside the block you output.  
+- You may add import statements if needed, but `numpy as np` and `scipy.optimize.linprog` are already available.  
+- Follow normal Python syntax; avoid stray indentation, mismatched brackets, or any construct that would raise a syntax error.  
+
+**Algorithmic Guidance (what has worked well)**  
+
+1. **Separate geometry from feasibility** – keep the circle centers fixed while you compute the maximal feasible radii using a linear program (LP).  
+2. **LP formulation** – for a given set of `n` centers:
+   - Variables: radii `r_i` (one per circle).  
+   - Objective: maximize the sum of radii (or any linear combination that encourages larger circles).  
+   - Constraints:  
+     - For each circle, `r_i` ≤ distance from its center to each side of the unit square (four wall constraints).  
+     - For each unordered pair `(i, j)`, `r_i + r_j` ≤ Euclidean distance between the two centers (non‑overlap constraint).  
+   - Bounds: `0 ≤ r_i ≤ 1`.  
+   The LP is always feasible because radii can be set to zero, and `linprog` will return a valid solution if the constraint matrix is built correctly.  
+
+3. **Initial layouts** – generate a diverse pool of deterministic and random center configurations:
+   - A uniform lattice (e.g., a regular grid) that roughly spreads the points.  
+   - Several random placements that respect a minimal separation (e.g., reject a point if it is closer than a tiny epsilon to an existing one).  
+   - Optionally, simple geometric patterns (e.g., concentric rings) can be added for variety.  
+
+4. **Local improvement loop** – after picking the best layout from the initial pool (the one with the highest LP objective):
+   - Iterate a fixed number of steps (or until no improvement).  
+   - Randomly select one circle, propose a small perturbation of its center (e.g., add a uniform offset in `[-δ, δ]` and clip to `[0,1]`).  
+   - Re‑solve the LP for the perturbed layout.  
+   - Keep the perturbation only if the new LP objective is strictly larger; otherwise discard it.  
+   - Optionally, adapt the perturbation magnitude `δ` (e.g., halve it after a number of rejections) to fine‑tune the search.  
+
+5. **Global stochastic search (optional enhancement)** – if you want to escape deeper local minima, embed a simple simulated‑annealing schedule:
+   - Accept worsening moves with a probability that decreases with a temperature parameter.  
+   - Still rely on the LP to verify feasibility after each move.  
+
+**Pitfalls to Avoid (what has caused failures)**  
+
+- **Matrix shape mismatches** when constructing the LP constraints. Ensure every constraint row has the same length (`n` coefficients) and that the total number of rows matches the number of inequality constraints you intend to add.  
+- **Index‑out‑of‑range errors** – always base loops on the actual size of the centers array (`len(centers)`) rather than a hard‑coded constant.  
+- **Broadcasting errors** – use explicit reshaping or list comprehensions to build constraint matrices; avoid mixing 1‑D and 2‑D arrays without matching dimensions.  
+- **Invalid center coordinates** – after any perturbation, clip each coordinate to the interval `[0, 1]` to stay inside the unit square.  
+- **Infinite loops or excessive runtime** – limit the number of LP solves (e.g., a few thousand) and keep perturbation magnitudes modest; `linprog` is fast but repeated solves dominate runtime.  
+- **Syntax/indentation mistakes** – keep a clean, consistent indentation level (4 spaces) and verify that all statements are properly terminated.  
+
+**Implementation Checklist**  
+
+- [ ] Function to generate candidate center layouts (deterministic grid + random sampling).  
+- [ ] Function that builds the LP matrices (`A_ub`, `b_ub`) given a set of centers.  
+- [ ] Wrapper that calls `linprog` and returns the radii and the objective value.  
+- [ ] Main construction routine that:
+  1. Creates the initial pool, evaluates each via the LP, keeps the best.
+  2. Runs the local‑search/hill‑climbing loop, updating the best layout whenever improvement occurs.
+  3. Returns the final list/array of centers and their radii in the format expected by the outer code.  
+
+Remember: **All helper functions you rely on must be defined inside the block you output.** Follow the output format strictly, and your code will be merged with the surrounding infrastructure for evaluation. Good luck!

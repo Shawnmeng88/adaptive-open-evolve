@@ -1,0 +1,125 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for the Evolve Block**
+
+**Output Requirements (must be obeyed exactly)**
+- Produce **only** the Python code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` markers themselves.  
+- Do **not** output calls to `run_packing()` or `visualize()` – those are added automatically.  
+- The surrounding code (imports, driver, visualisation, etc.) will be merged with whatever you output.  
+
+**Function Definition Rule**
+- Every function that your code calls must be **fully defined** within the block you output. No external references are allowed.
+
+---
+
+### What Has Proven Effective
+
+1. **Separate Position Search from Radius Optimisation**  
+   - Generate a set of candidate centre positions first, then compute the maximum feasible radii for those fixed centres using a linear program (LP).  
+   - The LP should enforce:  
+     * each radius ≤ distance to the four square edges,  
+     * for every pair of centres, the sum of their radii ≤ Euclidean distance between the centres.  
+   - Solving this LP yields the globally optimal radii for the current layout, guaranteeing feasibility.
+
+2. **Diverse Initial Layouts**  
+   - Use a mixture of random uniform sampling and a jittered grid (regular grid points perturbed by a small random offset).  
+   - This provides both exploration of the full space and a hint of structure that can help the LP find larger radii.
+
+3. **Multi‑Restart Stochastic Local Search**  
+   - For each initial layout, perform many short local‑search runs: repeatedly pick a centre and propose a small random displacement (clipped to stay inside the unit square).  
+   - After each move, resolve the LP; keep the move only if the total summed radius improves.  
+   - When a run stagnates, restart from a fresh layout (random or jittered grid).  
+   - A large number of inexpensive restarts prevents the algorithm from getting trapped in poor local optima.
+
+4. **Occasional Up‑hill Moves (Simulated‑Annealing Style)**  
+   - Allow a limited probability of accepting a move that reduces the total radius, with the probability decreasing over time.  
+   - This helps escape deeper local minima while still favouring improvements.
+
+5. **Fine‑Grained Post‑Processing**  
+   - After the LP‑based optimisation, run a brief gradient‑free refinement (e.g., coordinate‑wise hill‑climbing) on the centre positions while repeatedly re‑solving the LP.  
+   - This can capture small adjustments that the stochastic moves might miss.
+
+---
+
+### What to Avoid
+
+- **Fixed geometric templates** (e.g., a predetermined ring of circles) that never adapt positions or radii; they quickly hit a low performance ceiling.  
+- **Single long‑running local search without restarts**; it tends to become stuck in a local optimum and yields diminishing returns.  
+- **Leaving any referenced function undefined**; the evolve block must be self‑contained, otherwise a `NameError` will occur.  
+
+---
+
+### Guidance for Implementation
+
+- **Initialisation**: Create a helper that returns a list of centre coordinates using either pure random sampling or a jittered grid.  
+- **Radius optimisation**: Implement a helper that builds and solves the LP described above (you may use `scipy.optimize.linprog`). Return the radii and the total summed radius.  
+- **Local search loop**: Write a loop that, for a given number of iterations, perturbs a randomly chosen centre, recomputes radii via the LP, and decides whether to accept the move (including the optional up‑hill acceptance rule).  
+- **Restart logic**: After a predefined number of stagnation steps, discard the current layout and start a new one using the initialisation helper. Track the best overall packing found across all restarts.  
+- **Post‑processing**: Optionally add a short deterministic refinement that nudges centres in the direction that most improves the total radius, re‑solving the LP after each nudge.  
+
+Remember: every function you call must be defined inside this block, and the only code you output should be the concrete implementations that realise the strategy above.
+
+---
+
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **simple_structured_pattern** (best score: 0.3642)
+    Places a large central circle and a fixed ring of circles around it without any optimisation of radii.
+  - **grid_initialisation_plus_lp_and_basic_local_search** (best score: 0.8653)
+    Starts from a 5×5 grid (plus a centre point), solves a linear program to obtain maximal feasible radii for those centres, then performs a modest stochastic perturbation of the centres.
+  - **random_initialisation_multi_restart_stochastic_search** (best score: 0.9642)
+    Generates random centre sets, computes optimal radii via a linear program, and repeatedly restarts a small‑step stochastic local search that accepts moves improving the total radius.
+
+### Best Result (score: 0.9642):
+  **Main Idea:** Generate many random centre configurations, compute the largest possible radii for each configuration by solving a linear program, and iteratively improve the configuration with a multi‑restart stochastic search that makes small random moves and keeps any improvement in the total summed radius.
+  **Placement:** Centres are sampled uniformly at random inside the unit square (with a RNG) for each restart; during the search each centre is perturbed by a small random displacement while staying inside the square.
+  **Radius:** For a fixed set of centres a linear program maximises the sum of radii subject to (i) each radius being no larger than the distance to the four walls and (ii) the sum of any two radii being no larger than the Euclidean distance between their centres; the LP solution yields the optimal radii.
+  **Constraints:** All geometric constraints (wall limits and non‑overlap) are encoded as linear inequalities in the LP, guaranteeing feasibility; after each move the centres are clipped to [0,1] to keep them inside the square.
+
+### Score Improvements:
+  - Iter 1: +0.5011 - Switched from a hand‑crafted deterministic pattern to a grid of points plus linear‑programming optimisation of radii.
+  - Iter 10: +0.02 - Added aggressive multi‑restart stochastic search with many random restarts, improving exploration of centre configurations.
+  - Iter 12: +0.079 - Refined the stochastic search to use smaller neighbourhood moves and more frequent restarts, yielding a noticeable jump in total radius.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Deterministic geometric templates (e.g., a fixed ring) quickly reach a low ceiling because they never adapt radii to the actual layout.
+  - Pattern 2: A single local‑search run without restarts tends to become trapped in a local optimum, limiting score growth after the initial improvement.
+
+### Novel Discoveries:
+  - Using a linear program to compute the globally optimal radii for any arbitrary set of centre points, effectively separating position search from radius optimisation.
+
+### Error Patterns:
+  - truncated_code_syntax_error: 1 occurrences
+    Likely cause: The source was cut off mid‑line, producing an incomplete statement that would raise a syntax error if executed.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.9642
+  - Iterations Since Improvement: 1
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Introduce a simulated‑annealing schedule or tabu list to allow occasional uphill moves, helping escape deeper local optima.
+  - Combine the random initialisation with a perturbed grid (e.g., jittered grid points) to increase the variety of starting configurations while retaining some structure.
+  - After the LP provides feasible radii, run a short nonlinear optimisation (e.g., gradient descent on centre positions) that directly maximises the sum of radii, allowing fine‑grained adjustments beyond the discrete LP steps.
+

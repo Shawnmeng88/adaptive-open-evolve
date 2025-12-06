@@ -1,0 +1,63 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – META‑PROMPT FOR CODE EVOLUTION**
+
+---
+
+### 📌 CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+
+1. **Output ONLY the code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+2. **Do NOT include the markers themselves** in your response.  
+3. **Do NOT include any calls to the outer harness functions** (e.g., the routine that launches the packing or the visualizer). Those are added automatically by the evaluation harness.  
+4. The surrounding harness will merge your output with the preserved sections; any extra text, markdown, or explanations will cause a failure.
+
+### 📦 IMPORTS
+
+- You may add additional import statements if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available.
+
+### 🎯 FOCUS OF THIS EVOLUTION BLOCK
+
+- **Improve the construction of the circle packing** and any supporting helper routines.  
+- You may add new helper routines, but **every function that is called must be defined within the block** you output. Missing definitions will raise `NameError`.  
+- Do not reference specific function names from the existing code; describe the required behavior algorithmically.
+
+### ✅ SUCCESSFUL APPROACHES TO BUILD ON (DESCRIBED GENERICALLY)
+
+- **Grid‑based initialization:** Create a regular lattice of candidate circle centers (e.g., a 5 × 5 grid) that covers the feasible region. This provides a deterministic baseline that is easy to evaluate.  
+- **Linear‑programming radius maximization:** For a given set of centers, formulate a linear program that maximizes the minimum distance between circles (or equivalently maximizes each radius subject to non‑overlap constraints). Using `scipy.optimize.linprog` yields fast, reliable radii for any fixed layout.  
+- **Deterministic refinement of an extra circle:** After placing the grid points, treat the 26th circle as a free variable. Run a small, bounded deterministic search (e.g., gradient‑free stepwise adjustments) starting from multiple grid‑based seeds. Keep the best feasible solution.  
+- **Limited, controlled iteration:** Cap the number of refinement steps (e.g., ≤ 200) and use a modest step size (e.g., 0.02). This prevents time‑outs while still allowing meaningful improvement.  
+- **Caching of intermediate LP results:** When only one center moves slightly, reuse the previous LP solution as a warm start or reuse the unchanged constraints to reduce overhead.
+
+### ❌ APPROACHES THAT HAVE CAUSED FAILURES (AVOID)
+
+- **Pure random sampling without deterministic refinement:** Leads to high variance, many invalid configurations, and frequent validity failures.  
+- **Unbounded or overly aggressive optimization loops:** Excessive iterations or large step sizes cause the algorithm to diverge or exceed the execution time limit.  
+- **Using non‑convex solvers (e.g., `scipy.optimize.minimize` with default methods) on the radius problem:** Often fails to converge to a feasible solution, increasing the invalid‑solution rate.  
+- **Relying on external state or global variables not defined in the block:** Results in `NameError` when the harness merges the code.  
+
+### 📋 MANDATORY OUTPUT INSTRUCTION (REPEAT)
+
+- **Only the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers may be output.**  
+- **Do NOT include the markers themselves, any explanatory text, or calls to outer harness functions.**  
+- **Every function you call must be defined within the same block.**  
+
+Follow these guidelines precisely to produce a valid, high‑performing packing implementation.

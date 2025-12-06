@@ -1,0 +1,122 @@
+# Prompt Type: C
+# Outer Iteration: 4
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for the Evolve Block**
+
+**Output Requirements (must be obeyed exactly)**
+- Produce **only** the Python code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- **Do not** include the `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` markers themselves.
+- **Do not** output calls to `run_packing()` or `visualize()` – those are added automatically.
+- The surrounding code (imports, driver, visualisation, etc.) will be merged with whatever you output.
+
+**Function Definition Rule**
+- Every function that your code calls must be **fully defined** within the block you output. No external references are allowed.
+
+---
+
+### What Has Proven Effective (algorithmic guidance)
+
+- **Separate geometry search from radius optimisation**  
+  Keep the positions of the circles independent of their sizes. After each change in positions, solve a linear program that maximises the sum of radii subject to:
+  1. Each radius ≤ distance from its centre to the four sides of the unit square.  
+  2. For every pair of centres, the sum of their radii ≤ Euclidean distance between the centres.  
+
+- **Multi‑restart stochastic search**  
+  - Generate many independent starting configurations. A good baseline is a regular lattice (e.g., 5×5 grid) plus an extra centre, then add Gaussian jitter to each start.  
+  - For each restart, repeatedly propose small random displacements of a randomly chosen centre. After each proposal, re‑solve the radius LP and keep the move only if the total summed radius increases.
+
+- **Adaptive step‑size schedule**  
+  - Begin with relatively large displacement magnitudes to explore the search space globally.  
+  - Gradually shrink the displacement scale after a fixed number of iterations or when improvements plateau, allowing fine‑grained local refinement.
+
+- **Deterministic post‑processing (optional but beneficial)**  
+  After the stochastic phase finishes, run a short deterministic refinement: e.g., perform a few passes where each centre is moved in the direction that most improves the LP objective, or solve a second LP that directly maximises the minimum pairwise distance while keeping the total radius high.
+
+- **Robust handling of feasibility**  
+  Because the LP guarantees feasibility, any move that leads to an infeasible LP should be rejected immediately. This prevents the algorithm from drifting into invalid configurations.
+
+---
+
+### What to Avoid (failed approaches)
+
+- **Relying on a single fixed layout** (e.g., only a grid) without sufficient randomisation; this causes early convergence to sub‑optimal packings.  
+- **Incomplete or truncated code** – missing function bodies, unclosed parentheses, or undefined symbols will raise syntax errors and invalidate the run.  
+- **Skipping the radius optimisation step** after moving centres; without re‑optimising radii the algorithm may accept infeasible configurations.  
+- **Neglecting adaptive step‑size** – using a constant large jump size prevents fine‑grained convergence; using only tiny jumps from the start limits global exploration.  
+
+---
+
+### Reminder
+
+- **All functions you invoke must be defined within this block.** Ensure that helper utilities (e.g., LP construction, random perturbation, post‑processing) are fully implemented here.  
+
+Follow these guidelines to craft a complete, self‑contained implementation that maximises packing quality while remaining syntactically correct.
+
+---
+
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **grid_plus_center_initialization_with_simple_local_search** (best score: 0.8653)
+    Starts from a 5×5 grid plus a centre point, computes maximal radii via a linear program and performs a modest stochastic perturbation of the centres.
+  - **multi_restart_stochastic_local_search_with_lp_radius_optimization** (best score: 0.9642)
+    Runs many independent starts, each time jittering centre positions, recomputing optimal radii with a linear program and accepting moves that increase the total radius; uses small neighbourhood moves for fine‑grained exploration.
+  - **simulated_annealing_with_deterministic_refinement_and_lp_radius_optimization** (best score: 0.8278)
+    Applies a temperature‑controlled annealing schedule to propose centre moves, solves the radius LP each step, and finishes with a few deterministic fine‑tuning passes.
+  - **incomplete_or_broken_implementation** (best score: 0.0000)
+    Code is truncated (e.g., missing function body), leading to syntax errors and zero validity.
+
+### Best Result (score: 0.9642):
+  **Main Idea:** Generate many randomised initial centre configurations, repeatedly apply tiny random displacements, recompute the optimal radii via a linear program and keep changes that raise the total summed radius; the best configuration across all restarts is returned.
+  **Placement:** Initial centres are placed on a regular 5×5 grid with an extra centre, then each restart adds Gaussian jitter; subsequent moves are small random perturbations drawn from a narrow normal distribution.
+  **Radius:** For a fixed set of centres, a linear program maximises the sum of radii subject to (i) each radius being no larger than the distance to the four square sides and (ii) the sum of any two radii being no larger than the Euclidean distance between their centres.
+  **Constraints:** All wall‑contact and non‑overlap constraints are encoded as linear inequalities in the LP, guaranteeing that any returned radii are feasible; the algorithm discards moves that violate feasibility.
+
+### Score Improvements:
+  - Iter 10: +0.0199 - Introduced aggressive multi‑restart stochastic search instead of a single simple local search.
+  - Iter 12: +0.079 - Switched to very small neighbourhood moves and increased the number of restarts, yielding finer exploration of the search space.
+
+### Stuck Patterns (AVOID THESE):
+  - Reliance on a fixed grid layout without sufficient randomisation leads to early convergence to sub‑optimal packings.
+  - Incomplete code fragments (missing brackets or function bodies) cause syntax errors and produce completely invalid runs.
+
+### Novel Discoveries:
+  - Decoupling centre placement from radius determination by solving a linear program for radii after every centre perturbation enables rapid feasibility checks and allows the stochastic engine to focus solely on geometry.
+
+### Error Patterns:
+  - syntax_error_or_truncated_code: 1 occurrences
+    Likely cause: Function definitions were left unfinished (e.g., missing body or closing parenthesis), causing the interpreter to raise a SyntaxError.
+
+### Convergence Analysis:
+  - Trend: improving up to iteration 12 then plateauing/declining
+  - Best Score: 0.9642
+  - Iterations Since Improvement: 8
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Combine the successful multi‑restart stochastic scheme with an adaptive step‑size schedule: start with larger jumps to explore globally, then shrink the move scale for local refinement.
+  - Add a deterministic post‑processing phase (e.g., gradient‑based centre adjustment or a second LP that directly maximises the minimum pairwise distance) after the stochastic search finishes to squeeze out additional radius.
+  - Ensure code completeness and automate syntax checking; also experiment with alternative initial lattices such as a hexagonal or triangular grid, which may provide a better starting density for the LP‑based radius optimisation.
+

@@ -1,0 +1,72 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert algorithm designer and numerical optimizer specializing in geometric packing problems.  
+Your task is to improve the code that appears between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers. The surrounding code (imports, the driver function, visualisation, etc.) is fixed and will be automatically combined with whatever you output.
+
+**Goal**  
+Maximize the provided *combined_score* metric (which depends on the sum of radii of the 26 circles) while keeping the solution **valid** (validity = 1.0). A valid solution must respect all geometric constraints: every circle stays inside the unit square and no two circles overlap.
+
+**What you must produce**  
+- **Only** the Python code that belongs inside the evolve block.  
+- Do **not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+- Do **not** output any code outside this region.  
+- The block you supply must be self‑contained: any function you call from within the block must be defined **inside** the block.  
+- Use clear, well‑named functions and variables; readability helps later iterations.
+
+**Guidance for the implementation**  
+
+1. **Geometric model**  
+   - Represent circle centers as an `n × 2` NumPy array and radii as a length‑`n` array.  
+   - The distance from a center to each side of the unit square gives an immediate upper bound for its radius.  
+   - Pairwise distances between centers give constraints: for any two circles the sum of their radii must not exceed the Euclidean distance between their centers.
+
+2. **Optimization strategies** (you may combine several)  
+   - **Iterative scaling**: start with a feasible set of radii (e.g., the border limits), then repeatedly adjust radii to satisfy pairwise constraints, using proportional scaling or a simple relaxation scheme.  
+   - **Linear programming / convex optimization**: formulate the problem as maximizing the sum of radii subject to linear inequalities derived from the distance constraints (treat distances as constants for a given layout). Use `scipy.optimize.linprog` or `cvxopt` if you prefer.  
+   - **Gradient‑based improvement**: treat the sum of radii as an objective and use a projected gradient ascent that respects the non‑overlap constraints by projecting onto the feasible set after each step.  
+   - **Layout refinement**: modify the positions of the centers to allow larger radii. Simple heuristics include:  
+     * jittering centers away from each other,  
+     * arranging them on concentric rings with radii chosen to fit inside the square,  
+     * applying a force‑based simulation where circles repel each other and are attracted to the square boundaries.  
+   - **Hybrid approach**: iterate between repositioning centers (using a few steps of a force‑based method) and recomputing optimal radii via linear programming.
+
+3. **Algorithmic skeleton you might follow**  
+   - Define a function that, given a set of centers, computes the maximal feasible radii (using either the iterative scaling method or an LP solver).  
+   - Define a function that perturbs or optimizes the centers while keeping them inside the unit square (e.g., random small moves, simulated annealing, or a simple repulsive‑force loop).  
+   - In the main entry point, start from a reasonable initial layout (grid, rings, or random), then run a loop that alternates:  
+     1. compute radii,  
+     2. evaluate the current score,  
+     3. improve the layout,  
+     4. stop when improvements fall below a threshold or after a fixed number of iterations.  
+   - Return the final centers, radii, and the sum of radii.
+
+4. **Performance considerations**  
+   - Keep the number of pairwise distance calculations O(n²) (n = 26 is small, so a double loop is fine).  
+   - Cache distances if you reuse them across iterations.  
+   - Limit the number of optimization iterations to a modest count (e.g., 50–200) to keep runtime low.
+
+5. **Common pitfalls to avoid**  
+   - **Missing definitions**: every helper you call must be defined inside this block; otherwise the combined script will raise a `NameError`.  
+   - **Violating constraints**: never return radii that cause overlap or extend beyond the square; the validity check will fail.  
+   - **Returning incorrect types**: the entry function must return a tuple `(centers, radii, sum_of_radii)` where `centers` is a NumPy array of shape `(26, 2)`, `radii` is a NumPy 1‑D array of length 26, and `sum_of_radii` is a scalar (float).  
+   - **Using external state**: avoid reliance on global variables outside the block; keep everything self‑contained.  
+   - **Printing or logging**: extraneous output may interfere with automated evaluation; limit prints to debugging only if you later remove them.
+
+**Final reminder**  
+Your output is **exactly** the code that belongs inside the evolve block—no markers, no surrounding code, no explanations. Write clean, functional Python that adheres to the constraints above, and aim for the highest possible combined_score while keeping the solution valid.

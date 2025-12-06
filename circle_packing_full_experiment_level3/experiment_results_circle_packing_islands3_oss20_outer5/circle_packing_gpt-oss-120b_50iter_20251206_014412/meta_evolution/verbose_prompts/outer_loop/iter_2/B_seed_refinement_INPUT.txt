@@ -1,0 +1,165 @@
+# Prompt Type: B
+# Outer Iteration: 2
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 2
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 6582 chars
+- Current best prompt length: 3986 chars
+
+## Convergence History:
+### Successful Patterns:
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9357
+- Valid: 9, Invalid: 2
+- Failure modes: ['Validity failures: 2/11 (18.2%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **RingPatternWithComputeMaxRadii** (1 attempts, struggled)
+    Places circles on concentric rings (center + two rings) and then calls an undefined `compute_max_radii` to determine radii. The pattern is very rigid and yields a low score.
+  - **LPWithMultipleLayouts** (1 attempts, worked)
+    Generates several deterministic and random center layouts, solves a linear program for each to maximize the sum of radii, and keeps the best result. This yields a substantial score jump.
+  - **LPWithLocalSearchPerturbations** (2 attempts, worked)
+    Starts from the best layout found by the previous approach, then performs hill‑climbing perturbations of individual centers. After each perturbation the LP is solved again and changes that improve the objective are kept. This yields the best score.
+
+### Best Result (score: 0.9357):
+  **Main Idea:** Use a linear program to compute the largest possible radii for a fixed set of circle centers, and then iteratively refine those centers by local search. The LP guarantees feasibility while the search explores better spatial arrangements.
+  **Placement:** Centers are initially placed on a deterministic lattice or randomly, then each center is perturbed one at a time by a small random offset. Only perturbations that increase the LP objective are accepted.
+  **Radius:** For a given center set, the LP maximizes the sum of radii with constraints: each radius ≤ distance to each side of the unit square, and for every pair i<j, r_i + r_j ≤ distance between centers i and j.
+  **Constraints:** All constraints are encoded as linear inequalities in the LP. The LP solver (`scipy.optimize.linprog`) ensures the solution satisfies the wall and non‑overlap constraints, and radii are clipped to [0,1] by the bounds.
+
+### Score Improvements:
+  - Iter 1: +0.5011 - Replaced the rigid ring pattern with an LP that optimizes radii for multiple random/deterministic layouts.
+  - Iter 9: +0.0704 - Added a local‑search hill‑climbing loop that perturbs centers and keeps only beneficial moves.
+
+### Stuck Patterns (AVOID THESE):
+  - Repeated array‑size mismatches when building the LP constraint matrix, leading to broadcasting errors.
+  - Index‑out‑of‑bounds errors caused by assuming a fixed number of circles while iterating over a smaller array.
+  - Syntax/indentation errors introduced during rapid code edits, causing the program to fail before any computation.
+
+### Novel Discoveries:
+  - Using a linear program to compute the maximal radii for a fixed layout is a clean separation of geometry (center placement) and feasibility (radius sizing).
+  - The simple hill‑climbing perturbation of centers, coupled with re‑solving the LP, acts as a lightweight local optimizer that improves the packing without complex global search.
+
+### Error Patterns:
+  - BroadcastingShapeMismatch: 1 occurrences
+    Likely cause: The LP constraint matrix was built with rows of different lengths (e.g., 16 vs 9), causing NumPy to raise a broadcasting error.
+  - IndexOutOfBounds: 1 occurrences
+    Likely cause: A loop incorrectly assumed the array had 26 elements while it actually had 23, leading to an out‑of‑range index.
+  - SyntaxIndentation: 1 occurrences
+    Likely cause: An accidental indentation before an import statement broke the Python syntax.
+
+### Convergence Analysis:
+  - Trend: improving until plateauing at iteration 9 with a score of 0.9357, after which attempts either stagnate or regress.
+  - Best Score: 0.9357
+  - Iterations Since Improvement: 7
+  - Approach Diversity: medium – early iterations explored several layout strategies, but later iterations focused on refining a single approach.
+
+### Recommendations:
+  - Introduce a global stochastic search (e.g., simulated annealing or a genetic algorithm) for center placement to escape local optima while still using the LP for radius optimization.
+  - Add rigorous shape‑checking and bounds validation before building the LP to avoid broadcasting and index errors; for example, assert that the number of rows equals the number of columns in the constraint matrix.
+  - Implement a logging and checkpoint system that records the best center configuration and LP objective after each iteration, enabling rollback if a new perturbation degrades the solution.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_2):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for the Evolve Block**
+
+You are to produce **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+- **Do not** output the markers themselves.  
+- **Do not** output any code that lives outside this block (e.g., calls to `run_packing()` or `visualize()`).  
+- The surrounding framework will automatically insert your code into the full program.  
+
+**Output Requirements**  
+- Every function or class you call must be defined somewhere inside the block you output.  
+- You may add import statements if needed, but `numpy as np` and `scipy.optimize.linprog` are already available.  
+- Follow normal Python syntax; avoid stray indentation, mismatched brackets, or any construct that would raise a syntax error.  
+
+**Algorithmic Guidance (what has worked well)**  
+
+1. **Separate geometry from feasibility** – keep the circle centers fixed while you compute the maximal feasible radii using a linear program (LP).  
+2. **LP formulation** – for a given set of `n` centers:
+   - Variables: radii `r_i` (one per circle).  
+   - Objective: maximize the sum of radii (or any linear combination that encourages larger circles).  
+   - Constraints:  
+     - For each circle, `r_i` ≤ distance from its center to each side of the unit square (four wall constraints).  
+     - For each unordered pair `(i, j)`, `r_i + r_j` ≤ Euclidean distance between the two centers (non‑overlap constraint).  
+   - Bounds: `0 ≤ r_i ≤ 1`.  
+   The LP is always feasible because radii can be set to zero, and `linprog` will return a valid solution if the constraint matrix is built correctly.  
+
+3. **Initial layouts** – generate a diverse pool of deterministic and random center configurations:
+   - A uniform lattice (e.g., a regular grid) that roughly spreads the points.  
+   - Several random placements that respect a minimal separation (e.g., reject a point if it is closer than a tiny epsilon to an existing one).  
+   - Optionally, simple geometric patterns (e.g., concentric rings) can be added for variety.  
+
+4. **Local improvement loop** – after picking the best layout from the initial pool (the one with the highest LP objective):
+   - Iterate a fixed number of steps (or until no improvement).  
+   - Randomly select one circle, propose a small perturbation of its center (e.g., add a uniform offset in `[-δ, δ]` and clip to `[0,1]`).  
+   - Re‑solve the LP for the perturbed layout.  
+   - Keep the perturbation only if the new LP objective is strictly larger; otherwise discard it.  
+   - Optionally, adapt the perturbation magnitude `δ` (e.g., halve it after a number of rejections) to fine‑tune the search.  
+
+5. **Global stochastic search (optional enhancement)** – if you want to escape deeper local minima, embed a simple simulated‑annealing schedule:
+   - Accept worsening moves with a probability that decreases with a temperature parameter.  
+   - Still rely on the LP to verify feasibility after each move.  
+
+**Pitfalls to Avoid (what has caused failures)**  
+
+- **Matrix shape mismatches** when constructing the LP constraints. Ensure every constraint row has the same length (`n` coefficients) and that the total number of rows matches the number of inequality constraints you intend to add.  
+- **Index‑out‑of‑range errors** – always base loops on the actual size of the centers array (`len(centers)`) rather than a hard‑coded constant.  
+- **Broadcasting errors** – use explicit reshaping or list comprehensions to build constraint matrices; avoid mixing 1‑D and 2‑D arrays without matching dimensions.  
+- **Invalid center coordinates** – after any perturbation, clip each coordinate to the interval `[0, 1]` to stay inside the unit square.  
+- **Infinite loops or excessive runtime** – limit the number of LP solves (e.g., a few thousand) and keep perturbation magnitudes modest; `linprog` is fast but repeated solves dominate runtime.  
+- **Syntax/indentation mistakes** – keep a clean, consistent indentation level (4 spaces) and verify that all statements are properly terminated.  
+
+**Implementation Checklist**  
+
+- [ ] Function to generate candidate center layouts (deterministic grid + random sampling).  
+- [ ] Function that builds the LP matrices (`A_ub`, `b_ub`) given a set of centers.  
+- [ ] Wrapper that calls `linprog` and returns the radii and the objective value.  
+- [ ] Main construction routine that:
+  1. Creates the initial pool, evaluates each via the LP, keeps the best.
+  2. Runs the local‑search/hill‑climbing loop, updating the best layout whenever improvement occurs.
+  3. Returns the final list/array of centers and their radii in the format expected by the outer code.  
+
+Remember: **All helper functions you rely on must be defined inside the block you output.** Follow the output format strictly, and your code will be merged with the surrounding infrastructure for evaluation. Good luck!

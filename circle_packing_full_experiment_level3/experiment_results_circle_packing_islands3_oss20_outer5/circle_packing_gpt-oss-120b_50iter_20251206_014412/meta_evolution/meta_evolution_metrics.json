@@ -1,0 +1,22 @@
+{
+  "best_score": 0.9590844028821452,
+  "best_convergence_rate": 10.426611015619681,
+  "total_inner_iterations": 50,
+  "total_outer_iterations": 5,
+  "total_wall_clock_time": 747.5434381961823,
+  "comparison_to_baseline": null,
+  "iteration_scores": [
+    0.9357023953929297,
+    0.9357023953929297,
+    0.9384408535304215,
+    0.9590844028821452,
+    0.9590844028821452
+  ],
+  "iteration_convergence_rates": [
+    11.755874575249717,
+    11.755874575249717,
+    11.721569834281956,
+    10.426611015619681,
+    10.426611015619681
+  ]
+}

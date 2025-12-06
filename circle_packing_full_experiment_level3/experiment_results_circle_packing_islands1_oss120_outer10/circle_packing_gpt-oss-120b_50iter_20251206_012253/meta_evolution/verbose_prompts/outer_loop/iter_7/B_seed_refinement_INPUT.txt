@@ -1,0 +1,109 @@
+# Prompt Type: B
+# Outer Iteration: 7
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 7
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 5277 chars
+- Current best prompt length: 4949 chars
+
+## Convergence History:
+### Successful Patterns:
+- Negative guidance (what to avoid) helped
+- Change that helped: removed 'step'; expanded by 560 chars
+- Explicit constraint mentions helped
+- Change that helped: added 'step'; added 'important'; expanded by 744 chars
+- Change that helped: condensed by 385 chars
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9549
+- Valid: 4, Invalid: 1
+- Failure modes: ['Validity failures: 1/5 (20.0%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Recommendations:
+  - Analysis failed - could not parse LLM response
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_7):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – EVOLUTION BLOCK INSTRUCTION**
+
+You are to generate the Python code that will replace the contents of the evolution block (the region between `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`). Follow **all** of the rules below precisely.
+
+---
+
+### 1. OUTPUT FORMAT (CRITICAL)
+- **Only** output the Python code that belongs *inside* the evolution block.  
+- **Do not** include the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers themselves.  
+- **Do not** include any calls to outer‑framework functions such as `run_packing()` or `visualize()`. Those calls are added automatically by the surrounding system.  
+- The code you provide will be merged with the surrounding framework, so it must be a **self‑contained** replacement for the block.
+
+### 2. FUNCTION DEFINITIONS
+- Every function that you call from within the block must be defined **inside** the block you output.  
+- Do not rely on functions that exist only outside the block unless they are guaranteed to be pre‑imported (e.g., `numpy as np`, `scipy.optimize.linprog`).  
+
+### 3. ALGORITHMIC GUIDANCE – WHAT TO DO
+- **Goal:** Produce a configuration of circles (centers and radii) that maximises a chosen quality metric while satisfying geometric feasibility constraints.  
+- **Successful strategies to incorporate:**
+  1. **Sampling of candidate center layouts:** Generate many random or structured arrangements of circle centers inside the allowed region (e.g., uniform random points, lattice‑based seeds, or perturbations of previous best layouts).  
+  2. **Linear programming sub‑problem:** For each candidate layout, formulate a linear program that maximises the sum (or another monotonic function) of the radii subject to:
+     - Non‑overlap constraints: for every pair of circles, the sum of their radii must be ≤ the Euclidean distance between their centers.  
+     - Boundary constraints: each radius must be ≤ the distance from its center to the nearest side of the bounding box (or other container shape).  
+  3. **Uniform scaling check:** After solving the LP, optionally compute the maximum uniform scaling factor that can be applied to all radii simultaneously without violating any constraints; this can improve the overall packing density.  
+  4. **Selection of the best result:** Keep the configuration that yields the highest objective value (e.g., total radius sum or scaled sum) across all sampled layouts.  
+
+- **Implementation hints:**
+  - Use `numpy` for vectorised distance calculations.  
+  - Use `scipy.optimize.linprog` (already available) to solve the LP; construct the coefficient matrix and bounds accordingly.  
+  - Encapsulate repeated logic (e.g., building the constraint matrix, solving the LP, computing scaling factors) into small helper functions defined within the block.  
+  - Ensure numerical stability by adding a tiny epsilon (e.g., `1e-9`) to inequality RHS values to avoid borderline feasibility issues.  
+
+### 4. WARNINGS – WHAT TO AVOID (FAILED APPROACHES)
+- **Overlapping circles:** Do not rely on heuristics that only adjust radii after placement without re‑checking pairwise distances; this caused validity failures in earlier attempts.  
+- **Ignoring boundary constraints:** Failing to enforce that each circle remains fully inside the container leads to immediate rejection.  
+- **Using non‑linear solvers without proper bounds:** Attempts with `scipy.optimize.minimize` that did not enforce linear inequality constraints resulted in infeasible solutions.  
+- **Hard‑coding a single layout:** A static configuration works for only a few problem sizes; the algorithm must explore multiple layouts to achieve high scores.  
+
+### 5. PERFORMANCE CONSIDERATIONS
+- Limit the number of sampled layouts to a reasonable count (e.g., 200–500) to keep runtime acceptable while still providing diversity.  
+- Re‑use computed distance matrices when possible to avoid redundant calculations across LP solves.  
+
+--- 
+
+**Remember:** The only code you output will be placed between the evolve‑block markers. It must be a complete, self‑contained implementation of the described approach, defining all functions it uses, and must not contain any outer‑framework calls or the markers themselves.

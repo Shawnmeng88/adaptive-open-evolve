@@ -1,0 +1,116 @@
+# Prompt Type: B
+# Outer Iteration: 4
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 4
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 6207 chars
+- Current best prompt length: 5354 chars
+
+## Convergence History:
+### Successful Patterns:
+- Change that helped: expanded by 295 chars
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+- Change that helped: added 'step'; removed 'constraint'; expanded by 1488 chars
+- Change that helped: added 'constraint'; condensed by 953 chars
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9553
+- Valid: 3, Invalid: 2
+- Failure modes: ['Validity failures: 2/5 (40.0%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Recommendations:
+  - Analysis failed - could not parse LLM response
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_4):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Circle‑Packing Code**
+
+---
+
+### 📋 Mandatory Output Requirements (must be obeyed)
+
+1. **Output ONLY** the Python source code that belongs **between** the markers  
+   `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+2. **Do NOT** include the marker lines themselves, nor any surrounding code such as `run_packing()` or `visualize()`.  
+3. The system will splice your output into the existing file; therefore **every identifier you reference must be defined inside the block you provide**.  
+4. You may add additional `import` statements if needed, but remember that `numpy as np` and `scipy.optimize.linprog` are already available.  
+
+---
+
+### 🎯 Focus Area
+
+Improve the core packing construction logic and any helper utilities it relies on. You may restructure, replace, or add helper routines, but the final block must be self‑contained and executable when merged.
+
+---
+
+### ✅ Successful Strategies to Emulate (described algorithmically, not by name)
+
+- **Compute a full Euclidean distance matrix** for a set of candidate centers once, and reuse it to evaluate overlap constraints efficiently.  
+- **Formulate the radius selection as a linear program** that maximizes the sum (or a weighted sum) of radii while enforcing pairwise non‑overlap constraints `r_i + r_j ≤ d_ij` and optional boundary constraints.  
+- **Initialize centers with a deterministic, well‑spaced seed** (e.g., points on a circle, a low‑discrepancy sequence, or a simple lattice) to give the optimizer a good starting region.  
+- **Iteratively refine**: after solving the LP, optionally run a small local optimization (e.g., gradient‑free search) on the radii to push them up until a constraint becomes tight, then re‑solve if necessary.  
+- **Validate the final configuration** by re‑computing all pairwise distances and confirming that every `r_i + r_j ≤ d_ij` (with a tiny tolerance) and that any required boundary conditions hold.  
+
+---
+
+### ❌ Approaches That Lead to Failures (avoid them)
+
+- **Greedy placement without global optimization** – placing circles one‑by‑one often leaves large gaps and can violate the feasibility check later.  
+- **Ignoring the distance matrix reuse** – recomputing distances inside tight loops dramatically slows execution and may cause time‑outs.  
+- **Omitting boundary constraints** (if the problem domain has walls) – circles may be placed partially outside the allowed region, causing validity failures.  
+- **Using non‑linear solvers without proper scaling or bounds** – can produce radii that exceed feasible limits or cause numerical instability.  
+- **Skipping a final validation step** – missing subtle violations leads to “invalid packing” errors during evaluation.  
+
+---
+
+### 🛠 Implementation Guidance
+
+- Structure the code so that the main packing routine calls only helpers that you also define inside this block.  
+- Keep helper functions small, pure, and well‑documented; they should each perform a single logical task (e.g., distance matrix creation, LP formulation, result validation).  
+- Use clear variable names and add docstrings/comments explaining the purpose of each step; this aids future evolution.  
+- Ensure any tolerance values used in validation are consistent (e.g., `1e-9`) to avoid floating‑point edge cases.  
+
+---
+
+### 📌 Reminder
+
+All functions, classes, constants, and imports you reference **must be defined within the block you output**. The outer code (`run_packing()`, `visualize()`, etc.) is handled automatically and should not appear in your response.

@@ -1,0 +1,113 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Code Evolution**
+
+You are to improve only the portion of the program that constructs a packing of **26 circles inside the unit square**.  
+The code you provide will replace everything between the markers `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`.  
+All surrounding code (including the call to `run_packing()` and any visualisation) is fixed and will be merged automatically.
+
+---
+
+### Mandatory Output Format (CRITICAL)
+
+- **Output ONLY the code that belongs between the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers.**  
+- **Do NOT include the markers themselves** in your response.  
+- **Do NOT include calls to `run_packing()` or `visualize()`** – those are preserved automatically.  
+- **Every function you call must be defined within the block you output.** The evolve block must be a self‑contained replacement.
+
+---
+
+### What Has Worked Well (keep these ideas)
+
+1. **Triangular (hexagonal) lattice for centre positions** – placing the 26 circle centres on a dense hexagonal grid yields a uniform distribution and a high total radius sum.  
+2. **Linear‑programming optimisation of radii** – with the centres fixed, formulate a linear program that maximises the sum of radii while enforcing:
+   - each radius ≤ distance to the nearest square side,
+   - for every pair of circles, the sum of their radii ≤ centre‑to‑centre distance.
+3. **Extra‑circle insertion in a grid cell** – after creating a regular square grid of 25 circles (radius = spacing/2), insert a 26th circle in the centre of an otherwise empty cell. Size this extra circle to the minimum of its distances to the four surrounding grid circles and to the square boundaries. This simple addition can raise the total radius sum beyond the pure lattice solution.
+
+Combine these ideas where possible: e.g., start from a hexagonal lattice, optimise radii with LP, then scan for the largest empty gap and place an additional small circle sized to the local constraints.
+
+---
+
+### What to Avoid (failed approaches)
+
+- **Leaving undefined helpers** – any helper routine you call (e.g., distance calculations, max‑radius utilities) must be present in the output. Missing definitions cause `NameError` and abort the evolution.  
+- **Partial or truncated code fragments** – ensure all statements are complete and syntactically correct; avoid cut‑off lists, missing parentheses, or unfinished loops.  
+- **Validity violations** – the final packing must satisfy all non‑overlap and boundary constraints. Do not rely on heuristics that can produce circles extending outside the unit square or intersecting each other.  
+- **Hard‑coded single‑purpose solutions** – overly specific placements that only work for a particular configuration may break when the evolution process mutates the code. Aim for a general algorithmic description that can adapt to small changes.
+
+---
+
+### Instructions for Your Implementation
+
+1. **Generate centre coordinates** using a dense hexagonal pattern that fits inside the unit square.  
+2. **Set up and solve a linear program** (e.g., with `scipy.optimize.linprog`) to obtain the maximal feasible radii for those centres under the constraints described above.  
+3. **Identify a promising gap** (for example, the largest empty region between neighbouring circles or between a circle and a boundary).  
+4. **Place an additional circle** at the centre of that gap and compute its radius as the minimum distance to the surrounding circles and to the square edges, ensuring feasibility.  
+5. **Return the final list of centre coordinates and radii** (e.g., as two NumPy arrays or a list of tuples) in the format expected by the surrounding code.  
+6. **Include any auxiliary functions** you use (distance computation, gap detection, LP construction, etc.) within the same block.
+
+Remember: **every identifier you reference must be defined in the output**, and the code must be syntactically complete and obey all packing constraints. Good luck!
+
+---
+
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **regular_grid_corners_removed** (best score: 0.0000)
+    Places circles on a fixed 5×6 rectangular grid (spacing 0.2) and removes the four corner circles so that each remaining circle can have radius 0.1.
+  - **hex_lattice_with_lp** (best score: 0.7532)
+    Generates points on a hexagonal (triangular) lattice inside the unit square, then solves a linear program that maximises the sum of radii subject to border and pairwise non‑overlap constraints.
+  - **grid_with_extra_center_circle** (best score: 0.9645)
+    Uses a 5×5 regular grid (radius 0.1 for each of the 25 circles) and inserts one additional small circle in the centre of a grid cell, adjusting its radius to keep the packing valid.
+
+### Best Result (score: 0.9645):
+  **Main Idea:** Start from a dense 5×5 square grid of circles (radius 0.1) and boost the total radius sum by adding a 26th circle in the middle of a free grid cell, carefully sizing it so that it does not intersect any existing circle or the square boundary.
+  **Placement:** Deterministic rectangular grid for 25 circles; the 26th circle is placed at the centre of a chosen grid cell (e.g., (0.2,0.2) offset from the surrounding circles).
+  **Radius:** Grid circles receive the maximal uniform radius of spacing/2 = 0.1; the extra circle’s radius is computed as the minimum of its distances to the four surrounding grid circles and to the square sides.
+  **Constraints:** Validity is ensured by explicit distance checks: each radius is limited by the distance to the nearest square side and, for the extra circle, by the distances to the four neighbouring grid circles (ri + r_extra ≤ centre‑to‑centre distance).
+
+### Score Improvements:
+  - Iter 6: +0.7532 - Switched from a pure rectangular grid to a hexagonal lattice and introduced a linear‑programming step that optimises radii for the generated centres.
+  - Iter 9: +0.2113 - Added a single extra small circle inside a grid cell and sized it analytically, raising the total sum of radii beyond the LP‑based hex lattice result.
+
+### Stuck Patterns (AVOID THESE):
+  - Repeated NameError for undefined helper functions (e.g., compute_max_radii) because the evolution process omitted the function definition while keeping calls to it.
+  - Code fragments are frequently truncated (e.g., incomplete corner_coords set), leading to syntax errors or early termination before any meaningful computation.
+
+### Novel Discoveries:
+  - The clever insertion of one extra circle into a regular grid cell to increase the objective while keeping all constraints satisfied.
+
+### Error Patterns:
+  - NameError: name 'compute_max_radii' is not defined: 2 occurrences
+    Likely cause: Evolutionary mutations removed or never added the definition of the helper function but retained calls to it.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.9645
+  - Iterations Since Improvement: 1
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Combine the hexagonal lattice + LP radius optimisation with the extra‑circle idea: after solving the LP, look for large gaps and insert additional circles to further increase the sum of radii.
+  - Modularise the code base – keep utility functions (e.g., compute_max_radii, distance checks) in a separate, always‑imported module to avoid NameError failures during evolution.
+  - Explore continuous optimisation methods (e.g., simulated annealing, gradient‑based non‑linear programming) that can move centre positions slightly away from strict lattice points, potentially yielding higher total radii than fixed‑grid approaches.
+

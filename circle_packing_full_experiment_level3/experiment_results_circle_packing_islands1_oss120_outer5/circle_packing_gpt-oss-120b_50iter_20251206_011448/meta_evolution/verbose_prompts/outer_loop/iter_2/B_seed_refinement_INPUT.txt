@@ -1,0 +1,108 @@
+# Prompt Type: B
+# Outer Iteration: 2
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 2
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 3569 chars
+- Current best prompt length: 5654 chars
+
+## Convergence History:
+### Successful Patterns:
+- Change that helped: expanded by 1390 chars
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9538
+- Valid: 8, Invalid: 2
+- Failure modes: ['Validity failures: 2/10 (20.0%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Recommendations:
+  - Analysis failed - could not parse LLM response
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_2):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – META‑PROMPT FOR CODE EVOLUTION**
+
+---
+
+### 📌 CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+
+- **Output ONLY the code that belongs between the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers.**  
+- **Do NOT include the markers themselves** in your response.  
+- **Do NOT include calls to `run_packing()` or `visualize()`** – those are added automatically by the outer harness.  
+- The surrounding harness will merge your output with the preserved sections; any extra text will cause a failure.
+
+### 📦 IMPORTS
+
+- You may add additional import statements if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available.
+
+### 🎯 FOCUS OF THIS EVOLUTION
+
+- **Improve the construction of the circle‑packing layout** and any helper logic used for determining feasible radii.  
+- You may redesign the deterministic placement strategy, add geometric preprocessing, or replace the optimization formulation, but **all functions you call must be defined within the block** you output.  
+- Do **not** reference specific function names from the existing code; describe the algorithmic steps abstractly.
+
+### ✅ SUCCESSFUL APPROACHES TO BUILD ON
+
+- Create a **deterministic arrangement of centre points** (e.g., a regular grid, lattice, or symmetric pattern) that guarantees a well‑structured geometry for the given number of circles.  
+- Use a **linear‑programming formulation** to maximize the radii subject to pairwise non‑overlap constraints and optional boundary constraints.  
+- Encode the constraints as linear inequalities of the form `r_i + r_j ≤ distance(c_i, c_j)` and solve with `linprog` (or a suitable LP solver).  
+- After solving, **post‑process** the solution to ensure non‑negative radii and optionally adjust any near‑zero values for visual clarity.
+
+### ⚠️ APPROACHES THAT HAVE FAILED (AVOID)
+
+- Purely random placement of centres without a systematic pattern leads to many infeasible or sub‑optimal configurations and triggers validity failures.  
+- Heuristic radius adjustments that are not derived from a formal optimization model often violate the non‑overlap constraints, causing the evaluator to reject the result.  
+- Introducing external helper calls that are **not defined** within the output block results in `NameError` exceptions.  
+- Omitting boundary constraints when the problem specification expects circles to stay within a given region can produce invalid packings.
+
+### 📋 MANDATORY OUTPUT FORMAT INSTRUCTION
+
+- **Output ONLY the code that belongs between the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers.**  
+- **Do NOT include the markers themselves** or any surrounding prose.  
+- **Do NOT include calls to `run_packing()` or `visualize()`**; those are handled automatically.  
+- Ensure that **every function you invoke is fully defined** within the code you provide, so the resulting module is self‑contained and executable.
+
+--- 
+
+Proceed to generate the improved implementation respecting the constraints above.

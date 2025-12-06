@@ -1,0 +1,55 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – Evolve Block Guidelines**
+
+You are to generate the complete contents that will replace the code between the markers `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`. **Do not** output the markers themselves, nor any surrounding code such as `run_packing()` or `visualize()`. The system will automatically insert your output into the existing file.
+
+### Mandatory Output Rules
+- **Only** the Python code that belongs between the two markers may be produced.
+- **Do not** include the marker lines, comments about the markers, or any extra text outside the code block.
+- Every function, class, or variable that you reference must be **fully defined** within the output you provide. Missing definitions will cause a `NameError`.
+- You may add import statements if additional libraries are required, but `numpy as np` and `scipy.optimize.linprog` are already available.
+
+### Focus of the Evolution
+Improve the central packing construction routine and any helper utilities it uses. Your goal is to increase the total summed radius of the circles packed inside the unit square for the given number of circles.
+
+### Successful Strategies to Emulate
+1. **Diverse Initial Layouts** – generate several distinct sets of centre coordinates (e.g., a hexagonal lattice, a regular rectangular grid, and a random spread respecting a small margin from the borders). Starting from multiple configurations helps avoid early plateaus.
+2. **Analytical Radius Computation** – for any fixed set of centres, compute each radius as the minimum of:
+   - the distance to the four square edges, and  
+   - half of the Euclidean distance to every other centre.  
+   This guarantees non‑overlap and respects the boundary without needing an external optimizer.
+3. **Stochastic Hill‑Climbing Refinement** – repeatedly perturb centre positions by a small random offset, recompute the radii analytically, and keep the modification only if the total summed radius improves.  
+   - Use an adaptive step size: shrink the perturbation magnitude when recent improvements stall, and occasionally reset to a larger step to escape local optima.
+4. **Multi‑Start Loop** – run the hill‑climbing process independently for each initial layout, retain the best overall result, and optionally perform a short final polishing pass on that best configuration.
+
+### Pitfalls to Avoid
+- **Incomplete Code** – ensure all loops, conditionals, and function bodies are fully written; truncated statements will cause syntax errors.
+- **Undefined Helpers** – do not call any helper that you have not defined inside the evolve block. If you introduce a new utility (e.g., a function that builds a lattice), provide its complete implementation.
+- **Over‑Reliance on a Single Layout** – using only one deterministic pattern (such as a central ring) limits exploration and typically yields lower scores.
+- **Excessive Solver Calls** – repeatedly solving a linear program at every refinement step adds overhead without improving results compared to the direct analytical radius update described above.
+
+### Implementation Advice
+- Structure the code with a clear main function that orchestrates the multi‑start generation, the hill‑climbing refinement, and the final selection.
+- Keep helper utilities small and focused (e.g., a function to generate a hex lattice, one to compute radii, one to perform a single stochastic move).
+- Use NumPy vectorised operations wherever possible for speed, especially when calculating pairwise distances.
+- Include a simple random‑seed parameter to make results reproducible during testing, but allow the seed to be varied across starts for diversity.
+
+Follow these guidelines precisely, and the produced code will be merged correctly and have a higher chance of achieving an improved packing score.

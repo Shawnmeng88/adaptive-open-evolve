@@ -1,0 +1,164 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 5294 chars
+- Current best prompt length: 4626 chars
+
+## Convergence History:
+### Successful Patterns:
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9439
+- Valid: 13, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **simple_ring_pattern** (1 attempts, struggled)
+    Places one central circle and eight surrounding circles in a fixed geometric ring; radii are not optimized.
+  - **grid_with_corner_removal** (1 attempts, mixed)
+    Creates a regular rectangular grid of 30 points, then deletes the four corner points to obtain 26 circles; radii are later computed by LP.
+  - **hex_lattice_plus_lp_refinement** (2 attempts, mixed)
+    Starts from a hexagonal lattice, adds small random perturbations and solves a linear program to maximise the sum of radii for the current centre positions.
+  - **lp_radius_optimization** (3 attempts, mixed)
+    Given any fixed set of centres, formulates a linear program that maximises the sum of radii subject to border and pairwise non‑overlap constraints.
+  - **stochastic_hill_climbing_without_lp** (1 attempts, worked)
+    Generates several diverse initial layouts and iteratively perturbs centre positions, recomputing maximal feasible radii directly (no linear programming).
+
+### Best Result (score: 0.9439):
+  **Main Idea:** Generate a few diverse seed packings (hexagonal lattice, regular grid, random points) and then run a long stochastic hill‑climbing loop that repeatedly nudges centre positions while recomputing the maximal feasible radii for the current layout, keeping the best configuration seen.
+  **Placement:** Multiple deterministic seeds (hex lattice, uniform grid, random with margin) followed by random small displacements of individual centres during hill‑climbing.
+  **Radius:** For each centre the radius is set to the minimum of (distance to the four square edges) and (half the distance to every other centre), i.e. the exact maximal radius that respects borders and non‑overlap, computed analytically rather than via LP.
+  **Constraints:** After each perturbation the radii are recomputed; any move that would cause a radius to become negative or violate a border/non‑overlap condition is rejected, guaranteeing validity = 1.0.
+
+### Score Improvements:
+  - Iter 1: +0.4373 - Introduced linear‑programming based radius maximisation for a fixed set of centres.
+  - Iter 2: +0.0208 - Switched to a regular grid layout and removed corner circles to obtain a more uniform distribution.
+  - Iter 3: +0.0719 - Adopted a hexagonal lattice seed and added random perturbations with LP refinement, increasing packing density.
+  - Iter 7: +0.0141 - Refactored the LP radius routine (better constraint building, tighter bounds) leading to a modest gain.
+  - Iter 10: +0.0356 - Replaced LP‑based refinement with a stochastic hill‑climbing that directly computes maximal radii, and combined three different seeds.
+
+### Stuck Patterns (AVOID THESE):
+  - Repeated truncation of code blocks (unfinished loops, missing returns) causing syntactic incompleteness in early iterations.
+  - Heavy reliance on linear programming which caps improvement speed; after a certain point LP refinements yield diminishing returns.
+
+### Novel Discoveries:
+  - The switch from an LP‑driven optimisation to a direct geometric radius computation within a hill‑climbing loop, which both simplifies the pipeline and yields a higher score.
+
+### Error Patterns:
+  - truncated_syntax: 4 occurrences
+    Likely cause: Evolutionary generation cut off lines before they were completed, probably due to token‑limit or premature termination of the mutation operator.
+  - duplicate_imports: 3 occurrences
+    Likely cause: Automatic code insertion repeats import statements when blocks are recombined.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.9439
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Combine the geometric hill‑climbing radius calculation with occasional LP re‑optimisation to escape local plateaus.
+  - Introduce adaptive step‑size control in the hill‑climbing loop (larger moves early, finer moves later) to explore the search space more efficiently.
+  - Experiment with non‑uniform initial lattices (e.g., distorted hexagonal or concentric shells) to increase diversity of centre configurations.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)**  
+- **Output ONLY** the Python code that belongs *between* the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **Do NOT** include the markers themselves, nor any surrounding code such as `run_packing()` or `visualize()`.  
+- The system will automatically merge your output with the preserved outer sections.  
+
+**IMPORTS**  
+- You may add additional import statements if needed (e.g., `from scipy.optimize import linprog`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available from the outer scope.  
+
+**FOCUS**  
+- Improve the central packing construction routine and any helper utilities it uses.  
+- You may create new helper functions, but every function you call must be defined within the block you output.  
+
+**ALGORITHMIC GUIDANCE (WHAT TO DO)**  
+
+1. **Diverse Seed Generation**  
+   - Produce several independent initial centre configurations:  
+     * a slightly perturbed hexagonal lattice,  
+     * a regular rectangular grid with a few points removed to reach the required count,  
+     * a set of uniformly random points respecting a small margin from the square edges.  
+   - These seeds should be generated deterministically where possible to ensure reproducibility, but include a modest random jitter to increase diversity.
+
+2. **Exact Geometric Radius Computation**  
+   - For any fixed set of centre coordinates, compute the maximal feasible radius for each circle as the minimum of:  
+     * distance to each of the four square boundaries,  
+     * half the Euclidean distance to every other centre.  
+   - This calculation guarantees a valid packing (no overlaps, all circles fully inside) without needing a linear program.
+
+3. **Stochastic Hill‑Climbing with Adaptive Step‑Size**  
+   - Iterate a large number of moves (e.g., tens of thousands).  
+   - At each iteration randomly select one centre and propose a displacement drawn from a zero‑mean normal distribution whose standard deviation decays over time (large steps early, fine adjustments later).  
+   - After the move, recompute the radii exactly as described above.  
+   - **Accept** the move only if the new radii remain non‑negative for all circles (i.e., the packing stays valid).  
+   - Keep track of the best‑scoring configuration seen so far (sum of radii or the evaluator’s combined score).
+
+4. **Occasional Linear‑Program Escape Mechanism**  
+   - Every few thousand iterations (or when improvement stalls), solve a linear program that maximises the sum of radii for the current centre positions, using the same border and non‑overlap constraints.  
+   - Replace the current radii with the LP solution if it yields a higher score, then resume hill‑climbing.  
+   - This hybrid step helps escape shallow local optima while keeping the overall pipeline lightweight.
+
+5. **Final Refinement**  
+   - After the main loop, perform a short “polish” phase with a very small step‑size and a few LP refinements to fine‑tune the radii.  
+
+**WARNINGS ABOUT FAILED APPROACHES (WHAT TO AVOID)**  
+
+- **Truncated or incomplete code blocks** – ensure every loop, conditional, and function definition is syntactically complete.  
+- **Duplicate import statements** – avoid re‑importing modules that are already available in the outer scope.  
+- **Excessive reliance on linear programming alone** – pure LP refinements quickly reach diminishing returns and limit exploration; combine them with geometric hill‑climbing.  
+- **Fixed step‑size moves** – using the same displacement magnitude throughout the search hampers both global exploration and local convergence.  
+- **Generating centres without a margin** – points placed too close to the square edges can produce negative radii after perturbation, causing invalid configurations.  
+
+**GENERAL REMINDERS**  
+
+- Every helper you invoke must be defined within the block you output.  
+- Keep the code self‑contained and free of external side effects; only return the data structure expected by the outer driver (e.g., a list/array of centre‑radius pairs).  
+- Maintain readability and avoid overly deep nesting; clear function boundaries help the evolutionary process produce syntactically correct mutations.  
+
+Follow these instructions precisely to produce a high‑quality, valid circle‑packing implementation.

@@ -1,0 +1,130 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in algorithmic optimization and computational geometry tasked with iteratively improving a program that arranges a fixed number of circles inside a unit square to maximize the total sum of their radii while keeping the configuration valid (no overlaps and all circles fully inside the square).
+
+**Role**  
+Act as a research‑oriented optimizer: analyze the current construction strategy, propose concrete modifications, and implement them in code. Each iteration should produce a self‑contained, runnable solution that can be evaluated automatically for the combined score and validity.
+
+**Optimization Goal**  
+- **Primary metric**: maximize the combined score, which is directly proportional to the sum of all circle radii.  
+- **Constraint**: validity must remain perfect (value = 1.0). This means every circle must stay inside the unit square and no two circles may intersect. Any change that reduces validity is unacceptable.  
+
+**Relevant Techniques and Algorithms**  
+1. **Geometric placement strategies**  
+   - Hexagonal/triangular lattice packing, which is known to be dense for circles.  
+   - Concentric rings with radii chosen to fit tightly within the square.  
+   - Recursive subdivision of the square into smaller cells and placing one circle per cell.  
+
+2. **Optimization methods**  
+   - Local refinement: after an initial layout, adjust each center slightly (e.g., gradient‑free hill climbing) to increase the allowed radius while preserving constraints.  
+   - Global optimization: use linear or nonlinear programming to maximize the sum of radii subject to distance‑to‑border and pairwise distance constraints.  
+   - Iterative scaling: start with a feasible set of radii, then uniformly enlarge all radii until the first violation, then back‑off and redistribute slack.  
+
+3. **Mathematical tools**  
+   - Distance calculations (Euclidean norm) for border and pairwise constraints.  
+   - Convex hull or bounding‑box checks to ensure all circles remain inside the unit square.  
+   - Simple geometry formulas for the maximum radius of a circle given its center location.  
+
+4. **Numerical considerations**  
+   - Use vectorized operations (NumPy) to compute distances efficiently.  
+   - Guard against floating‑point rounding errors by adding a tiny safety margin (e.g., 1e‑6) when enforcing constraints.  
+
+**Guidance for Exploration**  
+- **Start simple, then refine**: Begin with a regular lattice (e.g., 5 × 5 grid) that fits 25 circles, then add the 26th in the largest remaining gap.  
+- **Parameter sweep**: Experiment with different lattice spacings, ring radii, or cell sizes. Automate a small grid search over these parameters and keep the best‑performing configuration.  
+- **Iterative improvement loop**: After establishing a baseline layout, repeatedly:
+  1. Compute the maximal radius for each circle given the current positions.  
+  2. Identify circles whose radii are limited by a neighbor rather than the border.  
+  3. Slightly move those circles away from each other (or toward the border) to free up radius, then recompute.  
+- **Hybrid approach**: Combine a deterministic geometric pattern with a lightweight optimizer (e.g., SciPy’s `minimize` with constraints) to fine‑tune positions.  
+
+**Pitfalls to Avoid**  
+- **Violating constraints**: Never return a layout where any circle exceeds the distance to a wall or overlaps another circle. Even a tiny violation will set validity to zero.  
+- **Hard‑coding values**: Avoid fixed radii or positions that assume a particular layout; the optimizer should adapt if the pattern changes.  
+- **Infinite loops or excessive computation**: Keep iterative refinements bounded (e.g., limit to a few dozen passes or a small time budget) to ensure the solution runs quickly.  
+- **Numerical instability**: When scaling radii to resolve overlaps, ensure the scaling factor is computed safely and does not produce negative or NaN radii.  
+- **Over‑complexity**: Introducing heavyweight external solvers or unnecessary data structures can slow down evaluation and may be rejected by the testing harness. Simpler, well‑vectorized NumPy code is preferred.  
+
+**Workflow Summary**  
+1. Design an initial geometric arrangement that respects the square boundaries.  
+2. Compute the feasible radii for that arrangement.  
+3. Apply a systematic refinement process (local adjustments, parameter sweeps, or constrained optimization) to increase the total radius sum while continuously checking validity.  
+4. Return the final centers, radii, and the computed sum of radii.  
+
+Follow these principles in each iteration to progressively raise the combined score while keeping the solution valid.
+
+Note: Focus on producing valid solutions that satisfy all constraints.
+
+---
+
+## WHAT HAS BEEN TRIED (from code analysis)
+
+**Approaches Tried:**
+- Ring placement with clipping: scores [0.364], best=0.364
+  (Places one central circle, an inner ring of 8 circles and an outer ring of 16 circles, then clips coordinates to stay inside the unit square.)
+- Square grid + extra centre with LP radius optimisation: scores [0.847], best=0.847
+  (Creates a 5×5 regular grid (spacing 0.18) plus a centre circle, then solves a linear program that maximises the sum of radii while respecting border and pairwise non‑overlap constraints.)
+- Hexagonal lattice with LP radius optimisation: scores [0.911], best=0.911
+  (Generates a hexagonal (triangular) lattice of centres inside the unit square and uses a linear program to obtain the largest feasible radii for those fixed centres.)
+- Hexagonal equal‑radius attempt (missing helper): scores [0.000, 0.000], best=0.000
+  (Builds a hexagonal grid and calls an undefined function `compute_max_radii` to obtain radii, causing a runtime NameError.)
+
+**Best Result (score: 0.9115):**
+- Main idea: Generate a dense hexagonal lattice of candidate centre points and then solve a linear program that maximises the total sum of radii while enforcing border and non‑overlap constraints.
+
+**What Led to Improvements:**
+- +0.4824: Switched from ad‑hoc ring placement to a regular square grid plus an LP that optimises radii, dramatically increasing feasible radii.
+- +0.0649: Replaced the square grid with a hexagonal lattice and kept the LP optimisation, yielding a denser centre arrangement and higher total radius.
+
+**DO NOT DO (stuck patterns):**
+- Repeated reliance on an undefined helper `compute_max_radii`, leading to NameError crashes in multiple iterations.
+- Several code blocks are truncated before completing the LP constraint matrix (e.g., border limits cut off), preventing successful execution.
+
+**Novel Techniques That Worked:**
+- Using a linear program to maximise the sum of radii for a *fixed* set of centres, turning a geometric packing problem into a tractable LP.
+- Generating a hexagonal lattice inside a bounded square by offsetting alternate rows, which provides a higher packing density than a simple square grid.
+
+**Common Errors to Avoid:**
+- NameError: compute_max_radii not defined: The helper function that computes maximal feasible radii was never defined or imported; the evolutionary script copied code that depended on it without providing its implementation.
+
+**Suggested Next Steps:**
+- Implement or import a robust `compute_max_radii` routine (e.g., based on pairwise distance constraints) and reuse it consistently, eliminating the NameError failures.
+- Combine the hexagonal lattice with a local optimisation step (e.g., gradient‑based or simulated‑annealing) that perturbs centre positions after the LP stage to potentially increase the total radius further.
+- Experiment with alternative objectives such as maximising the minimum radius (packing density) or a weighted sum, and consider non‑linear solvers that can optimise both centres and radii jointly.
+

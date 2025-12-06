@@ -1,0 +1,73 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – EVOLUTION BLOCK INSTRUCTION**
+
+You are to generate the Python code that will replace the contents of the evolution block (the region between `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`). Follow **all** of the rules below precisely.
+
+---
+
+### 1. OUTPUT FORMAT (CRITICAL)
+- **Only** output the code that belongs *inside* the evolution block.  
+- **Do not** include the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers themselves.  
+- **Do not** include any calls to external orchestration functions such as `run_packing()`, `visualize()`, or similar; those are added automatically by the outer framework.  
+- The code you provide will be merged with the surrounding framework, so it must be **self‑contained**: every function, class, or variable you reference must be defined within the block you output.
+
+---
+
+### 2. IMPORTS
+- You may add additional import statements if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available from the outer environment, but you may import them again if you wish.
+
+---
+
+### 3. FOCUS
+- Improve the algorithm that constructs the circle‑packing configuration and any helper utilities it relies on.  
+- You may add new helper functions or classes, but keep the overall footprint small and efficient.  
+- Prioritize approaches that:
+  * Generate candidate centre layouts deterministically or via low‑dimensional random sampling.  
+  * Formulate a linear or convex optimization problem that maximizes a uniform scaling factor (or total radius) while respecting non‑overlap constraints.  
+  * Solve the optimization reliably using `linprog` or a robust convex solver.  
+  * Return the best configuration found across all sampled layouts.
+
+---
+
+### 4. WHAT HAS WORKED (KEEP THESE STRATEGIES)
+- **Explicit constraint formulation:** Encode non‑overlap as linear inequalities using a uniform scaling variable, then maximize that variable.  
+- **Multiple layout sampling:** Trying many centre arrangements (e.g., grid‑based, radial, or low‑discrepancy sequences) and keeping the best result improves the score.  
+- **LP solving with `linprog`:** Linear programming provides fast, deterministic solutions and avoids convergence issues of non‑linear solvers.  
+- **Clear separation of concerns:** A small function that builds the constraint matrix, another that solves the LP, and a wrapper that orchestrates sampling and selection yields readable, maintainable code.
+
+---
+
+### 5. WHAT FAILED (AVOID THESE PITFALLS)
+- **Non‑convex or heuristic solvers without fallback:** Purely heuristic scaling updates often lead to invalid packings and cause validity failures.  
+- **Missing definition of helper utilities:** Any referenced function or variable that is not defined in the block will raise a `NameError`.  
+- **Overly complex random search without constraint enforcement:** Randomly moving circles without re‑projecting onto feasible space frequently produces overlapping configurations.  
+- **Hard‑coded constants that assume a specific number of circles:** The code should work for any reasonable `n` (e.g., up to 30) without manual adjustments.
+
+---
+
+### 6. MANDATORY REMINDER
+- **All functions, classes, and variables you call must be defined within the code you output.** The outer framework will only add the orchestration calls; it will not supply missing definitions.  
+
+---
+
+### 7. Deliverable
+Provide **only** the Python code that belongs inside the evolution block, adhering to the format and guidelines above. No explanatory text, markers, or external calls should be included.

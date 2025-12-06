@@ -1,0 +1,87 @@
+# Prompt Type: C
+# Outer Iteration: 1
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You are to supply **only** the Python source that belongs between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...your code...
+# EVOLVE-BLOCK-END
+```  
+
+Do **not** output the markers themselves, and do **not** include `run_packing()` or `visualize()` – those sections are preserved automatically.  
+
+All functions that your new code calls must be fully defined **within** the block you output. If you introduce helper routines, include their definitions here.
+
+---
+
+### What to achieve
+- Construct a placement of 26 circles inside the unit square that maximizes the combined score (total sum of radii) while keeping the solution **valid** (no overlaps, all circles fully inside the square).  
+- The scoring system rewards larger radii, so aim for a dense yet feasible arrangement.
+
+### Successful strategies (algorithmic ideas – do **not** name existing functions)
+
+1. **Regular lattice with a perturbation**  
+   - Start from a structured grid (e.g., a 5 × 5 lattice giving 25 points).  
+   - Compute the maximal radius each point can have given the current set of radii and the square boundaries.  
+   - Add a 26th point in a region that is still relatively empty (e.g., the centre or a corner) and recompute radii.  
+   - Optionally apply a small random jitter to each lattice point and re‑evaluate radii; keep the jittered version only if it improves the total radius while remaining valid.
+
+2. **Hexagonal (triangular) packing pattern**  
+   - Generate points on a hexagonal lattice scaled to fit inside the unit square.  
+   - Trim or shift points that fall outside the boundaries.  
+   - Because hexagonal packing yields a higher density than a square grid, it can increase the achievable radii.
+
+3. **Iterative radius expansion (greedy)**  
+   - Place all points first (using any of the layouts above).  
+   - Repeatedly increase the radius of the circle that can grow the most without violating any non‑overlap or boundary constraint.  
+   - Stop when no circle can be enlarged further. This greedy expansion often yields a locally optimal radii set.
+
+4. **Linear programming / convex optimization refinement**  
+   - Formulate the radius limits as linear constraints: each radius ≤ distance to the nearest neighbor minus that neighbor’s radius, and each radius ≤ distance to each square side.  
+   - Solve a linear program that maximizes the sum of radii subject to those constraints.  
+   - Use the provided `linprog` (already imported) or any other optimizer you import inside the block.
+
+5. **Hybrid approach**  
+   - Combine a deterministic lattice (grid or hexagonal) with a short stochastic search: generate several random perturbations of the point set, run the greedy expansion or LP refinement on each, and keep the best‑scoring configuration.
+
+### What to avoid (failed approaches)
+
+- **Ignoring boundary constraints**: any circle whose centre plus radius exceeds 1 or falls below 0 will cause the validity flag to drop.
+- **Allowing overlaps**: do not compute radii independently without checking pairwise distances; overlapping circles invalidate the solution.
+- **Hard‑coding a single static arrangement** without any radius optimization: this often yields a low total radius and limits the score.
+- **Using external files or network calls**: the environment is sandboxed; only standard library and the pre‑imported `numpy`/`scipy` modules are available.
+- **Referencing or calling functions that are not defined inside the block**: this will raise `NameError`. Ensure every invoked routine is either a built‑in, an imported module function, or defined in the block you output.
+
+### Implementation checklist
+
+- Begin by generating a candidate set of 26 centre points (grid, hexagonal, or hybrid).  
+- Compute the maximal feasible radius for each centre respecting both other circles and the square borders.  
+- Apply an optimization step (greedy expansion, linear programming, or a short random‑search loop) to improve the radii sum.  
+- Return the final arrays of centres and radii in the format expected by the surrounding code.  
+- Include any helper functions (e.g., distance matrix computation, radius update logic, LP formulation) inside the block.  
+
+Remember: **only the code** (no markers, no extra commentary) should be output. Follow the format strictly to ensure successful merging and evaluation.

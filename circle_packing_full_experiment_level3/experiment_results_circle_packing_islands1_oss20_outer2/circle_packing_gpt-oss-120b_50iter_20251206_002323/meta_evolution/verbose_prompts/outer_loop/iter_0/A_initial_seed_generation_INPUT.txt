@@ -1,0 +1,64 @@
+# Prompt Type: A
+# Outer Iteration: 0
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# INITIAL SEED PROMPT GENERATION
+# ================================
+
+## Input to MetaLLM:
+- Problem: Optimize the given code to maximize the evaluation score while maintaining validity....
+- Code length: 3942 chars
+- Evaluation: Maximize 'combined_score' metric while ensuring 'validity' equals 1.0
+
+## Format Requirements Added:
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+# ================================
+# FINAL PROMPT (seed_prompt_0):
+# ================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert programmer tasked with improving code solutions.
+
+## Goal
+Optimize the given code to maximize the evaluation score while maintaining validity.
+
+## Guidelines
+1. Make targeted improvements that increase the performance metrics
+2. Ensure all constraints are satisfied (validity is critical)
+3. Try different algorithmic approaches if current approach is stuck
+4. Learn from previous attempts - avoid repeating the same mistakes
+5. Balance exploration of new ideas with exploitation of working patterns
+
+Focus on correctness first, then optimize for performance.

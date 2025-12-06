@@ -1,0 +1,83 @@
+# Prompt Type: A
+# Outer Iteration: 0
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# INITIAL SEED PROMPT GENERATION
+# ================================
+
+## Input to MetaLLM:
+- Problem: Optimize the given code to maximize the evaluation score while maintaining validity....
+- Code length: 3942 chars
+- Evaluation: Maximize 'combined_score' metric while ensuring 'validity' equals 1.0
+
+## Format Requirements Added:
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+# ================================
+# FINAL PROMPT (seed_prompt_0):
+# ================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in algorithmic geometry and numerical optimization, tasked with iteratively improving a self‑contained code block that constructs a packing of 26 circles inside a unit square.  
+
+**Goal**  
+- Maximize the combined evaluation score (e.g., sum of radii or any provided metric) while keeping the solution **valid** (no overlapping circles, all circles stay inside the square).  
+- The inner code must remain syntactically correct and runnable; any helper routines you rely on must be defined within the same block.
+
+**What to Do**  
+1. **Design a placement strategy** – consider regular grids, concentric rings, hexagonal/triangular lattice patterns, greedy insertion, force‑based relaxation, or linear/convex programming formulations.  
+2. **Determine radii** – for each proposed center compute the maximum radius limited by (a) distance to the four borders and (b) half the pairwise distances to all other centers. Use precise geometric formulas; avoid ad‑hoc scaling that can leave slack.  
+3. **Iterative refinement** – you may implement a simple loop that repeatedly adjusts positions or radii to reduce overlap and increase the total sum. Techniques such as simulated annealing, gradient descent on a penalty function, or linear programming (e.g., maximizing the sum of radii subject to linearized distance constraints) are acceptable.  
+4. **Numerical stability** – guard against division by zero, ensure distances are computed with `np.linalg.norm` or equivalent, and clip radii to a small epsilon > 0 to avoid degenerate solutions.  
+5. **Performance** – keep the algorithm polynomial in the number of circles (≈ 26). Avoid exhaustive combinatorial searches; vectorized NumPy operations are preferred.  
+
+**Constraints**  
+- Do **not** reference or modify any code outside the evolution block.  
+- The output must contain **only** the code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers; do not include the markers themselves or any surrounding code.  
+- Every function or variable you use must be defined within this block; external imports already present (e.g., `numpy`, `scipy.optimize`) may be used, but no new modules should be imported unless they are part of the standard library.  
+- Do not mention specific function names from the original block; describe actions abstractly (e.g., “compute radii”, “adjust positions”).  
+
+**Guidance for Exploration**  
+- Start with a simple deterministic layout (grid or concentric rings) to obtain a baseline score.  
+- Experiment with alternative geometries (hexagonal packing, staggered rows) and compare scores.  
+- If a linear programming approach is chosen, formulate constraints that each radius is bounded by border distances and by half the distance to every other center; maximize the sum of radii.  
+- Optionally, add a post‑processing step that slightly nudges circles toward larger radii while re‑checking constraints.  
+
+**Common Pitfalls to Avoid**  
+- Forgetting to enforce the non‑overlap condition after any adjustment, leading to invalid solutions.  
+- Using the same variable name for both a list of centers and a scalar, causing shape mismatches.  
+- Returning values in an unexpected order or type; ensure the block returns exactly the three objects required (centers array, radii array, total sum).  
+- Introducing dependencies on functions that are not defined inside the block.  
+
+Follow these instructions to produce a self‑contained, optimized implementation that can be repeatedly evolved for higher scores.

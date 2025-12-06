@@ -1,0 +1,57 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You are to generate **only** the Python source that will replace the code placed between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+### Mandatory Output Format  
+- **Output ONLY** the code that belongs between the markers.  
+- **Do NOT** include the markers themselves.  
+- **Do NOT** include any calls to outer driver functions (e.g., `run_packing()`, `visualize()`). Those are added automatically outside the block.  
+- The snippet you provide must be **self‑contained**: every routine that your code invokes must be defined somewhere within this block.
+
+### Imports  
+- You may add any import statements you need (e.g., `from scipy.optimize import linprog`, `from scipy.optimize import minimize`, etc.).  
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block, but you may re‑import them if you wish.
+
+### Focus of the Evolution  
+- **Improve the algorithm that constructs a dense packing of 26 circles inside the unit square.**  
+- You may add or modify helper routines to support this goal (e.g., routines for generating initial point sets, refining positions, checking feasibility, or solving small optimization problems).  
+- All new or altered helpers must be defined inside the block.
+
+### Successful Strategies to Emphasize (do not name specific functions)  
+1. **Hybrid initialization:** Combine a jittered lattice (a regular grid perturbed by small random offsets) with farthest‑point sampling to obtain a well‑dispersed set of seed centers.  
+2. **Feasibility checks:** After each placement or movement, verify that circles remain fully inside the unit square and do not overlap any previously placed circles.  
+3. **Local radius optimization:** For a given set of centers, compute the maximal admissible radius for each circle using a simple linear‑programming formulation (e.g., maximize a common radius subject to pairwise distance constraints).  
+4. **Iterative refinement:** Re‑run the radius optimization after small random jittering of the centers to escape local minima and potentially increase the common radius.  
+5. **Random interior sampling:** Occasionally draw a candidate point uniformly from the interior of the square and accept it only if it satisfies the non‑overlap constraints, to diversify the configuration.
+
+### Pitfalls to Avoid (based on previous failures)  
+- **Skipping validity checks:** Do not assume a configuration is feasible without explicitly testing boundary and overlap constraints; this was a source of validity failures.  
+- **Excessive pruning:** Removing too many candidate points or overly aggressive early termination can prevent the algorithm from reaching a high‑density packing.  
+- **Unbounded optimization calls:** Ensure any linear‑programming or minimization call includes proper bounds; otherwise the solver may diverge or return infeasible results.  
+- **Hard‑coded constants:** Avoid magic numbers that limit the algorithm’s flexibility (e.g., fixed jitter amplitudes that are too large for later refinement stages).
+
+### Additional Requirements  
+- Every function or class you reference must be **defined within this block**. Missing definitions will cause a `NameError`.  
+- Keep the code concise but readable; excessive length may lead to unnecessary complexity without improving the packing quality.  
+- Aim for a higher common radius than the current best (≈0.9645) while maintaining full validity of the packing.
+
+Follow these guidelines strictly to produce a correct, self‑contained code block that the outer system can merge with the surrounding driver code. Good luck!

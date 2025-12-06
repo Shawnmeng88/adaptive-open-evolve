@@ -1,0 +1,110 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM INSTRUCTION (DO NOT MODIFY)**  
+
+You are to generate **only** the Python source that will be placed between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...your code...
+# EVOLVE-BLOCK-END
+```  
+
+Do **not** output the markers themselves, nor any surrounding code such as `run_packing()` or `visualize()`. The surrounding script will automatically insert those parts.  
+
+**OUTPUT REQUIREMENTS**  
+- The submitted text must be *exactly* the code that belongs between the two markers.  
+- Every function or class that your code calls must be defined **within** this block. Missing definitions will raise a `NameError`.  
+- You may add import statements at the top of the block if additional libraries are needed (e.g., `from scipy.optimize import linprog, minimize`).  
+
+**ALGORITHMIC GUIDELINES**  
+
+1. **What has worked well**  
+   - **Fixed geometric layout + linear programming** – generate a deterministic set of centre points (e.g., a central point plus concentric rings or a well‑spaced grid) and then solve a linear program that maximizes the sum of radii while enforcing:  
+     * distance from each centre to the four square edges ≥ its radius,  
+     * for every unordered pair of centres, the sum of their radii ≤ the Euclidean distance between the centres.  
+   - Using `scipy.optimize.linprog` (or an equivalent LP solver) to obtain the maximal feasible radii for a given layout gives a large jump in the total‑radius score.  
+
+2. **How to improve beyond the static layout**  
+   - **Evolutionary or stochastic search over centre positions** – repeatedly perturb the current set of centres (mutation, crossover, simulated‑annealing style moves) and re‑run the LP for each candidate. Keep the best‑scoring layout. This explores a broader region of the solution space and can surpass the ceiling imposed by a single handcrafted pattern.  
+   - **Joint non‑linear optimisation** – after a promising layout is found, run a constrained non‑linear optimizer (e.g., `scipy.optimize.minimize` with `method='SLSQP'`) that treats both centre coordinates and radii as variables. Include the same wall and pairwise non‑overlap constraints, but now allow the centres to move while the radii adapt, enabling a tighter packing.  
+   - **Local refinement step** – once radii are obtained, apply a simple force‑directed “push‑apart” iteration: for any pair whose distance is larger than the sum of radii, move the centres slightly toward each other while maintaining the wall constraints. This can exploit any slack left by the linear model and increase the total radius sum.  
+
+3. **What to avoid**  
+   - **Truncated or incomplete code** – ensure every statement is syntactically complete (balanced parentheses, commas, colons, etc.). Missing characters cause immediate runtime failures.  
+   - **Partial constraint generation** – when building the LP or non‑linear constraint list, include *all* unordered pairs of circles. Omitting any pair may produce an infeasible solution that violates the non‑overlap rule, breaking validity.  
+   - **Hard‑coded radii without optimisation** – patterns that assign fixed radii regardless of centre positions quickly hit a low score ceiling and provide little room for improvement.  
+
+4. **Implementation checklist**  
+   - Define a function that creates an initial centre layout (grid, concentric rings, or random perturbation).  
+   - Define a routine that builds and solves the linear program for a given layout, returning the optimal radii.  
+   - Define a mutation / recombination routine that produces new centre layouts from existing ones.  
+   - (Optional) Define a non‑linear optimisation wrapper that refines centres and radii together.  
+   - (Optional) Define a local‑push‑apart refinement loop that iteratively tightens the packing after radii are computed.  
+   - Ensure each routine is fully self‑contained, imports any required modules, and returns data in a consistent format (e.g., two NumPy arrays: `centers` of shape `(n,2)` and `radii` of shape `(n,)`).  
+
+**FINAL REMINDER**  
+Your submission must be a **single, self‑contained block of Python code** that satisfies the output format rules and includes definitions for every symbol it uses. The surrounding framework will handle execution, scoring, and visualization. Good luck!
+
+---
+
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **handcrafted_structured_pattern** (1 attempts, struggled)
+    Places circles in a fixed geometric pattern (center circle + rings) with hard‑coded radii; no optimization of positions or sizes.
+  - **linear_programming_radius_optimization** (1 attempts, worked)
+    Given a set of circle centers, solves a linear program that maximizes the sum of radii while enforcing wall‑distance and pairwise non‑overlap constraints.
+  - **evolutionary_center_mutation** (1 attempts, mixed)
+    The surrounding EVOLVE‑BLOCK framework mutates/ recombines center coordinates across generations, but without a strong objective or joint radius update it yields modest gains.
+
+### Best Result (score: 0.8543):
+  **Main Idea:** Fix a deterministic layout of circle centers and then compute the largest feasible radii for that layout via a linear program that respects boundary and non‑overlap constraints, thereby maximizing the total radius sum.
+  **Placement:** A handcrafted geometric pattern (central circle plus concentric rings) generated by simple trigonometric formulas.
+  **Radius:** Linear programming (scipy.optimize.linprog) that minimizes the negative sum of radii subject to linear inequality constraints for walls and pairwise distances.
+  **Constraints:** Each radius is bounded by its distance to the four square edges; for every pair of circles a constraint ri + rj ≤ distance(centers_i, centers_j) is added to the LP.
+
+### Score Improvements:
+  - Iter 1: +0.4901 - Replaced naive fixed‑radius construction with an LP that optimally inflates radii for the same center layout.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Code truncation / missing parentheses – many lines end abruptly (e.g., "np.cos(angle), 0.5 + 0.3 * np.sin(a"), causing syntax errors and preventing execution.
+  - Pattern 2: Reliance on a single handcrafted center pattern limits exploration; without varying the layout the LP can only improve radii up to a geometric ceiling.
+
+### Novel Discoveries:
+  - Using a pure linear program to compute maximal radii for a pre‑specified set of centers is an effective shortcut that jumps score dramatically.
+
+### Error Patterns:
+  - syntax_truncation: 2 occurrences
+    Likely cause: Automatic snippet extraction cut off lines before they were completed, leaving dangling parentheses and unfinished statements.
+  - incomplete_constraint_generation: 1 occurrences
+    Likely cause: The pairwise distance loop in the LP builder is cut off, so not all non‑overlap constraints are added, potentially leading to infeasible or overly optimistic radii.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.8543
+  - Approach Diversity: low (only one geometric pattern plus a single LP tweak; no fundamentally different center generation strategies yet)
+
+### Recommendations:
+  - Introduce a genuine evolutionary search over center coordinates (e.g., mutation, crossover, simulated annealing) so the LP can be applied to many diverse layouts, increasing the chance of a better global optimum.
+  - Upgrade the optimization from linear programming to a non‑linear joint optimization (e.g., using scipy.optimize.minimize with constraints) that simultaneously adjusts centers and radii, allowing the layout itself to adapt to radius growth.
+  - Add a local refinement step after the LP, such as a force‑directed repulsion or gradient‑based push‑apart of circles, to resolve any remaining slack and push the solution beyond the linear bound ceiling.
+

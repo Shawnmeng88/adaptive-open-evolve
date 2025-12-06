@@ -1,0 +1,212 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 4765 chars
+- Current best prompt length: 5142 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.8841
+- Valid: 6, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **Simple geometric pattern with heuristic radius scaling** (1 attempts, struggled)
+    Places a central circle and a ring of circles at fixed offsets, then scales radii heuristically to avoid overlap.
+  - **Heuristic fallback radius computation** (1 attempts, mixed)
+    Computes radii by limiting each circle to the nearest square edge and then proportionally shrinking overlapping pairs.
+  - **Linear programming for optimal radii given fixed centers** (2 attempts, worked)
+    Formulates a linear program that maximises the sum of radii while enforcing border and pairwise‑non‑overlap constraints.
+  - **Multi‑pattern deterministic generation with LP selection** (1 attempts, worked)
+    Generates several deterministic centre layouts (central rings, hex lattice), solves the LP for each and keeps the layout with the highest total radius.
+  - **Hexagonal lattice generation + LP** (1 attempts, worked)
+    Creates up to 26 points on a triangular/hexagonal grid inside the unit square and then solves the LP to obtain the maximal radii.
+
+### Best Result (score: 0.8841):
+  **Main Idea:** Generate a compact hexagonal lattice of candidate centre points and then solve a linear program that maximises the sum of radii while respecting the square borders and non‑overlap constraints.
+  **Placement:** Deterministic hexagonal (triangular) grid with a small margin from the square edges; spacing chosen to accommodate roughly 26 points.
+  **Radius:** Linear programming: maximise Σ r_i subject to r_i ≤ distance to each of the four borders and r_i + r_j ≤ Euclidean distance between centres i and j.
+  **Constraints:** All constraints are encoded in the LP, guaranteeing that the returned radii satisfy border and pairwise non‑overlap constraints; the LP solver returns a feasible solution, giving Validity = 1.0.
+
+### Score Improvements:
+  - Iter 1: +0.1189 - Added a fallback radius routine and began sketching an LP‑based optimiser, moving away from pure heuristic scaling.
+  - Iter 2: +0.2712 - Implemented a complete linear‑program formulation (solve_optimal_radii_lp) that directly maximises radii for a given centre set.
+  - Iter 3: +0.0654 - Introduced multiple deterministic patterns (central rings + hex lattice) and selected the best via the LP, increasing total radius.
+  - Iter 4: +0.0644 - Switched to a dedicated hexagonal lattice generator, providing a more space‑efficient centre layout before the LP optimisation.
+
+### Stuck Patterns (AVOID THESE):
+  - Repeated truncation of code lines (e.g., unfinished statements, missing parentheses) caused syntax errors that prevented execution of early generations.
+  - Reliance on pure heuristic radius scaling without optimisation yielded very low scores and quickly hit a performance ceiling.
+
+### Novel Discoveries:
+  - Using a linear program to compute the *optimal* radii for any fixed set of centres, turning a geometric packing problem into a convex optimisation task.
+  - Systematically generating several deterministic centre patterns and automatically picking the best via the LP, effectively performing a lightweight meta‑search.
+
+### Error Patterns:
+  - Incomplete/truncated code fragments: 3 occurrences
+    Likely cause: The evolutionary code generator hit token limits or line‑break bugs, cutting off statements mid‑line.
+  - Undefined helper function references: 1 occurrences
+    Likely cause: Inconsistent naming (e.g., _solve_optimal_radii_lp vs solve_optimal_radii_lp) introduced after refactoring.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.8841
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Explore continuous optimisation of centre positions (e.g., gradient‑based or evolutionary algorithms) instead of fixed deterministic patterns; the LP can then be used as a sub‑routine to evaluate each candidate layout.
+  - Switch the LP objective from maximizing Σr to maximizing Σπr² (total area) using a second‑order cone program or a simple iterative re‑weighting scheme, which aligns the optimisation target with the true packing quality.
+  - Add a post‑generation validation step that checks for syntactic completeness and resolves missing imports or function names, ensuring every evolved snippet is runnable before scoring.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+## CRITICAL: FUNCTION DEFINITIONS (READ CAREFULLY)
+- **EVERY function you call MUST be defined in your output**
+- The evolve block is a COMPLETE REPLACEMENT - nothing from previous code versions is preserved
+- If you call `solve_optimal_radii_lp()`, you MUST include its complete definition
+- If you call `compute_max_radii()`, you MUST include its complete definition
+- If you call ANY helper function, you MUST include its complete definition
+- Common error: calling functions without defining them causes NameError and score = 0.0
+- **Check: before calling any function, ensure you've defined it in your code**
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are to generate **only** the Python code that will replace the content between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers. Do **not** output the markers themselves, and do **not** include any calls to `run_packing()` or `visualize()`—those are added automatically by the surrounding framework.
+
+### Mandatory Output Format
+- Output **exactly** the code that belongs inside the evolve block.
+- No extra text, comments, or markers outside the code.
+- The outer script will merge your code with the preserved sections automatically.
+
+### Imports
+- You may add additional import statements if needed (e.g., `from scipy.optimize import linprog`, `import numpy as np`).  
+- `numpy` and `scipy.optimize.linprog` are already available, but you may import them again for clarity.
+
+### Functional Requirements
+1. **Complete Definitions** – Every function you invoke must be fully defined within the code you output. The evolve block is a self‑contained replacement; missing definitions will cause a `NameError` and a score of 0.0.  
+2. **Deterministic Center Generation** – Create one or more compact, deterministic layouts of circle centres inside the unit square (e.g., dense hexagonal/triangular lattices, concentric rings, or grid‑based patterns).  
+3. **Optimization Sub‑routine** – For each candidate layout, formulate a linear program that maximizes the total “size” of the circles while enforcing:
+   - Each radius does not exceed the distance from its centre to any square edge.
+   - The sum of any two radii does not exceed the Euclidean distance between their centres (non‑overlap constraint).
+4. **Selection Logic** – Evaluate all generated layouts with the optimizer and keep the layout that yields the highest objective value.  
+5. **Robustness** – Include a fallback that returns a feasible (though possibly sub‑optimal) solution if the optimizer fails to converge. This guarantees a valid packing with full border and non‑overlap compliance.  
+6. **Optional Enhancement** – If you wish to target total covered area rather than total radius, you may iteratively re‑weight the linear program or apply a simple heuristic that scales radii after the initial LP solution, but always keep the final radii feasible.
+
+### What Has Worked Well
+- Using a dense hexagonal (triangular) lattice to place centre points gives a very compact starting configuration.  
+- Solving a linear program for the radii on a fixed centre set reliably produces a feasible packing and maximizes the chosen objective.  
+- Generating several deterministic centre patterns and selecting the best via the optimizer provides a lightweight meta‑search that improves the score without excessive computation.
+
+### What to Avoid
+- Relying solely on heuristic radius scaling without an optimisation step; this quickly limits performance.  
+- Leaving any code line truncated, missing parentheses, or otherwise syntactically incomplete.  
+- Calling helper functions that are not defined in the output block.  
+- Omitting necessary imports or redefining already‑imported symbols in a way that causes conflicts.
+
+### Guidance Summary
+- **Design** a deterministic centre‑generation routine (or several alternatives).  
+- **Formulate** a linear program that respects border and pairwise‑non‑overlap constraints.  
+- **Solve** the LP for each centre set, keep the best result, and ensure a feasible fallback.  
+- **Define** every function you use within the block, include any needed imports, and output only the code between the markers.
+
+Follow these instructions precisely to produce a correct, self‑contained implementation that will be merged with the surrounding framework.
+
+---
+
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **Simple geometric pattern with heuristic radius scaling** (1 attempts, struggled)
+    Places a central circle and a ring of circles at fixed offsets, then scales radii heuristically to avoid overlap.
+  - **Heuristic fallback radius computation** (1 attempts, mixed)
+    Computes radii by limiting each circle to the nearest square edge and then proportionally shrinking overlapping pairs.
+  - **Linear programming for optimal radii given fixed centers** (2 attempts, worked)
+    Formulates a linear program that maximises the sum of radii while enforcing border and pairwise‑non‑overlap constraints.
+  - **Multi‑pattern deterministic generation with LP selection** (1 attempts, worked)
+    Generates several deterministic centre layouts (central rings, hex lattice), solves the LP for each and keeps the layout with the highest total radius.
+  - **Hexagonal lattice generation + LP** (1 attempts, worked)
+    Creates up to 26 points on a triangular/hexagonal grid inside the unit square and then solves the LP to obtain the maximal radii.
+
+### Best Result (score: 0.8841):
+  **Main Idea:** Generate a compact hexagonal lattice of candidate centre points and then solve a linear program that maximises the sum of radii while respecting the square borders and non‑overlap constraints.
+  **Placement:** Deterministic hexagonal (triangular) grid with a small margin from the square edges; spacing chosen to accommodate roughly 26 points.
+  **Radius:** Linear programming: maximise Σ r_i subject to r_i ≤ distance to each of the four borders and r_i + r_j ≤ Euclidean distance between centres i and j.
+  **Constraints:** All constraints are encoded in the LP, guaranteeing that the returned radii satisfy border and pairwise non‑overlap constraints; the LP solver returns a feasible solution, giving Validity = 1.0.
+
+### Score Improvements:
+  - Iter 1: +0.1189 - Added a fallback radius routine and began sketching an LP‑based optimiser, moving away from pure heuristic scaling.
+  - Iter 2: +0.2712 - Implemented a complete linear‑program formulation (solve_optimal_radii_lp) that directly maximises radii for a given centre set.
+  - Iter 3: +0.0654 - Introduced multiple deterministic patterns (central rings + hex lattice) and selected the best via the LP, increasing total radius.
+  - Iter 4: +0.0644 - Switched to a dedicated hexagonal lattice generator, providing a more space‑efficient centre layout before the LP optimisation.
+
+### Stuck Patterns (AVOID THESE):
+  - Repeated truncation of code lines (e.g., unfinished statements, missing parentheses) caused syntax errors that prevented execution of early generations.
+  - Reliance on pure heuristic radius scaling without optimisation yielded very low scores and quickly hit a performance ceiling.
+
+### Novel Discoveries:
+  - Using a linear program to compute the *optimal* radii for any fixed set of centres, turning a geometric packing problem into a convex optimisation task.
+  - Systematically generating several deterministic centre patterns and automatically picking the best via the LP, effectively performing a lightweight meta‑search.
+
+### Error Patterns:
+  - Incomplete/truncated code fragments: 3 occurrences
+    Likely cause: The evolutionary code generator hit token limits or line‑break bugs, cutting off statements mid‑line.
+  - Undefined helper function references: 1 occurrences
+    Likely cause: Inconsistent naming (e.g., _solve_optimal_radii_lp vs solve_optimal_radii_lp) introduced after refactoring.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.8841
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Explore continuous optimisation of centre positions (e.g., gradient‑based or evolutionary algorithms) instead of fixed deterministic patterns; the LP can then be used as a sub‑routine to evaluate each candidate layout.
+  - Switch the LP objective from maximizing Σr to maximizing Σπr² (total area) using a second‑order cone program or a simple iterative re‑weighting scheme, which aligns the optimisation target with the true packing quality.
+  - Add a post‑generation validation step that checks for syntactic completeness and resolves missing imports or function names, ensuring every evolved snippet is runnable before scoring.
+
+

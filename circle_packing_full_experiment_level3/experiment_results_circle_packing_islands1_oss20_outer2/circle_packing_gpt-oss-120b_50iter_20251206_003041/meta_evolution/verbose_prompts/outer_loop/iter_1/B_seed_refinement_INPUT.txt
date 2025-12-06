@@ -1,0 +1,107 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 3879 chars
+- Current best prompt length: 4506 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9605
+- Valid: 19, Invalid: 7
+- Failure modes: ['Validity failures: 7/26 (26.9%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Recommendations:
+  - Analysis failed - could not parse LLM response
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Code Evolution Guidance**
+
+---
+
+### Output Formatting (Strictly Enforced)
+- **Only** output the Python code that belongs **between** the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **Do not** include the marker lines themselves.  
+- **Do not** include calls to `run_packing()` or `visualize()` – those will be inserted automatically.  
+- The resulting snippet must be a **self‑contained replacement** for the entire evolve block: every function or variable referenced inside the block must be defined within the block.
+
+### Imports
+- You may add additional `import` statements if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available globally; you do not need to re‑import them.
+
+### Focus of the Improvement
+- Concentrate on the logic that constructs the circle packing (the core algorithm).  
+- You may introduce new helper utilities, data structures, or mathematical routines, provided they are defined in the block.
+
+### Successful Strategies to Emphasize
+- **Geometric feasibility first**: compute a safe margin from each circle centre to the square boundaries and enforce it as a hard constraint.  
+- **Pairwise non‑overlap**: maintain a lower bound on the Euclidean distance between any two centres that is at least the sum of their radii.  
+- **Optimization‑driven sizing**: treat radii as decision variables and maximize a quality metric (e.g., total radius sum) subject to the feasibility constraints using a linear or convex programming solver.  
+- **Iterative refinement**: start from a simple feasible layout (grid or random placement) and then improve radii via successive optimization passes, updating constraints each round.  
+- **Numerical stability**: add tiny tolerances (e.g., `1e-9`) when checking constraints to avoid floating‑point edge cases that could falsely flag a valid configuration as invalid.
+
+### Pitfalls to Avoid (Based on Past Failures)
+- **Neglecting boundary constraints**: any circle that touches or crosses the unit‑square edges will cause a validity failure.  
+- **Allowing overlap due to rounding**: using strict `>` comparisons without a margin can let circles intersect by a minuscule amount, which the evaluator treats as invalid.  
+- **Over‑constraining the problem**: adding unnecessary constraints (e.g., forcing all radii to be equal) can dramatically reduce the achievable score.  
+- **Unbounded optimization variables**: ensure all decision variables have sensible lower and upper bounds; otherwise the solver may diverge or produce infeasible solutions.  
+- **Missing definitions**: every helper function or class you call must be defined inside the evolve block; otherwise the merged program will raise a `NameError`.
+
+### Validation Requirement
+- The final packing must satisfy **all** of the following:
+  1. Every circle centre lies within `[0, 1]` for both coordinates.  
+  2. The distance from each centre to each side of the unit square is **at least** its radius.  
+  3. For every pair of distinct circles, the centre‑to‑centre distance is **≥** the sum of their radii.  
+- The evaluator will set the validity flag to `0` if any of these conditions are violated.
+
+### Scoring Objective
+- Maximize the combined quality metric (typically the sum of radii or a related aggregate) while maintaining full validity.  
+- Use the optimization techniques mentioned above to push the metric higher than previous attempts.
+
+### Reminder
+- **All code you produce must be executable as‑is** within the evolve block. No external references beyond the allowed imports are permitted.  
+- Keep the code clear, well‑commented, and focused on the packing construction logic.

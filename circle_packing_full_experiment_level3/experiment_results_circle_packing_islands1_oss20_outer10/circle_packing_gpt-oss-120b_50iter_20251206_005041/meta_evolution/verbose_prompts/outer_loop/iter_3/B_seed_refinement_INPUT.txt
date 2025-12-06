@@ -1,0 +1,162 @@
+# Prompt Type: B
+# Outer Iteration: 3
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 3
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 4779 chars
+- Current best prompt length: 3441 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+- Change that helped: condensed by 1151 chars
+- Change that helped: removed 'step'; condensed by 780 chars
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9596
+- Valid: 4, Invalid: 1
+- Failure modes: ['Validity failures: 1/5 (20.0%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **grid_plus_lp** (1 attempts, mixed)
+    Starts with a fixed 5×5 grid plus a centre point, then solves a linear program to maximise radii.
+  - **random_search_plus_lp** (1 attempts, mixed)
+    Adds a short random‑search perturbation to the grid layout before re‑solving the LP for radii.
+  - **simulated_annealing_refinement_plus_lp** (1 attempts, worked)
+    Uses a simulated‑annealing style loop that moves one centre at a time with a shrinking step size, re‑optimising radii after each move.
+  - **far_point_sampling_hill_climb_plus_lp** (1 attempts, mixed)
+    Initialises centres by far‑point sampling, then performs a stochastic hill‑climb where each perturbation is accepted only if the LP sum of radii improves.
+
+### Best Result (score: 0.9596):
+  **Main Idea:** The best score is achieved by a simulated‑annealing style refinement that iteratively perturbs a single centre with a gradually shrinking Gaussian step, re‑solving a linear program for radii after each move and accepting only beneficial moves.
+  **Placement:** Centrally starts from a 5×5 grid plus the centre, then explores the neighbourhood of each centre one at a time.
+  **Radius:** For any fixed set of centres, a linear program is solved where the objective is to maximise the sum of radii, subject to pairwise non‑overlap constraints and wall‑distance bounds.
+  **Constraints:** All constraints are enforced in the LP: each radius must be non‑negative, cannot exceed the distance to any of the four square edges, and the sum of any two radii cannot exceed the Euclidean distance between their centres.
+
+### Score Improvements:
+  - Iter 1: +0.5466 - Added a random‑search perturbation to the deterministic grid before solving the LP.
+  - Iter 9: +0.0488 - Switched to a simulated‑annealing style refinement that moves one centre at a time with a shrinking step size.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Early iterations often failed to finish due to incomplete code (e.g., missing closing parentheses or unfinished function bodies).
+  - Pattern 2: Attempts that relied solely on deterministic grids without any perturbation got stuck in local optima, yielding low scores.
+
+### Novel Discoveries:
+  - Use of far‑point sampling to initialise centres provides a more diverse starting configuration than a simple lattice.
+  - Re‑solving the LP after every small perturbation allows the algorithm to exploit the full linear‑programming relaxation at each step.
+
+### Error Patterns:
+  - syntax_error_mismatched_parenthesis: 1 occurrences
+    Likely cause: Incomplete copy‑paste or manual editing left an unmatched parenthesis, causing the interpreter to abort.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.9596
+  - Iterations Since Improvement: 1
+  - Approach Diversity: high
+
+### Recommendations:
+  - Recommendation 1: Replace the simple LP solver with a more robust solver (e.g., Gurobi or CPLEX) that can handle larger numbers of constraints and provide warm starts to speed up the repeated LP solves during refinement.
+  - Recommendation 2: Incorporate a gradient‑based local optimisation (e.g., sequential quadratic programming) on top of the LP solution to fine‑tune radii while keeping the non‑overlap constraints active, potentially pushing the score closer to the theoretical optimum.
+  - Recommendation 3: Exploit symmetry by grouping centres into mirrored pairs or rings; enforce equal radii for symmetric pairs to reduce the search space and improve convergence stability.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_3):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You are to produce **only** the Python source that will replace the code placed between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+**MANDATORY OUTPUT FORMAT**  
+- Output **exactly** the code that belongs between the markers; do **not** include the markers themselves.  
+- Do **not** include any calls to `run_packing()` or `visualize()` – those are added automatically outside the block.  
+- The snippet you provide must be **self‑contained**: every routine that your code invokes must be defined somewhere within this block.  
+
+**IMPORTS**  
+You may add any import statements you need (e.g., `from scipy.optimize import linprog`, `from scipy.optimize import minimize`, etc.).  
+`numpy` as `np` and `scipy.optimize.linprog` are already available, but you may import additional modules if useful.
+
+---
+
+### WHAT TO IMPLEMENT
+
+1. **Packing Construction Strategy**  
+   - Begin with a **diverse initial layout** of 26 points inside the unit square. Effective methods include:
+     * A regular lattice (e.g., a 5 × 5 grid plus a central point) **augmented** with a far‑point sampling step to spread points more uniformly.  
+     * Random perturbations of the lattice to break symmetry early.  
+   - For any fixed set of centres, **solve a linear program** that maximizes the sum of radii subject to:
+     * Non‑negativity of each radius.  
+     * Each radius ≤ distance from its centre to each of the four square edges.  
+     * For every pair of centres, the sum of their radii ≤ Euclidean distance between the centres.  
+   - Use the LP solution to obtain the current radii.
+
+2. **Iterative Refinement (Simulated‑Annealing‑style)**  
+   - Repeatedly select a single centre and propose a small move drawn from a zero‑mean Gaussian distribution.  
+   - **Gradually shrink** the Gaussian standard deviation over the course of the search (e.g., exponential decay).  
+   - After each tentative move, re‑solve the LP to obtain new radii and compute the objective (total radius sum).  
+   - **Accept** the move only if the objective improves; otherwise reject it and keep the previous configuration.  
+   - Continue for a fixed budget of iterations or until improvements cease.
+
+3. **Helper Utilities**  
+   - Functions to compute pairwise distances, generate far‑point samples, and perform the LP formulation should be defined inside the block.  
+   - Any random‑number generation must use a deterministic seed (e.g., `np.random.default_rng(seed)`) so that the overall program remains reproducible.
+
+4. **Robustness Requirements**  
+   - Ensure **all parentheses, brackets, and indentation** are balanced; the code must parse without syntax errors.  
+   - Every function you call must be defined in this block—do not rely on external definitions other than the permitted imports.  
+   - Avoid returning partially‑filled data structures; always return a complete list/array of centre coordinates and the matching radii.
+
+---
+
+### WHAT TO AVOID (based on past failures)
+
+- **Leaving the code incomplete** (missing closing parentheses, unfinished function bodies, or dangling statements).  
+- **Using only a deterministic grid** without any stochastic perturbation; this leads to early stagnation and low scores.  
+- **Calling undefined helpers** or assuming the outer environment provides them.  
+- **Over‑constraining the LP** with redundant or contradictory inequalities that cause infeasibility.  
+- **Neglecting to shrink the perturbation step size**, which prevents convergence to a refined solution.  
+- **Relying on a single LP solve** for the entire search; re‑solving after each move is essential for exploiting the relaxation at every step.
+
+---
+
+### FINAL REMINDER
+
+Your output must be a **single, self‑contained Python code block** that implements the above strategy (or an even better one you devise) while obeying all formatting and completeness rules. The outer infrastructure (`run_packing()`, `visualize()`) will be inserted automatically and must not appear in your submission.

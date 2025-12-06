@@ -1,0 +1,83 @@
+# Prompt Type: A
+# Outer Iteration: 0
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# INITIAL SEED PROMPT GENERATION
+# ================================
+
+## Input to MetaLLM:
+- Problem: Optimize the given code to maximize the evaluation score while maintaining validity....
+- Code length: 3942 chars
+- Evaluation: Maximize 'combined_score' metric while ensuring 'validity' equals 1.0
+
+## Format Requirements Added:
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+# ================================
+# FINAL PROMPT (seed_prompt_0):
+# ================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert **algorithmic optimization engineer** specializing in geometric packing problems and iterative code improvement.  
+
+**Goal**  
+Create a self‑contained implementation that, given a fixed number of points inside the unit square, determines positions and corresponding maximal radii so that circles do not overlap and stay inside the square. The implementation will be evaluated on a **combined_score** that rewards a larger total sum of radii while maintaining **validity = 1.0** (no overlaps, all circles fully inside). Your code will be repeatedly replaced, so each version should aim to increase the score without breaking correctness.  
+
+**Relevant techniques & ideas**  
+- **Geometric heuristics**: start from symmetric patterns (grid, concentric rings, hexagonal lattice) and perturb them.  
+- **Iterative refinement**: after an initial placement, repeatedly adjust positions/radii using gradient‑free methods (e.g., local search, simulated annealing, random perturbation with acceptance criteria).  
+- **Linear / convex programming**: formulate the maximal radii problem as a set of linear constraints (radius ≤ distance to each wall, radius_i + radius_j ≤ distance between centers) and solve with an LP or QP solver for a tighter bound.  
+- **Scaling & normalization**: ensure all coordinates stay within [0,1] and radii stay non‑negative; clip or project after each update.  
+- **Pairwise distance handling**: efficiently compute distances (vectorized NumPy) and enforce the non‑overlap constraint by scaling radii or moving centers.  
+- **Multi‑stage approach**: first compute a feasible set of radii for a given layout, then optionally move centers to increase the feasible radii, iterating between the two steps.  
+
+**Output requirements**  
+- Output **only** the code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the marker lines themselves.  
+- Do **not** output any code outside this block (the surrounding functions are preserved automatically).  
+- The code you provide must be **complete and self‑contained**: every function or helper you call must be defined within the block. No external references to undefined symbols are allowed.  
+
+**Guidelines for exploration**  
+1. **Start simple**: a regular lattice or concentric circles gives a baseline score.  
+2. **Iterate**: add a loop that perturbs positions or radii and keeps changes that improve the total sum while preserving feasibility.  
+3. **Try optimization solvers**: if available, call a linear programming routine to compute the maximal radii for the current positions; this often yields a better score than naïve pairwise scaling.  
+4. **Balance speed and quality**: the evaluation environment may have time limits; prefer vectorized NumPy operations and limit the number of iterative steps to a reasonable count (e.g., ≤ 200).  
+5. **Record the best result**: maintain a copy of the best configuration seen so far and return it at the end.  
+
+**Common pitfalls to avoid**  
+- **Missing definitions**: any helper you invoke must be defined inside the block; otherwise the merged program will crash.  
+- **Violating constraints**: never return circles that extend beyond the unit square or overlap; the validity check will reject the solution.  
+- **Infinite loops or excessive computation**: keep iteration counts bounded and avoid costly nested Python loops when NumPy can handle the work.  
+- **Hard‑coding the number of circles**: use the size of the input array to determine how many points you handle, so the code adapts if the surrounding script changes the count.  
+- **Returning extraneous data**: only the expected return values (positions array, radii array, and total sum) should be produced; extra prints or side effects may interfere with the evaluation harness.  
+
+Follow these instructions carefully and strive to produce a concise, efficient, and valid implementation that improves the combined_score on each iteration.

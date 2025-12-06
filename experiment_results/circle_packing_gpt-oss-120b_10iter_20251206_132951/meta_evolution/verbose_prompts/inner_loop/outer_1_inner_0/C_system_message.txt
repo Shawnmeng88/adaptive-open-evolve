@@ -1,0 +1,57 @@
+# Prompt Type: C
+# Outer Iteration: 1
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for the Evolution Block**
+
+You are to generate **only** the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **Do not** include the marker lines themselves.  
+- **Do not** include calls to `run_packing()` or `visualize()` – those are added automatically elsewhere.  
+- The code you output will be merged with the surrounding framework, so it must be a **self‑contained** module: every name you reference (functions, classes, constants, imports) must be defined **within** the block you produce.
+
+### What to Achieve
+Create a construction routine for packing exactly 26 circles inside the unit square that:
+
+1. **Guarantees validity** (no overlaps, all circles fully inside the square).  
+2. **Maximises the total sum of radii** (the combined_score metric).  
+
+### Proven Strategies to Use
+- **Hexagonal lattice scaffold**: generate candidate centre points on a dense hexagonal grid that fits inside the unit square.  
+- **Linear‑programming radius optimisation**: with the centres fixed, formulate a linear program that maximises the sum of radii while enforcing:
+  * non‑negativity of each radius,
+  * boundary constraints (`x_i - r_i ≥ 0`, `x_i + r_i ≤ 1`, same for `y`),
+  * pairwise separation constraints (`‖c_i‑c_j‖ ≥ r_i + r_j`), which are linear because the centres are known.
+- **Local refinement** after the LP solution: apply a small, gradient‑free perturbation (e.g., random jitter followed by re‑solving the LP) to escape any plateau caused by the rigid lattice.
+
+### Pitfalls to Avoid
+- **Rigid geometric templates** (e.g., a single central circle with concentric rings) tend to leave large unused corners and limit the total radius sum.  
+- **Using only a static scaffold without any post‑LP adjustment** quickly reaches a performance ceiling; the LP cannot increase radii beyond the geometry imposed by the fixed centres.  
+- **Leaving any referenced name undefined** will cause runtime errors; ensure every helper routine you call is included in the block.
+
+### Implementation Guidance
+- You may import additional standard libraries (e.g., `random`, `math`) inside the block as needed.  
+- Use `numpy` and `scipy.optimize.linprog` (already available) for vectorised calculations and the linear program.  
+- Structure the code so that the main entry point (the construction routine) returns two arrays: `centers` (shape (26, 2)) and `radii` (shape (26,)).  
+- Include any auxiliary functions (grid generation, LP building, jitter refinement, etc.) that the main routine relies on.
+
+**Remember:** the only output you provide is the code between the evolve markers, fully self‑contained, adhering to the format rules above.

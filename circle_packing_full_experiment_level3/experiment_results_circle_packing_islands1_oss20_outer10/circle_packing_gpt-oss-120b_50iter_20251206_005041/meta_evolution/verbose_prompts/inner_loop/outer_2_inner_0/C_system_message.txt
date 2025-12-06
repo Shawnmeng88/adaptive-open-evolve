@@ -1,0 +1,61 @@
+# Prompt Type: C
+# Outer Iteration: 2
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You must generate **only** the Python source that will replace the code placed between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+- **Do not** output the markers themselves.  
+- **Do not** include any calls to `run_packing()` or `visualize()` – those are added automatically outside the block.  
+- The snippet you provide must be **self‑contained**: every routine that your code invokes must be defined somewhere within this block.  
+
+**IMPORTS**  
+You may add any `import` statements you need (e.g., `from scipy.optimize import linprog`, `from scipy.optimize import minimize`, etc.).  
+`numpy` as `np` and `scipy.optimize.linprog` are already available, but you may import additional modules if useful.
+
+**FOCUS OF IMPROVEMENT**  
+
+1. **Placement strategy** – a structured set of centre points works well. A regular grid (e.g., 5 × 5 points evenly spaced inside the unit square) combined with a central point provides a strong initial layout.  
+
+2. **Radius optimisation** – formulate a linear program that maximises the sum of radii while enforcing:  
+   * each radius ≤ distance from its centre to the four square edges,  
+   * for every pair of centres, the sum of their radii ≤ Euclidean distance between the centres.  
+   Solving this LP yields the largest feasible radii for the fixed centre layout.  
+
+3. **Post‑LP refinement** – after obtaining the LP solution, perform a short stochastic perturbation of the centre positions: randomly move a centre by a small amount, re‑solve the LP (or update the radii analytically) and keep the change only if the total radius sum improves and all constraints remain satisfied. This helps escape the deterministic grid’s local optimum.  
+
+**WHAT TO AVOID**  
+
+- Fixed‑radius ring constructions that force many circles to be tiny; they dramatically reduce the total packed area.  
+- Leaving any referenced helper routine undefined; missing definitions cause `NameError` and abort the evaluation.  
+- Over‑constraining the linear program (e.g., using distances that are too tight) which can make it infeasible.  
+
+**MANDATORY OUTPUT FORMAT INSTRUCTION**  
+
+- Output **only** the code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the marker comments themselves or any surrounding code.  
+- Do **not** include calls to `run_packing()` or `visualize()`.  
+- Ensure that every function, class, or variable used inside your snippet is defined within the same snippet.  
+
+Follow these guidelines precisely; any deviation will cause the program to fail evaluation.

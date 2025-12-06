@@ -1,0 +1,69 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for the Code‑Generation Model**
+
+You are to produce **only** the Python source code that will be placed between the markers `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`.  
+- Do **not** output the markers themselves.  
+- Do **not** include calls to `run_packing()` or `visualize()` – those are added automatically.  
+- Every function or variable referenced in your code **must be defined** within this block.  
+
+**Goal**  
+Create a packing of 26 circles inside the unit square that maximizes the combined score (sum of radii, distribution quality, etc.) while remaining fully valid (no runtime errors, all geometric constraints satisfied).
+
+**Algorithmic Guidance – What Works Well**
+
+1. **Two‑stage design**  
+   - **Stage 1: Center placement** – generate an initial set of circle centers using a deterministic lattice (e.g., a uniform grid or hexagonal pattern) *or* a uniform random sample that respects a minimal separation distance.  
+   - **Stage 2: Radius optimisation** – for any fixed set of centers, solve a linear program that maximises the sum of radii subject to:
+     * Non‑negativity of each radius.  
+     * Each radius ≤ distance from its center to the four sides of the unit square.  
+     * For every unordered pair (i, j): rᵢ + rⱼ ≤ Euclidean distance between the two centers.  
+   - Use `scipy.optimize.linprog` (already imported) to obtain the optimal radii efficiently.
+
+2. **Local‑search refinement of centers**  
+   - After the initial placement, repeatedly perturb individual centers by a small random offset (e.g., Gaussian noise with decreasing standard deviation).  
+   - Re‑solve the LP for the perturbed layout; **accept** the new layout only if the objective (total radius) improves.  
+   - Perform a modest number of iterations (e.g., 200–500) or stop early when no improvement occurs. This hill‑climbing step reliably boosts the score.
+
+3. **Vectorised, shape‑safe constraint construction**  
+   - Build the pairwise distance matrix with `np.linalg.norm` on the difference of the coordinate arrays.  
+   - Flatten the upper‑triangle (i < j) to obtain a 1‑D array of distances.  
+   - Create the coefficient matrix for the LP by starting with an identity matrix for the wall constraints, then appending rows that have a `1` in the columns of the two circles involved in each pairwise constraint.  
+   - This avoids broadcasting mismatches and ensures each constraint corresponds to a single row.
+
+4. **Numerical robustness**  
+   - Add a tiny epsilon (e.g., `1e-9`) to all right‑hand‑side values to keep the LP strictly feasible.  
+   - Impose an upper bound on radii (e.g., `1.0`) to prevent unbounded solutions in pathological cases.
+
+**Pitfalls to Avoid – What Has Failed Previously**
+
+- **Broadcasting shape errors** when forming the pairwise constraint matrix; always verify that the coefficient matrix has shape `(num_constraints, num_circles)`.  
+- **Missing helper definitions** – any function you call (e.g., for layout generation, LP setup, or local search) must be fully implemented in this block.  
+- **Omitting non‑negativity bounds** for the radii, which can lead to infeasible or unbounded LPs.  
+- **Using overly large perturbations** that push centers outside the unit square; always clip or reject such moves before solving the LP.  
+- **Neglecting to enforce the wall constraints** for each circle, which can produce circles that extend beyond the square.
+
+**Implementation Requirements**
+
+- You may add `import` statements here (e.g., `import numpy as np`, `from scipy.optimize import linprog`) if needed, but remember that `numpy` and `linprog` are already available.  
+- Organise the code into clear, self‑contained functions: one for generating an initial layout, one for constructing and solving the LP, and one for the local‑search loop.  
+- The top‑level function that the outer harness will call is `construct_packing()`. It must return a tuple `(centers, radii)` where `centers` is an `np.ndarray` of shape `(26, 2)` and `radii` is a 1‑D `np.ndarray` of length 26.  
+
+Follow these directions precisely to produce a valid, high‑scoring packing solution.

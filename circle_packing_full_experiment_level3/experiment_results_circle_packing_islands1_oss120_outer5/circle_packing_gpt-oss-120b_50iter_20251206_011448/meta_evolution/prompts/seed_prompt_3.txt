@@ -1,0 +1,73 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – META‑PROMPT FOR CODE EVOLUTION**
+
+---
+
+### 📌 CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+
+- **Output ONLY the code that belongs between the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers.**  
+- **Do NOT include the markers themselves** in your response.  
+- **Do NOT include calls to the outer harness functions** (e.g., the routine that launches the packing or the visualizer) – those are added automatically by the evaluation harness.  
+- The surrounding harness will merge your output with the preserved sections; any extra text will cause a failure.
+
+### 📦 IMPORTS
+
+- You may add additional import statements if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block.
+
+### 🎯 FOCUS OF THIS EVOLUTION
+
+- **Improve the algorithm that generates the set of circle centers and determines their radii.**  
+- You are free to add new helper utilities, data‑structures, or mathematical sub‑routines, but **every function you call must be defined within the block** you produce.  
+- Keep the overall interface unchanged: the outer harness will call the generation routine and then pass the resulting `centers` and `radii` to the visualizer.
+
+### ✅ SUCCESSFUL STRATEGIES TO BUILD ON
+
+1. **Deterministic lattice with a single outlier** – start from a regular grid (e.g., a 5×5 arrangement) that guarantees non‑overlap, then add an extra point in a corner or edge to increase the count.
+2. **Linear‑programming based radius maximization** – formulate the radius constraints as a linear program (using `linprog`) that simultaneously maximizes the sum (or minimum) of radii while respecting pairwise distance limits.
+3. **Iterative nudging / local refinement** – after an initial layout, perform a small number of displacement steps for the outlier (or any point) that improve the total radius without breaking feasibility. Simple hill‑climbing or coordinate‑wise line search works well.
+4. **Symmetry exploitation** – keep the grid symmetric; this reduces the dimensionality of the LP and makes the solution more stable.
+
+### ❌ APPROACHES THAT CAUSED FAILURES (AVOID)
+
+- **Purely random placement** of all points followed by greedy radius assignment – leads to a high rate of overlapping circles and many invalid solutions.
+- **Over‑aggressive global scaling** of radii after placement – often violates distance constraints for some pairs, triggering validity failures.
+- **Complex non‑convex optimizers** (e.g., `scipy.optimize.minimize` with default settings) without careful constraint handling – resulted in convergence to infeasible configurations.
+- **Excessive iterative perturbations** that move many points simultaneously – quickly destroys the structured layout and produces many invalid packings.
+
+### 🛠️ IMPLEMENTATION GUIDELINES
+
+- Start from a **structured base layout** (grid + optional corner point).  
+- Encode the **pairwise distance constraints** as linear inequalities suitable for `linprog`.  
+- Solve the LP to obtain the **largest feasible radii** for the current centers.  
+- If you add a refinement stage, limit it to a **small number of deterministic adjustments** (e.g., move the corner point along the diagonal by a bounded step and re‑solve the LP).  
+- **Validate** the final configuration: ensure every pair of circles satisfies `dist >= r_i + r_j` (allow a tiny epsilon for floating‑point tolerance).  
+- Return the **centers array** and the **radii array** in the format expected by the outer harness.
+
+### 🔄 FINAL REMINDER
+
+- **All functions, classes, or utilities you reference must be defined inside the code block you output.**  
+- Do **not** include any code outside the required block, and do **not** mention function names from the surrounding harness.  
+- Follow the output format rules exactly; the system will automatically insert the surrounding calls.
+
+--- 
+
+*Proceed to generate the code that satisfies the above constraints and leverages the successful strategies while avoiding the listed pitfalls.*

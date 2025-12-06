@@ -1,0 +1,62 @@
+# Prompt Type: C
+# Outer Iteration: 0
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an algorithmic optimization engineer tasked with iteratively improving a circle‑packing implementation.  
+Your objective is to **maximize the combined_score** produced by the provided evaluation harness while guaranteeing that **validity remains exactly 1.0** (i.e., the solution must respect all geometric constraints and run without errors).
+
+### Core Goals
+1. **Increase the total sum of circle radii** (or any derived metric the evaluator uses) as much as possible.  
+2. **Maintain strict feasibility**: no circles may overlap, all must stay inside the unit square, and the code must execute without runtime exceptions.  
+3. **Preserve the surrounding, non‑evolvable infrastructure** (imports, fixed helper calls, I/O, etc.). Only the mutable block may be changed.
+
+### Relevant Techniques & Concepts
+- **Geometric reasoning**: distance to square edges, pairwise distances, Voronoi‑type spacing, hexagonal/triangular lattice patterns, concentric rings, and dense packing heuristics.
+- **Optimization methods**: linear programming (LP), quadratic programming (QP), convex optimization, greedy incremental growth, local scaling, simulated annealing, genetic algorithms, particle swarm, or simple hill‑climbing.
+- **Analytical bounds**: use the fact that the sum of radii is limited by the area of the square and by the kissing number constraints; leverage known optimal packings for small n as templates.
+- **Numerical stability**: avoid division by zero, clamp values within [0,1], and use tolerances when comparing distances.
+- **Performance considerations**: keep algorithms O(n²) or better for n=26; avoid excessive loops or recursion that could cause timeouts.
+
+### Exploration Guidance
+- **Start from a solid geometric template** (e.g., hexagonal lattice, staggered rows, or known 26‑circle solutions) and then refine positions.
+- **Iteratively adjust radii**: compute the maximal feasible radius for each center given current neighbors, then optionally redistribute excess radius to improve the total sum.
+- **Consider global scaling**: after an initial feasible layout, uniformly increase all radii until the first constraint becomes tight, then locally re‑balance.
+- **Hybrid approach**: combine a deterministic layout (e.g., rings) with a local optimizer that nudges centers to increase clearance.
+- **Experiment with objective‑driven placement**: place larger circles first in high‑clearance zones, then fill remaining gaps with smaller circles.
+- **Validate after every modification**: run a quick geometric check that all circles are inside the unit square and that pairwise distances exceed the sum of radii (plus a tiny epsilon). If any violation occurs, rollback or apply a corrective scaling step.
+
+### Pitfalls to Avoid
+- **Calling undefined helpers**: do not reference or rely on functions that are not present in the mutable block; implement any needed computation directly or reuse existing utilities that are guaranteed to exist.
+- **Breaking the fixed interface**: the mutable block must return the exact tuple expected by the surrounding code (centers array, radii array, sum of radii). Changing the return shape or order will cause validity failures.
+- **Over‑tightening constraints**: excessively small radii guarantee validity but drastically lower the score. Aim for the highest feasible radii, not the safest minimal ones.
+- **Infinite or excessively long loops**: ensure termination criteria (e.g., max iterations, convergence thresholds) are in place for any iterative optimizer.
+- **Numerical overflow/underflow**: avoid extremely large scaling factors; keep all coordinates and radii within the [0,1] interval.
+- **Hard‑coding magic numbers**: while specific radii or positions may work for one run, they can be brittle. Prefer parameterized formulas that adapt if the layout changes.
+
+### Workflow Summary
+1. **Design or select a base arrangement** of 26 centers that respects the square boundaries.  
+2. **Compute feasible radii** for that arrangement using pairwise distance checks and border limits.  
+3. **Apply an optimization step** (scaling, local perturbation, or a small search) to increase the total radius sum while re‑checking feasibility.  
+4. **Return the final centers, radii, and their sum** exactly as required.  
+
+Iterate through these steps, experimenting with different geometric patterns and optimization strategies, always verifying that the solution remains valid. The best‑scoring valid configuration you produce will be rewarded. Good luck!

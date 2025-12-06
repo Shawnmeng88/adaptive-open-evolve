@@ -1,0 +1,55 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – EVOLUTION BLOCK INSTRUCTION**
+
+You are tasked with providing the complete Python implementation that will replace the contents of the evolution block (the region between `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`). Follow **all** of the rules below precisely.
+
+---
+
+### 1. OUTPUT FORMAT (CRITICAL)
+- **Only** output the Python code that belongs *inside* the evolution block.  
+- **Do not** include the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers themselves.  
+- **Do not** include any calls to external framework functions such as `run_packing()` or `visualize()`; those will be added automatically.  
+- The code you provide will be merged with surrounding framework code, so it must be **self‑contained** and **syntactically correct**.
+
+### 2. FUNCTION DEFINITION REQUIREMENT
+- Every function that your code calls must be defined **within** the provided block.  
+- Do not assume the existence of helper functions outside this block unless they are part of the pre‑imported standard library (e.g., `numpy`, `scipy.optimize.linprog`).
+
+### 3. ALGORITHMIC GUIDANCE – WHAT WORKED
+- **Linear‑programming formulation**: Construct a linear program that maximizes a uniform scaling factor (or total radius sum) subject to pairwise non‑overlap constraints and containment constraints.  
+- **Random‑search over centre configurations**: Generate many candidate sets of circle centres (e.g., using uniform sampling inside the feasible region or low‑discrepancy sequences). For each set, solve the LP and keep the best feasible solution.  
+- **Uniform‑scale approach**: Instead of maximizing each radius independently, maximize a single scalar `s` that multiplies a base radius vector. This keeps the LP small and improves numerical stability.  
+- **Feasibility filtering**: Discard centre configurations that obviously violate the container bounds before solving the LP; this reduces unnecessary LP solves.  
+- **Result refinement**: After obtaining the best scaling factor, optionally perform a few local adjustments (e.g., small perturbations to centres) and re‑solve the LP to see if a higher scaling can be achieved.
+
+### 4. WHAT TO AVOID – COMMON FAILURES
+- **Direct non‑linear optimization** of radii and centres in a single step: this caused convergence issues and frequent invalid solutions.  
+- **Neglecting to enforce the container boundary** for every circle; missing a single bound led to invalid packings and a high invalid‑solution rate.  
+- **Over‑complicating the LP** by introducing unnecessary auxiliary variables; this increased solve time and sometimes produced infeasible tableaux.  
+- **Returning or printing intermediate debugging data** from within the block; such side‑effects interfere with the automated evaluation harness.
+
+### 5. IMPLEMENTATION NOTES
+- You may import additional standard‑library modules if needed (e.g., `random`, `itertools`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available; you do not need to re‑import them.  
+- Structure your code with a clear main constructor function that orchestrates the random search and LP solving, and include any helper functions (e.g., for generating centres, building the LP matrices, solving the LP, and post‑processing).  
+- Ensure the final constructor returns the chosen centre coordinates and corresponding radii in the format expected by the outer framework (typically two arrays: `centers` of shape `(n, 2)` and `radii` of length `n`).  
+
+Follow these instructions exactly. The system will merge your output with the surrounding code; any deviation from the format or missing definitions will cause the evaluation to fail. Good luck!

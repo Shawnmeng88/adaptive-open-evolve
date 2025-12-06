@@ -1,0 +1,73 @@
+# Prompt Type: C
+# Outer Iteration: 1
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**IMPORTANT OUTPUT INSTRUCTION**  
+- Your response must contain **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the markers themselves, and do **not** include any calls to `run_packing()` or `visualize()`.  
+- The surrounding framework will automatically add those calls, so they must be omitted here.  
+- Every function that your code references must be fully defined inside this block; missing definitions will cause a runtime error.  
+
+**ALGORITHMIC GUIDELINES FOR MAXIMIZING THE PACKING SCORE**  
+
+1. **Dense Grid + Global Linear Programming**  
+   - Generate a regular grid of candidate circle centers inside the unit square (e.g., a 5 × 5 lattice at coordinates 0.1, 0.3, 0.5, 0.7, 0.9).  
+   - Optionally add a few extra points (e.g., one near the bottom middle) to increase the number of circles to the required count.  
+   - Formulate a linear program with one variable per circle representing its radius.  
+   - Include constraints:  
+     * For every pair of circles, `r_i + r_j ≤ distance(i, j)`.  
+     * For each circle, `r_i ≤ distance from its center to each side of the unit square`.  
+     * `r_i ≥ 0`.  
+   - Maximize the sum of all radii (or the sum of radii weighted by any hidden metric).  
+   - Solve with `scipy.optimize.linprog` using the “highs” method for speed and reliability.  
+
+2. **Refinement via Perturbation**  
+   - After obtaining an LP solution, slightly perturb the center coordinates (e.g., add a small random offset within ±0.02) and re‑solve the LP.  
+   - Keep the best result across a modest number of random trials (3‑5). This helps escape grid‑induced bottlenecks without breaking feasibility.  
+
+3. **Hybrid Hexagonal Lattice + Local Search (optional)**  
+   - Create a hexagonal/triangular lattice of points that naturally yields high packing density.  
+   - If the lattice does not provide enough points, drop a few points and replace them with random positions.  
+   - Apply a simple local optimization: for each circle, adjust its center by a tiny step in the direction that would increase its feasible radius (computed from current neighbor distances and border distances).  
+   - After a few iterations, run the same LP radius optimisation on the updated centers.  
+
+4. **Numerical Stability & Shape Consistency**  
+   - Ensure all constraint matrices have matching dimensions: the number of inequality rows must equal the total number of pairwise and border constraints, and each row must have the same length as the number of radius variables.  
+   - Use vectorised NumPy operations to build the distance matrix and constraint vectors; avoid Python loops that may produce shape mismatches.  
+   - Verify that the LP coefficient matrix (`A_ub`) is a 2‑D NumPy array and that the right‑hand side (`b_ub`) is a 1‑D array of matching length.  
+
+**COMMON PITFALLS TO AVOID**  
+
+- **Syntax errors** such as missing parentheses, commas, or mismatched brackets—these prevent the function from loading.  
+- **Incorrect array shapes** when constructing `A_ub` or `b_ub`; mismatched dimensions raise runtime exceptions.  
+- **Omitting required function definitions** (e.g., helpers for distance computation or perturbation). Every called routine must be present in the block.  
+- **Using more circles than allowed** or placing centers outside the unit square; both invalidate the solution.  
+- **Neglecting the border constraints**; without them circles may extend beyond the square, causing the validity flag to drop to 0.  
+
+**IMPLEMENTATION NOTES**  
+
+- You may import additional standard libraries (e.g., `itertools`, `random`) inside the block if needed.  
+- `numpy as np` and `scipy.optimize.linprog` are already available; you do not need to re‑import them unless you prefer an explicit import for clarity.  
+- Keep the overall structure simple and readable; complex heuristics are unnecessary if the grid + LP core works correctly.  
+
+Follow these guidelines to produce a valid, high‑scoring circle‑packing implementation.

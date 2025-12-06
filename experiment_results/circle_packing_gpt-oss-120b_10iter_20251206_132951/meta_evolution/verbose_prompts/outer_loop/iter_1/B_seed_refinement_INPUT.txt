@@ -1,0 +1,129 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 3893 chars
+- Current best prompt length: 3795 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9256
+- Valid: 6, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **central-ring pattern** (1 attempts, struggled)
+    Places one large circle at the centre and a fixed number of circles on concentric rings using simple trigonometric formulas; radii are set heuristically or uniformly.
+  - **hexagonal lattice scaffold with linear‑programming radii** (1 attempts, worked)
+    Generates centre coordinates on a hexagonal grid that roughly fills the unit square, then formulates a linear program that maximises the sum of radii while enforcing non‑overlap and boundary constraints.
+  - **evolutionary random placement with direct radius optimisation** (1 attempts, mixed)
+    Randomly (or mutation‑driven) chooses centre positions and then solves a small optimisation (often LP or simple scaling) for radii; the evolutionary loop tries many variants but often hits overlap or boundary violations.
+
+### Best Result (score: 0.9256):
+  **Main Idea:** Create a dense hexagonal grid of candidate centre points and then solve a linear program that assigns the largest possible radii to those centres while respecting the unit‑square borders and pairwise non‑overlap constraints.
+  **Placement:** Deterministic hexagonal lattice (spacing 2r horizontally, √3·r vertically) clipped to the unit square.
+  **Radius:** Linear programming maximising Σ r_i subject to: r_i ≥ 0, x_i ± r_i ∈ [0,1], y_i ± r_i ∈ [0,1], and ‖c_i‑c_j‖ ≥ r_i + r_j for every pair of centres.
+  **Constraints:** All geometric constraints are encoded as linear inequalities in the LP; feasibility guarantees a validity score of 1.0.
+
+### Score Improvements:
+  - Iter 1: +0.5614 - Switched from a hand‑crafted central‑ring layout to a hexagonal lattice scaffold and introduced a linear‑programming step that computes optimal radii for the fixed centres.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Fixed geometric templates (e.g., single centre + rings) quickly saturate the feasible radius sum because they leave large unused corners and cannot adapt to the square boundary.
+  - Pattern 2: Relying solely on a static scaffold without any local perturbation limits further gains; once the lattice is packed, the LP cannot increase radii any more, leading to a plateau.
+
+### Novel Discoveries:
+  - Using a linear program to compute maximal radii for a pre‑chosen set of centres is an elegant way to separate placement from sizing and yields a large jump in score.
+
+### Error Patterns:
+  - syntax/truncation errors: 1 occurrences
+    Likely cause: The code‑generation step was interrupted, leaving incomplete lines (e.g., missing closing parentheses) and unfinished loops.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.9256
+  - Approach Diversity: medium (two clearly different construction strategies plus a third exploratory random/evolutionary variant)
+
+### Recommendations:
+  - 1. Add a local refinement stage: after the LP‑derived radii, perturb centre positions with a small gradient‑free optimiser (e.g., CMA‑ES) and re‑solve the LP to escape the lattice‑only plateau.
+  - 2. Explore non‑linear optimisation where centre coordinates become variables as well; formulate a mixed‑integer or non‑linear program that jointly optimises positions and radii for potentially higher density.
+  - 3. Combine multiple scaffolds (hexagonal, square, and random jitter) in a hybrid ensemble and let the evolutionary controller select or blend them, increasing diversity of candidate packings.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for the Evolution Block**
+
+You are to generate **only** the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **Do not** include the marker lines themselves.  
+- **Do not** include calls to `run_packing()` or `visualize()` – those are added automatically elsewhere.  
+- The code you output will be merged with the surrounding framework, so it must be a **self‑contained** module: every name you reference (functions, classes, constants, imports) must be defined **within** the block you produce.
+
+### What to Achieve
+Create a construction routine for packing exactly 26 circles inside the unit square that:
+
+1. **Guarantees validity** (no overlaps, all circles fully inside the square).  
+2. **Maximises the total sum of radii** (the combined_score metric).  
+
+### Proven Strategies to Use
+- **Hexagonal lattice scaffold**: generate candidate centre points on a dense hexagonal grid that fits inside the unit square.  
+- **Linear‑programming radius optimisation**: with the centres fixed, formulate a linear program that maximises the sum of radii while enforcing:
+  * non‑negativity of each radius,
+  * boundary constraints (`x_i - r_i ≥ 0`, `x_i + r_i ≤ 1`, same for `y`),
+  * pairwise separation constraints (`‖c_i‑c_j‖ ≥ r_i + r_j`), which are linear because the centres are known.
+- **Local refinement** after the LP solution: apply a small, gradient‑free perturbation (e.g., random jitter followed by re‑solving the LP) to escape any plateau caused by the rigid lattice.
+
+### Pitfalls to Avoid
+- **Rigid geometric templates** (e.g., a single central circle with concentric rings) tend to leave large unused corners and limit the total radius sum.  
+- **Using only a static scaffold without any post‑LP adjustment** quickly reaches a performance ceiling; the LP cannot increase radii beyond the geometry imposed by the fixed centres.  
+- **Leaving any referenced name undefined** will cause runtime errors; ensure every helper routine you call is included in the block.
+
+### Implementation Guidance
+- You may import additional standard libraries (e.g., `random`, `math`) inside the block as needed.  
+- Use `numpy` and `scipy.optimize.linprog` (already available) for vectorised calculations and the linear program.  
+- Structure the code so that the main entry point (the construction routine) returns two arrays: `centers` (shape (26, 2)) and `radii` (shape (26,)).  
+- Include any auxiliary functions (grid generation, LP building, jitter refinement, etc.) that the main routine relies on.
+
+**Remember:** the only output you provide is the code between the evolve markers, fully self‑contained, adhering to the format rules above.

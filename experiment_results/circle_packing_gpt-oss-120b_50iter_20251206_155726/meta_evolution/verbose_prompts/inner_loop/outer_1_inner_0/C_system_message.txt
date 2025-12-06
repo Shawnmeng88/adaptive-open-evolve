@@ -1,0 +1,123 @@
+# Prompt Type: C
+# Outer Iteration: 1
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Code Evolution**
+
+You are to improve the portion of the program that creates a packing of **26 circles inside the unit square**.  
+Only the code that will appear between the markers `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` may be produced.  
+All other surrounding code (including the call to the packing routine and any visualisation) is fixed and will be merged automatically.
+
+---
+
+### 1. What has worked well  
+
+- **Hexagonal lattice for centre positions** – placing the circle centres on a dense triangular (hex) grid gives a very uniform distribution and high total radius.  
+- **Linear‑programming radius optimisation** – once the centres are fixed, formulate a linear program that maximises the sum of radii subject to:  
+  * each radius ≤ distance from its centre to the four square edges,  
+  * for every pair of circles, r_i + r_j ≤ distance between the two centres.  
+  Solving this LP (e.g., with `scipy.optimize.linprog`) yields radii that guarantee a *valid* packing (no overlaps, all circles fully inside the square).  
+- **Deterministic handling of the exact count** – generate a lattice that yields at least 26 points, then trim or add points in a reproducible way (e.g., remove the farthest points from the centre or add points from the next lattice layer) so the final set always contains exactly 26 centres.  
+
+These ingredients together produced the highest score so far (≈ 0.75).
+
+---
+
+### 2. What to avoid  
+
+- **Missing helper definitions** – any function that is called must be defined inside the evolve block. Failing to provide a definition leads to `NameError`.  
+- **Incomplete or syntactically broken code** – ensure all parentheses, brackets, and indentation are correct; the block must be a self‑contained, runnable Python module.  
+- **Relying solely on fixed radii** – using a constant radius without optimisation often results in low scores or invalid configurations.  
+- **Generating fewer or more than 26 centres without a deterministic correction step** – the outer framework expects exactly 26 circles; an incorrect count will cause runtime errors.  
+- **Ignoring border constraints** – radii must never exceed the distance from a centre to any side of the unit square; otherwise validity drops below 1.0.
+
+---
+
+### 3. Mandatory reminders  
+
+- **All functions that you call must be defined in the output.** The evolve block is the only place where new code can appear, so any helper you need (e.g., lattice generator, LP builder, fallback routine) must be included here.  
+- **Do not reference or rely on code outside the block.** The surrounding environment will only import what you provide.  
+- **Preserve the original public interface** – the outer program will call the main packing routine exactly as before, so keep its expected signature (no extra parameters, return the centres and radii as required).  
+
+---
+
+### 4. Mandatory Output‑Format Instruction  
+
+When you generate the answer, **output ONLY the Python code that belongs between the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers**.  
+
+- Do **not** include the markers themselves.  
+- Do **not** include any calls such as `run_packing()` or `visualize()`; those are added automatically by the system.  
+- The system will merge your code with the preserved surrounding sections, so the final program must be syntactically correct and self‑contained.
+
+Follow these rules precisely; any deviation will cause the evaluation to fail.
+
+---
+
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **handcrafted central+ring** (best score: 0.3642)
+    Places one large circle in the centre and eight circles equally spaced on a surrounding ring; radii are later inferred implicitly.
+  - **hexagonal lattice placement** (best score: 0.6717)
+    Generates centre points on a triangular (hex) lattice inside the unit square, truncating or padding to obtain exactly 26 points.
+  - **regular grid with corner removal** (best score: 0.0000)
+    Creates a 5×6 rectangular grid (spacing 0.2) and removes the four corner circles, intending each remaining circle to have radius 0.1.
+  - **hex lattice + LP radius optimization** (best score: 0.7532)
+    Uses a dense hexagonal lattice for centre positions and solves a linear program that maximises the sum of radii under border and non‑overlap constraints.
+
+### Best Result (score: 0.7532):
+  **Main Idea:** Generate a dense hexagonal lattice of 26 centre points and then compute the optimal radii by solving a linear programme that maximises the total radius while respecting square borders and pairwise non‑overlap constraints.
+  **Placement:** Hexagonal lattice with spacing 0.15 and a tiny margin (0.005) from the square edges; excess points are trimmed or padded deterministically to reach exactly 26 centres.
+  **Radius:** Linear programming (scipy.optimize.linprog) with objective –sum(r) and constraints: r_i ≤ distance to each side and r_i + r_j ≤ Euclidean distance between centres i and j.
+  **Constraints:** All constraints are encoded in the LP; the solver returns a feasible set of radii guaranteeing validity (Validity = 1.0). A fallback constant‑radius array is prepared if the LP fails.
+
+### Score Improvements:
+  - Iter 1: +0.3075 - Switched from a simple central‑ring layout to a hexagonal lattice of centres, increasing packing density.
+  - Iter 6: +0.0815 - Added a linear‑programming radius optimisation and refined lattice spacing, yielding a higher total radius.
+
+### Stuck Patterns (AVOID THESE):
+  - Missing helper function (compute_max_radii) causing NameError in several iterations.
+  - Incomplete code blocks (truncated loops, missing parentheses) leading to syntax errors or early termination.
+
+### Novel Discoveries:
+  - Formulating the radius‑maximisation as a linear programme for a fixed set of centres.
+  - Deterministic pseudo‑random padding to guarantee exactly the required number of points when the lattice yields too few.
+
+### Error Patterns:
+  - NameError: compute_max_radii not defined: 2 occurrences
+    Likely cause: The author referenced a helper that was never implemented or imported.
+  - SyntaxError / incomplete code: 2 occurrences
+    Likely cause: Code generation stopped mid‑line (e.g., missing closing brackets) during evolution, producing non‑runnable snippets.
+
+### Convergence Analysis:
+  - Trend: improving with occasional regressions; after a strong jump at iteration 6 the score fell back to zero in the next recorded iteration.
+  - Best Score: 0.7532
+  - Iterations Since Improvement: 2
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Consolidate the working hex‑lattice + LP code into a single, well‑tested module and remove duplicated imports and incomplete fragments.
+  - Experiment with adaptive centre optimisation (e.g., local gradient‑based moves) starting from the hex lattice to escape the fixed‑grid limitation.
+  - Add unit‑tests that verify the presence of all helper functions and that the generated code compiles, to catch NameError and SyntaxError early in the evolutionary loop.
+

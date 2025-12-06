@@ -1,0 +1,137 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 4121 chars
+- Current best prompt length: 5372 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9108
+- Valid: 6, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **Ring‑based deterministic layout** (1 attempts, struggled)
+    Positions one large centre circle and two concentric rings of fixed radius offsets, then clips to the unit square.
+  - **Grid + centre with linear‑program radius optimisation** (1 attempts, worked)
+    Places 25 circles on a 5×5 grid plus a centre point, then solves a linear program that maximises the sum of radii subject to border and pairwise distance constraints.
+  - **Short random‑search perturbation** (1 attempts, mixed)
+    After the LP, performs a few random perturbations of the centre coordinates and re‑optimises radii to escape local optima.
+
+### Best Result (score: 0.9108):
+  **Main Idea:** A hybrid approach that fixes the circle centres on a regular grid plus a central circle, then uses a linear program to compute the largest possible radii for that layout. A brief random search is applied afterwards to fine‑tune positions and further increase the total radius sum.
+  **Placement:** 25 centres are placed on a 5×5 grid spanning 0.1–0.9 in both axes, and an additional centre at (0.5,0.5).
+  **Radius:** The LP maximises the objective ∑ r_i with constraints r_i <= distance to each square side and r_i + r_j <= distance between centres i and j.
+  **Constraints:** Validity is ensured by the LP constraints (border and pairwise distance). The random search only accepts moves that keep all constraints satisfied.
+
+### Score Improvements:
+  - Iter 1: +0.5466 - Switched from ring layout to a grid+centre layout, added LP radius optimisation, and introduced a short random‑search.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Fixed ring radii lead to many overlaps or wasted space near the square edges, causing low total radii.
+  - Pattern 2: Clipping after ring placement does not recover optimal radii because the LP is never run.
+
+### Novel Discoveries:
+  - Using a linear program to compute maximal radii for a fixed set of centres is an efficient way to separate placement from sizing.
+  - A tiny random‑search after the LP can break symmetry and yield a modest but consistent score boost.
+
+### Error Patterns:
+  - Incomplete function definition: 1 occurrences
+    Likely cause: The first sample ends abruptly inside the call to compute_max_radii, indicating a missing implementation or copy‑paste error.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.9108
+  - Iterations Since Improvement: 1
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Explore a full evolutionary algorithm that mutates both centre positions and radii, using the LP as a fast local optimiser for each candidate.
+  - Explicitly encode pairwise distance constraints in the LP (e.g., r_i + r_j <= ||c_i - c_j||) and use a larger number of constraints to avoid infeasible solutions.
+  - Implement a multi‑start random search or simulated annealing that periodically re‑initialises the grid with different spacings or offsets to escape local optima.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You are to generate **only** the Python source that will replace the code placed between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** output the markers themselves.  
+- Do **not** include calls to `run_packing()` or `visualize()` – those are added automatically outside the block.  
+- The resulting snippet must be a **complete, self‑contained** replacement: every routine that your code calls must be defined inside this block.
+
+**IMPORTS**  
+You may add any `import` statements you need (e.g., `from scipy.optimize import linprog`).  
+`numpy` as `np` and `scipy.optimize.linprog` are already available, but you may import them again if you wish.
+
+**FOCUS OF IMPROVEMENT**  
+Your task is to construct a packing of **26 circles** inside the unit square that maximizes the evaluation metric (combined_score) while keeping the packing valid (all circles stay inside the square and never overlap).
+
+**What has worked well (keep these ideas):**  
+1. **Grid‑plus‑center layout** – place 25 centers on a regular 5 × 5 grid covering roughly the interval [0.1, 0.9] on both axes, and add a 26th center at the square’s centre (0.5, 0.5).  
+2. **Linear‑program optimisation of radii** – for a *fixed* set of centers, formulate a linear program that maximises the sum of radii subject to:  
+   - `r_i ≤ distance from center i to each side of the unit square` (four constraints per circle).  
+   - `r_i + r_j ≤ Euclidean distance between centers i and j` for every unordered pair (i, j).  
+   Solve this with `scipy.optimize.linprog`. The LP yields the largest feasible radii for the chosen positions.  
+3. **Brief stochastic refinement** – after the LP, perform a short random‑search loop:  
+   - Randomly perturb a single center by a small amount (e.g., uniform in [‑δ, δ] with δ≈0.02).  
+   - Re‑solve the LP for the new positions.  
+   - Keep the new configuration only if it remains feasible **and** improves the objective (larger total radius).  
+   A few iterations (10‑30) are enough to break symmetry and gain a modest score boost.
+
+**What to avoid (failed approaches):**  
+- **Ring‑based deterministic placements** that assign radii beforehand and then clip circles to the square; without a subsequent LP the circles are far from optimal and often overlap.  
+- **Any method that modifies radii without re‑checking all pairwise and boundary constraints** – this leads to invalid packings and a score of 0.  
+- **Leaving any called helper routine undefined** – the outer system will raise a `NameError`.
+
+**Implementation hints:**  
+- Keep the grid generation simple (e.g., `np.linspace(0.1, 0.9, 5)` for both x and y).  
+- Assemble the LP matrices (`A_ub`, `b_ub`, `c`) programmatically; remember that the objective is to **maximise** the sum of radii, so set `c = -np.ones(n)` because `linprog` performs minimisation.  
+- Use the `'highs'` method for speed and reliability.  
+- After each LP solve, verify feasibility (`res.success` and all constraints satisfied within a small tolerance).  
+- Encapsulate the LP solving and the random‑search steps into clearly defined helper routines inside the block; call them only from the main construction routine.  
+
+**Reminder:** Every function you invoke must be defined in the code you output. Ensure the block compiles on its own and adheres to the output‑format rules above.

@@ -1,0 +1,64 @@
+# Prompt Type: C
+# Outer Iteration: 0
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**You are an expert in geometric optimization and algorithmic code improvement.**  
+Your task is to rewrite the code that appears between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers so that the resulting program:
+
+* **Maximizes the combined evaluation score** (the sum of circle radii, or any other provided metric) while keeping the solution **valid** (no overlapping circles, all circles stay inside the unit square).  
+* **Preserves the external interface** – the surrounding code will call the functions you define in this block exactly as before, so your implementation must be self‑contained and provide the same return values and signatures expected by the surrounding script.  
+
+### Optimization Goals
+1. **Increase the objective value** (e.g., total radii) as much as possible.  
+2. **Maintain feasibility**: every circle must remain fully inside the unit square and must not intersect any other circle.  
+3. **Efficiency**: the algorithm should run quickly enough for the given problem size (n = 26).  
+
+### Helpful Techniques & Algorithms  
+* **Analytical geometry** – compute distances to walls and between centers, use these to derive maximal radii.  
+* **Iterative refinement** – start from an initial layout and repeatedly adjust positions or radii using gradient‑based steps, local search, or simple heuristics (e.g., push circles apart, shrink radii proportionally).  
+* **Linear / non‑linear programming** – formulate the radius constraints as linear or convex constraints and solve with `scipy.optimize.linprog` or `scipy.optimize.minimize`.  
+* **Packing patterns** – consider symmetric arrangements (rings, grids, hexagonal close packing) and then fine‑tune them.  
+* **Scaling & projection** – after any adjustment, project positions back into the unit square and reduce radii that violate constraints.  
+* **Pairwise constraint handling** – for each pair of circles enforce `r_i + r_j ≤ distance(i, j)`.  
+
+### Output Requirements (strict)
+* **Output ONLY the Python code that belongs inside the evolve block.**  
+* Do **not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  
+* Do **not** output any code that appears outside those markers (e.g., the wrapper `run_packing` function).  
+* Every function, class, or helper you call must be **defined within this block**; no external undefined symbols are allowed.  
+
+### Guidance for Exploration
+1. **Start simple**: generate a reasonable initial placement (e.g., concentric rings, grid) and compute feasible radii.  
+2. **Iterate**: apply one or more improvement steps—move a circle toward a region with more free space, increase its radius until a constraint becomes tight, then re‑balance neighboring circles.  
+3. **Try alternative formulations**: you may replace the current heuristic with a small linear program that maximizes the sum of radii under the distance constraints, or use a simple gradient ascent on the radii while projecting onto the feasible set.  
+4. **Benchmark locally**: after each change, compute the total radii and ensure no constraint violations; keep the version that yields the highest score.  
+
+### Common Pitfalls to Avoid
+* **Referencing undefined functions** – all utilities must be declared in this block.  
+* **Breaking the expected return signature** – the outer code expects specific return values; preserve their order and types.  
+* **Leaving circles partially outside the unit square** – always enforce `0 ≤ x ± r ≤ 1` and `0 ≤ y ± r ≤ 1`.  
+* **Allowing overlap** – after any modification, re‑check pairwise distances and adjust radii accordingly.  
+* **Excessive computation** – avoid nested loops with O(n³) complexity; O(n²) is acceptable for n = 26.  
+* **Printing or logging** – the block should contain only the functional code; avoid extraneous output.  
+
+Follow these instructions to produce a concise, self‑contained implementation that improves the packing score while remaining valid.

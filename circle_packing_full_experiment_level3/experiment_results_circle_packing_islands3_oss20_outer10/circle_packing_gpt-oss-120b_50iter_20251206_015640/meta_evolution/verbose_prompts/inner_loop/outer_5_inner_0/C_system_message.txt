@@ -1,0 +1,94 @@
+# Prompt Type: C
+# Outer Iteration: 5
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Circle‑Packing Code**
+
+---
+
+### 📌 Mandatory Output Requirements (must be obeyed)
+
+1. **Output ONLY** the Python source code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+2. **Do NOT** include the marker lines themselves, nor any surrounding code such as `run_packing()` or `visualize()`.  
+3. The system will automatically splice your output into the existing file; therefore **every identifier you reference must be defined within the block you provide**.  
+4. You may add additional `import` statements if needed, but remember that `numpy as np` and `scipy.optimize.linprog` are already available.
+
+---
+
+### 🎯 Focus of the Evolution
+
+- **Goal:** Produce a tighter, more reliable arrangement of a fixed number of circles inside a unit square (or other container) while respecting non‑overlap constraints.
+- **Scope:** Improve the core construction routine and any supporting utilities. You may create new helper routines, but all of them must be defined inside the block you output.
+- **Allowed Tools:** Use linear programming, greedy placement, iterative refinement, geometric heuristics, or any combination that stays within the standard library and the already‑imported `numpy`/`scipy` packages.
+
+---
+
+### ✅ What Has Worked Well
+
+- **Pairwise distance matrix** computed efficiently with vectorized NumPy operations.
+- **Linear‑programming formulation** that treats circle radii as variables and encodes non‑overlap as linear constraints on squared distances.
+- **Iterative tightening**: solve an LP, then adjust positions slightly and resolve, gradually increasing radii toward the maximal feasible values.
+- **Randomized initialization** of centers to escape local minima and improve coverage.
+
+---
+
+### ❌ What Has Failed (Avoid These Patterns)
+
+- **Hard‑coding a single deterministic layout** without any refinement; often leaves large unused gaps.
+- **Using only heuristic “push‑out” steps** without a global feasibility check; can produce overlapping circles that later cause validation failures.
+- **Neglecting to re‑evaluate constraints after each radius update**; leads to accumulated violations.
+- **Relying on non‑vectorized loops for distance calculations**; dramatically slows down the search and reduces the number of iterations you can afford.
+
+---
+
+### 🛠️ Recommended Algorithmic Strategy (high‑level)
+
+1. **Generate an initial set of candidate centers** (e.g., via a low‑discrepancy sequence, jittered grid, or uniform random sampling).  
+2. **Compute the full Euclidean distance matrix** for those centers using a fully vectorized approach.  
+3. **Formulate a linear program** where each radius is a variable, the objective maximizes the sum (or minimum) of radii, and constraints enforce:
+   - Each circle stays inside the container (e.g., `radius ≤ min(x, 1‑x, y, 1‑y)` for a unit square).  
+   - Pairwise non‑overlap (`radius_i + radius_j ≤ distance_ij`).  
+4. **Solve the LP** with `scipy.optimize.linprog`.  
+5. **If the solution is feasible**, optionally perform a short local optimization (e.g., small gradient‑free adjustments of centers) to increase the minimal radius further, then re‑solve the LP.  
+6. **Repeat the generate‑solve‑refine loop** a limited number of times (or until improvement stalls), each time re‑initializing the centers with a different random seed to explore alternative configurations.  
+7. **Select the best packing** encountered across all iterations based on the desired metric (e.g., maximal minimal radius or maximal total area).
+
+---
+
+### 📦 Implementation Details
+
+- All helper routines (distance computation, LP construction, refinement step, etc.) must be defined **inside** the evolve block you output.  
+- Keep the code **self‑contained**: do not reference functions that are defined outside the block.  
+- Use clear docstrings and type hints where helpful; they do not affect execution but improve readability.  
+- Ensure that the final routine returns the set of circle centers and radii in the format expected by the surrounding code (typically two `np.ndarray` objects).  
+- Include any necessary imports at the top of the block (e.g., `from scipy.optimize import linprog`).  
+
+---
+
+### 🔄 Final Reminder
+
+- **Only the code between the markers** will be inserted; do not include the markers themselves.  
+- **Do not mention specific existing function names** in this instruction; the inner model should rely on the algorithmic description above rather than copying exact identifiers.  
+- **All identifiers you call must be defined** within the provided block to avoid `NameError`s.  
+
+Proceed with the implementation, adhering strictly to the format and guidelines described. Good luck!

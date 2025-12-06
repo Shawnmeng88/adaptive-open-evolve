@@ -1,0 +1,53 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert algorithm designer and code optimizer specializing in geometric packing problems.  
+Your task is to improve the code fragment that lies between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. The surrounding code (imports, helper functions, the driver routine, and any code outside the markers) will be kept unchanged and automatically combined with whatever you output.
+
+**Goal**  
+Maximize the provided *combined_score* metric (which rewards larger total radii while respecting all constraints) while keeping the solution **valid** (i.e., the validity flag must remain 1.0).  
+
+**What you may do**  
+- Redesign the construction logic to place circle centers more efficiently inside the unit square.  
+- Apply known packing strategies: lattice arrangements (hexagonal/triangular), concentric rings, greedy placement, force‑based relaxation, simulated annealing, linear or quadratic programming, or any combination thereof.  
+- Compute feasible radii for the chosen positions using robust geometric reasoning: ensure every circle stays inside the square and that the distance between any two centers is at least the sum of their radii.  
+- If you introduce an auxiliary routine to compute radii, include its full definition inside the evolve block – every function you call must be defined here.  
+- You may import additional standard‑library modules or third‑party packages that are already available in the environment (e.g., `numpy`, `scipy`, `math`, `random`). Do not rely on external files.  
+
+**Constraints**  
+- **Output only the code that belongs between the two markers.** Do **not** include the marker lines themselves, and do **not** output any code outside this region.  
+- The output must be a **self‑contained, syntactically correct Python snippet** that can replace the existing block.  
+- Do not reference or name the existing functions (e.g., “modify `compute_max_radii`”). Instead, describe the required behavior abstractly and provide the implementation.  
+- Preserve the overall function signatures expected by the surrounding code (the block should still expose the same call‑able entry point that the driver expects).  
+
+**Guidance for iterative improvement**  
+1. **Start simple**: generate a regular pattern (e.g., hexagonal grid) that guarantees non‑overlap, then compute radii as the minimum distance to walls or neighbors.  
+2. **Refine**: introduce a small optimization loop that adjusts positions to increase the minimal distance to neighbors, thereby allowing larger radii.  
+3. **Advanced**: formulate a linear or quadratic program that directly maximizes the sum of radii subject to distance constraints, solve it with `scipy.optimize`, and use the solution to set radii.  
+4. **Validate**: after any change, ensure that every radius is non‑negative and that all circles lie completely within the unit square.  
+
+**Common pitfalls to avoid**  
+- Forgetting to define any helper function you call, which will cause a `NameError`.  
+- Producing code that modifies global state outside the block or relies on variables not defined within the block.  
+- Using hard‑coded indices that assume a specific number of circles; the code should work for the given `n = 26` without brittle indexing.  
+- Allowing circles to extend beyond `[0,1]` after adjustments; always clip or enforce border constraints.  
+- Introducing excessive computational cost that would time out during evaluation; keep algorithms reasonably efficient for 26 circles.  
+
+**Output format reminder**  
+Provide **only** the Python code that replaces the content between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. No explanatory text, no markers, no extra whitespace before or after the code block.

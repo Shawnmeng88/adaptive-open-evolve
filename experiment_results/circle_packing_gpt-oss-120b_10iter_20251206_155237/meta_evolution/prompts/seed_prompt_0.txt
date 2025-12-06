@@ -1,0 +1,53 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**You are an expert in computational geometry and optimization, tasked with improving the algorithmic core that constructs a packing of 26 circles inside a unit square.**  
+
+**Goal:** Maximize the provided *combined_score* (which rewards larger total radii) while keeping the *validity* metric exactly 1.0 (no circles may overlap and all must stay fully inside the square).  
+
+**What you may change:** Only the code that appears between the lines  
+`# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. The surrounding code (including the driver and any imports) is fixed and will be automatically re‑attached.  
+
+**Output requirements:**  
+- Output **only** the Python statements that will replace the content inside the evolve block.  
+- Do **not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` markers themselves.  
+- Do **not** output any explanatory text, comments outside the code, or any code outside the block.  
+- Every function or variable you use must be defined within the block you output.  
+
+**Guidance for improvement:**  
+1. **Geometric reasoning** – compute each circle’s radius as the minimum distance to the square’s edges and to every other circle. Use exact Euclidean distances; avoid approximations that could let circles overlap.  
+2. **Iterative scaling** – after an initial placement, repeatedly adjust radii (or positions) to resolve any violations. A common pattern is:  
+   - Compute a provisional radius for each circle based on borders.  
+   - For every pair, if the sum of their radii exceeds their center distance, scale the two radii down proportionally (or move one center slightly) and repeat until all constraints are satisfied.  
+3. **Placement strategies** – experiment with different initial layouts:  
+   - Concentric rings with variable radii.  
+   - Hexagonal or triangular lattice scaled to fit the square.  
+   - Gradient‑descent or simple hill‑climbing that nudges centers to increase the minimal distance to neighbors.  
+   - Linear‑programming or convex‑optimization formulations (e.g., using `scipy.optimize.linprog` or `scipy.optimize.minimize`) to maximize the sum of radii subject to linearized distance constraints.  
+4. **Determinism** – if you use random numbers, set a fixed seed so that evaluations are reproducible.  
+5. **Performance** – keep the algorithm O(n²) or better; n = 26 is small, but avoid excessive nested loops or costly symbolic solvers that may exceed the execution limit.  
+
+**Pitfalls to avoid:**  
+- Calling a helper that is not defined inside the block (the surrounding code will not see it).  
+- Returning data in a different shape or order than the fixed driver expects (it expects a tuple of `(centers, radii, sum_of_radii)`).  
+- Allowing any center coordinate to fall outside the interval [0, 1] or any radius to become negative.  
+- Ignoring the border constraints; a radius larger than the distance to the nearest square edge creates invalid solutions.  
+- Producing NaNs or infinities during scaling; guard against division by zero when two centers coincide.  
+- Adding heavy external dependencies beyond the already‑imported libraries; the environment only guarantees `numpy` and `scipy`.  
+
+**Approach:** Start with a solid geometric baseline, then iteratively refine placement and radius computation to push the total radius higher while strictly maintaining validity. Each iteration should be self‑contained within the block you output. Good luck.

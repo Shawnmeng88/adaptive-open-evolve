@@ -1,0 +1,102 @@
+# Prompt Type: B
+# Outer Iteration: 3
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 3
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 4812 chars
+- Current best prompt length: 5731 chars
+
+## Convergence History:
+### Successful Patterns:
+- Change that helped: expanded by 761 chars
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9384
+- Valid: 10, Invalid: 1
+- Failure modes: ['Validity failures: 1/11 (9.1%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Recommendations:
+  - Analysis failed - could not parse LLM response
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_3):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Instructions for the Evolve Block**
+
+You are to produce **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+- **Do not** output the markers themselves.  
+- **Do not** output any code that lives outside this block (e.g., calls to `run_packing()`, `visualize()`, or other framework code).  
+- The surrounding framework will automatically insert your code into the full program.
+
+### Mandatory Output Format
+- Output **exactly** the code that should appear between the markers, nothing else.  
+- Every function, class, or import you use must be defined **within** the code you output.  
+- You may add import statements if needed; `numpy as np` and `scipy.optimize.linprog` are already available.
+
+### Focus of the Evolution
+- Improve the routine that constructs a dense packing of 26 circles inside the unit square, together with any helper utilities it relies on.  
+- You may redesign the algorithm, add new helper functions, or replace existing logic, but all referenced symbols must be present in your output.
+
+### Successful Strategies to Emphasize
+- **Hybrid initialization**: start from a regular lattice (e.g., hexagonal or square grid) to give a good baseline, then generate multiple random perturbations to explore alternative configurations.  
+- **Iterative refinement**: apply a hill‑climbing or local‑search loop that repeatedly attempts small adjustments to circle positions, accepting moves that increase the minimum pairwise distance or overall packing density.  
+- **Constraint handling**: enforce that every circle remains fully inside the unit square and that no two circles overlap. Use straightforward geometric checks (distance between centers ≥ sum of radii) rather than heavyweight solvers when possible.  
+- **Adaptive radius scaling**: after each successful move, optionally increase the common radius slightly, then backtrack if a violation occurs. This helps push the packing toward the theoretical maximum.  
+- **Batch evaluation**: evaluate many candidate moves in parallel (e.g., using NumPy vectorization) to reduce overhead and improve the chance of finding beneficial adjustments.  
+- **Termination criteria**: stop when a preset number of iterations yields no improvement or when the radius cannot be increased beyond a tiny epsilon.
+
+### Approaches That Caused Failures (to Avoid)
+- **Relying solely on a linear programming solver** for the non‑convex circle‑packing constraints; this led to infeasible or sub‑optimal solutions and frequent validity failures.  
+- **Using fixed step sizes** for position updates without adapting to the current packing density; this caused the algorithm to get stuck early and produce invalid packings.  
+- **Neglecting boundary constraints** (circles partially exiting the unit square) which resulted in outright invalid configurations.  
+- **Over‑complicating the objective** with exotic penalty terms that interfered with the primary goal of maximizing the common radius, leading to unstable optimization and increased runtime.
+
+### General Guidelines
+1. Begin with a deterministic lattice placement to guarantee a valid baseline.  
+2. Introduce stochastic perturbations to diversify the search space.  
+3. Apply a simple, robust local‑search loop that respects both inter‑circle and boundary constraints.  
+4. Gradually increase the radius when possible, reverting changes that break feasibility.  
+5. Terminate based on improvement stagnation or a maximum iteration budget.  
+6. Ensure every helper routine you call (e.g., distance calculations, feasibility checks, random perturbation generators) is defined within the code you output.
+
+Follow these instructions precisely; any deviation from the required output format or missing definitions will cause the evaluation to fail.

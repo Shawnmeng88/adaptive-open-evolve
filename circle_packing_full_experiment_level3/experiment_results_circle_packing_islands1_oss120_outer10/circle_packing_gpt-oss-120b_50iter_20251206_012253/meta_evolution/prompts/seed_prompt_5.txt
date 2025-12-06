@@ -1,0 +1,80 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – EVOLUTION BLOCK INSTRUCTION**
+
+You are to generate the code that will replace the contents of the evolution block (the region between `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`). Follow **all** of the rules below precisely.
+
+---
+
+### 1. OUTPUT FORMAT (CRITICAL)
+- **Only** output the Python code that belongs *inside* the evolution block.  
+- **Do not** include the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers themselves.  
+- **Do not** include any calls to `run_packing()`, `visualize()`, or other outer‑framework functions; those are added automatically.  
+- The code you provide will be merged with the surrounding framework, so it must be a self‑contained replacement for everything that previously lived inside the block.
+
+### 2. FUNCTION DEFINITIONS
+- Every function that you call from within the block must be defined **inside** the block.  
+- You may add new helper functions as needed, but they must be fully implemented here.
+
+### 3. IMPORTS
+- The outer environment already provides `import numpy as np` and `from scipy.optimize import linprog`.  
+- If you need additional standard‑library modules or third‑party packages that are already available in the execution environment, you may import them here.
+
+### 4. FOCUS OF IMPROVEMENT
+- Concentrate on the construction of the packing and any supporting utilities.  
+- Aim to **maximize the total sum of radii** (or an equivalent aggregate measure) while respecting all geometric constraints.
+
+#### Recommended algorithmic elements (do not name specific functions):
+1. **Linear‑programming formulation**  
+   - Treat each radius as a variable.  
+   - Objective: maximize the sum of all radii (or a weighted sum).  
+   - Constraints:  
+     - For every pair of centers, enforce `r_i + r_j ≤ distance(i, j)` to prevent overlap.  
+     - For each center, enforce `r_i ≤ distance_to_boundary(i)` to keep circles inside the domain.  
+   - Use `linprog` with the “highs” method for robustness.
+
+2. **Pre‑processing of distances**  
+   - Compute pairwise Euclidean distances once and reuse them.  
+   - Compute each point’s distance to the nearest boundary (e.g., for a unit square, `min(x, 1‑x, y, 1‑y)`).
+
+3. **Feasibility handling**  
+   - If the LP is infeasible, fall back to a simple heuristic (e.g., assign each radius half of its minimum non‑overlap distance).  
+   - Ensure the fallback always yields a valid packing.
+
+4. **Post‑processing**  
+   - Clip any negative radii that might arise from numerical issues to zero.  
+   - Optionally perform a small “inflation” pass: increase each radius by a tiny epsilon while still satisfying constraints, to squeeze out extra space.
+
+### 5. WHAT TO AVOID (based on past failures)
+- **Missing constraints**: forgetting the boundary constraint or a pairwise non‑overlap constraint leads to invalid packings.
+- **Undefined variables or functions**: every identifier used must be defined in this block.
+- **Returning incomplete data structures**: the main routine must return the radii (or a structure that the outer code expects) in the exact shape and type used elsewhere.
+- **Numerical instability**: avoid overly tight tolerances that cause `linprog` to report infeasibility; use a modest tolerance or a fallback heuristic.
+- **Hard‑coding dimensions**: write the code to work for any number of points and any rectangular domain defined by the outer code, rather than assuming a fixed size.
+
+### 6. GENERAL GUIDELINES
+- Keep the code clear and well‑commented; concise comments are allowed.  
+- Use vectorized NumPy operations where possible for speed.  
+- Ensure the function signatures match what the outer framework expects (e.g., a single argument for the array of centers and a return value that can be consumed by the visualizer).  
+- Test logical flow mentally: compute distances → build LP matrices → solve → handle infeasibility → post‑process → return.
+
+--- 
+
+**Remember:** The only output you may produce is the Python code that belongs inside the evolution block, adhering to the format and constraints above. No markers, no external calls, and no extraneous text. Good luck!

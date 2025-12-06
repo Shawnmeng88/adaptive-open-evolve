@@ -1,0 +1,170 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 5164 chars
+- Current best prompt length: 4778 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.8880
+- Valid: 6, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **central+ring deterministic placement** (1 attempts, struggled)
+    Hard‑coded geometry: one large circle at the centre and eight circles placed on a fixed radius ring.
+  - **rectangular grid with LP radii** (2 attempts, mixed)
+    Points are taken from a regular rectangular grid (5×6 → first 26) and a linear program maximises the sum of radii under wall and non‑overlap constraints.
+  - **multi‑heuristic (hexagonal + jitter) with LP selection** (1 attempts, worked)
+    Several candidate layouts (hexagonal lattice, jittered points, possibly other heuristics) are generated; for each the maximal feasible radii are obtained via LP and the layout with the largest total radius is returned.
+
+### Best Result (score: 0.888):
+  **Main Idea:** Generate several plausible centre configurations (hexagonal lattice, jittered variants, etc.) and, for each, solve a linear program that maximises the sum of radii while respecting wall and pairwise non‑overlap constraints, finally picking the configuration with the highest total radius.
+  **Placement:** Heuristic point generation – primarily a hexagonal lattice inside the unit square with optional random jitter; additional fallback layouts are also tried.
+  **Radius:** A linear‑programming model where each radius is a variable; the objective is the negative sum of radii (so linprog minimizes) and constraints enforce r_i ≤ distance to each wall and r_i + r_j ≤ distance between centres i and j.
+  **Constraints:** All wall and pairwise non‑overlap constraints are encoded as linear inequalities in the LP; feasibility of the LP guarantees a valid packing (Validity = 1.0).
+
+### Score Improvements:
+  - Iter 1: +0.4136 - Replaced the naive central‑ring geometry with a rectangular grid and introduced a linear program to optimise radii.
+  - Iter 3: +0.0192 - Refined the grid to a 5×5 plus centre layout and cleaned up the LP formulation, yielding a modest gain.
+  - Iter 4: +0.091 - Added multiple heuristic layouts (hexagonal lattice, jitter) and selected the best after LP optimisation, dramatically raising the total radius.
+
+### Stuck Patterns (AVOID THESE):
+  - Deterministic, hand‑crafted placements without optimisation quickly hit a low ceiling (central‑ring pattern).
+  - Relying only on rectangular grids limits the achievable density; the algorithm never explores the denser hexagonal arrangement until later.
+  - Repeated insertion of full import statements inside the function body, a by‑product of the evolutionary generator, adds noise but does not affect correctness.
+
+### Novel Discoveries:
+  - Using a pure linear program to compute maximal radii for a *fixed* set of centres, turning the geometric packing problem into a tractable LP sub‑problem.
+  - Generating several candidate centre configurations (including jittered hexagonal lattices) and automatically picking the best after LP solving.
+
+### Error Patterns:
+  - truncated/incomplete code line: 1 occurrences
+    Likely cause: Mutation or crossover cut off a line during evolution, leaving an unfinished statement.
+  - duplicate imports inside function: 2 occurrences
+    Likely cause: Evolutionary code generator repeatedly inserts import statements when copying snippets.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.888
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Combine centre optimisation with radius optimisation: treat both positions and radii as variables in a mixed‑integer or second‑order cone program to escape the fixed‑centre limitation.
+  - Seed the generator with a high‑quality hexagonal lattice (theoretical optimal density) and allow small perturbations, so the search starts near a known good configuration.
+  - Introduce a stochastic local‑search phase (e.g., simulated annealing or CMA‑ES) that tweaks centre coordinates after the LP step, using the LP‑derived radii as a fast feasibility check.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for the Evolve Block**
+
+---
+
+### Output Requirements (DO NOT VIOLATE)
+
+- **Only** output the Python code that belongs **between** the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **Do not** include the marker lines themselves, nor any surrounding code such as `run_packing()` or `visualize()`.  
+- The surrounding script will automatically merge your output with the preserved sections.  
+
+### Imports
+
+- You may add additional `import` statements **inside** the block if a new library is required.  
+- `numpy as np` and `scipy.optimize.linprog` are already available; you do not need to re‑import them.  
+
+### Interface Guarantees
+
+- The surrounding code will call the functions you define exactly as before.  
+- **Every function you call must be defined in this block.**  
+- Do not reference or rely on any identifiers that are defined outside the block (except the pre‑imported `np` and `linprog`).  
+
+### Algorithmic Focus – What Works Well
+
+1. **Generate Multiple Candidate Center Configurations**  
+   - Create a dense hexagonal lattice inside the unit square and optionally perturb points with small random jitter.  
+   - Also consider simple rectangular or triangular grids, and a few random‑point sets as fall‑backs.  
+   - The goal is to provide diverse, high‑density layouts for later optimisation.
+
+2. **Linear‑Programmed Radius Optimisation for Fixed Centers**  
+   - For each candidate set of centers, formulate a linear program where each radius `r_i` is a variable.  
+   - Constraints:  
+     * `r_i ≤ distance from center i to each wall` (four wall constraints).  
+     * `r_i + r_j ≤ Euclidean distance between centers i and j` for every pair `(i, j)`.  
+   - Objective: **maximize** the sum of radii (equivalently, minimise the negative sum).  
+   - Solve with `scipy.optimize.linprog`. A feasible solution guarantees a valid packing.
+
+3. **Select the Best Layout**  
+   - After solving the LP for every candidate, compare the total radius (or any provided metric).  
+   - Return the centers and radii from the layout with the highest objective value.
+
+4. **Optional Local‑Search Refinement**  
+   - If time permits, perform a lightweight stochastic improvement: perturb a subset of centers, re‑solve the LP, and keep the change only if the total radius improves.  
+   - Keep the number of perturbation iterations modest to stay within runtime limits.
+
+### Pitfalls to Avoid (What Has Failed)
+
+- **Hard‑coded deterministic placements** (e.g., a single central circle with a fixed ring) quickly hit a low density ceiling; they should be replaced by the flexible, LP‑driven approach.  
+- **Relying on a single grid type** (only rectangular) limits achievable packing density; always generate at least two distinct patterns.  
+- **Duplicating import statements inside loops or functions** – this adds noise and may cause syntax errors. Import once at the top of the block if needed.  
+- **Leaving truncated or incomplete lines** – ensure every statement is syntactically complete.  
+- **Calling helper functions that are not defined in the block** – this will raise `NameError`. Define all utilities (e.g., distance calculators, layout generators, LP builder) inside the block.  
+
+### Suggested Helper Structure (you may implement as you see fit)
+
+- A function to build a hexagonal lattice within the unit square, accepting the desired number of points and optional jitter magnitude.  
+- A function to construct a rectangular/triangular grid fallback.  
+- A routine that, given a set of centers, builds the LP matrices (`c`, `A_ub`, `b_ub`) and calls `linprog`.  
+- A selector that iterates over all generated layouts, runs the LP, records the total radius, and returns the best packing.  
+- (Optional) A tiny local‑search loop that perturbs centers and re‑optimises radii.
+
+### Reminder
+
+- **All code must be self‑contained within the evolve block.**  
+- Follow the exact output format: *only the code*, no markers, no explanatory text outside the code.  
+
+--- 
+
+Proceed to implement the described strategy, ensuring the code adheres strictly to the format and interface constraints.

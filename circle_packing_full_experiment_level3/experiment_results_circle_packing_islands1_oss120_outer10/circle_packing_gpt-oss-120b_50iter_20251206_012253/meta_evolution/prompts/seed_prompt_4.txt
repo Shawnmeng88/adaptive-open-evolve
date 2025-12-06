@@ -1,0 +1,63 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – EVOLUTION BLOCK INSTRUCTION**
+
+You are to supply the Python code that will replace the contents of the evolution block (the region between `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`). Follow **all** of the rules below precisely.
+
+---
+
+### 1. OUTPUT FORMAT (CRITICAL)
+- **Only** output the code that belongs *inside* the evolution block.  
+- **Do not** include the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers themselves.  
+- **Do not** include any calls to outer‑framework functions such as `run_packing()` or `visualize()`. Those are added automatically.  
+- The code you provide will be merged with the surrounding framework, so it must be a **self‑contained replacement** for the block.
+
+### 2. IMPORTS
+- You may add additional import statements if required (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block.
+
+### 3. FOCUS OF IMPROVEMENT
+- Concentrate on the routine that builds the packing configuration from a set of circle centers, and any auxiliary routines that support it.  
+- You may introduce new helper routines, but they must be fully defined inside the block.
+
+### 4. SUCCESSFUL APPROACHES TO BUILD ON
+- **Linear‑programming formulation:** Treat the radii as decision variables and maximize a linear objective (e.g., total sum of radii or a weighted combination).  
+- **Explicit non‑overlap constraints:** For every pair of circles, enforce `r_i + r_j ≤ distance(c_i, c_j)`.  
+- **Boundary constraints:** Ensure each circle stays inside the container by adding `r_i ≤ distance(c_i, border)` for all relevant borders (e.g., square or circular container).  
+- **Uniform scaling step:** After obtaining a feasible set of radii, compute the largest uniform scaling factor that still satisfies all constraints; this often yields a tighter packing.  
+- **Numerical stability tricks:** Clamp very small distances, add tiny epsilons to inequalities, and use `linprog`’s high‑precision method (`method='highs'`) to avoid feasibility issues.
+
+### 5. WHAT TO AVOID (FAILED APPROACHES)
+- **Omitting any pairwise non‑overlap constraint** – leads to intersecting circles and invalid solutions.  
+- **Neglecting boundary constraints** – circles may extend outside the container, causing validity failures.  
+- **Relying solely on a heuristic scaling without re‑checking constraints** – can produce radii that violate the LP‑derived limits.  
+- **Using default tolerance settings that are too loose** – may cause the optimizer to report “optimal” while constraints are actually breached.  
+- **Calling helper routines that are not defined within the block** – results in `NameError` during execution.
+
+### 6. COMPLETENESS REQUIREMENT
+- Every function, class, or variable that your code references must be defined **within** the block you output. The surrounding framework will only provide the pre‑imported libraries and the outer orchestration; it will not supply any additional definitions.
+
+### 7. STYLE & READABILITY
+- Keep the code concise but well‑commented; brief comments explaining each major step are encouraged.  
+- Use clear variable names (`centers`, `radii`, `dist_matrix`, etc.) to aid future evolution cycles.
+
+---
+
+**Remember:** The only thing the system will keep from this interaction is the code you output between the markers, merged with the unchanged surrounding scaffold. Follow the format strictly, include all necessary definitions, and embed the successful algorithmic ideas while avoiding the pitfalls listed above.

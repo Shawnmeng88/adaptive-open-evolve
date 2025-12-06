@@ -1,0 +1,110 @@
+# Prompt Type: B
+# Outer Iteration: 8
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 8
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 7686 chars
+- Current best prompt length: 3762 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Change that helped: condensed by 1151 chars
+- Negative guidance (what to avoid) helped
+- Change that helped: added 'constraint'; condensed by 231 chars
+- Change that helped: removed 'step'; condensed by 627 chars
+- Change that helped: removed 'step'; condensed by 780 chars
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9645
+- Valid: 4, Invalid: 1
+- Failure modes: ['Validity failures: 1/5 (20.0%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Recommendations:
+  - Analysis failed - could not parse LLM response
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_8):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You are to generate **only** the Python source that will replace the code placed between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+**CRITICAL OUTPUT FORMAT**  
+- Output **only** the code that belongs between the markers.  
+- **Do not** include the markers themselves.  
+- **Do not** include calls to the outer driver functions (e.g., `run_packing()`, `visualize()`). Those are added automatically outside the block.  
+- The snippet you provide must be **self‑contained**: every routine that your code invokes must be defined somewhere within this block.
+
+**IMPORTS**  
+- You may add any import statements you need (e.g., `from scipy.optimize import linprog`, `from scipy.optimize import minimize`, `import random`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available from the surrounding code, but you may import them again if you wish.
+
+**FOCUS**  
+- Improve the **packing construction routine** and any helper utilities it uses.  
+- You may add new helper functions, data‑structures, or constants, but **every** name you call must be defined in the code you output.
+
+**Successful Algorithmic Strategies (do use)**  
+1. **Diversified initial point sets** – start from several distinct seed configurations such as:  
+   - A jittered lattice (regular grid perturbed by a small random offset).  
+   - Farthest‑point sampling (iteratively select the point farthest from all previously chosen points).  
+   - Random interior points with a simple rejection test.  
+   Combining multiple seeds and selecting the best result after optimization improves robustness.
+
+2. **Linear‑programming radius optimization** – formulate the problem of maximizing a common radius subject to non‑overlap and boundary constraints as a linear program and solve it with `scipy.optimize.linprog`. This yields the optimal uniform radius for a given set of centers quickly and reliably.
+
+3. **Iterative refinement** – after an initial LP solution, optionally perform a few local adjustments (e.g., small gradient‑free moves of the centers) followed by another LP solve to escape local plateaus.
+
+4. **Numerical safety** – enforce a tiny safety margin (e.g., `1e-9`) when constructing constraints to avoid floating‑point equality issues that can cause infeasibility.
+
+5. **Deterministic fallback** – if the LP solver fails to find a feasible solution for a seed, fall back to a simple greedy placement that guarantees a valid (though possibly sub‑optimal) packing, ensuring the routine never returns an invalid configuration.
+
+**What to Avoid (failed approaches)**  
+- **Heavy nested loops** that scale quadratically with the number of circles without early termination; they cause timeouts.  
+- **Random‑only strategies** without a deterministic fallback; they can produce infeasible packings and raise validation errors.  
+- **Missing boundary constraints** (e.g., forgetting to enforce `center ± radius ≤ 1`); this leads to circles spilling outside the unit square.  
+- **Returning `None` or an incomplete data structure**; the outer driver expects a complete list/array of circle centers and a radius value.  
+- **Using global state** or variables defined outside the block; the block must be self‑contained.
+
+**Reminder**  
+- Every function, class, or constant referenced in your code must be defined **within** the block you output.  
+- Keep the code concise but clear; excessive comments are allowed, but they must not interfere with the required output format.
+
+**Proceed to write the improved code block now, adhering strictly to the format and guidelines above.**

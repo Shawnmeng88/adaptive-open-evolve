@@ -1,0 +1,76 @@
+# Prompt Type: C
+# Outer Iteration: 2
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You are to supply **only** the Python source that belongs between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...your code...
+# EVOLVE-BLOCK-END
+```  
+
+Do **not** output the markers themselves, and do **not** include any code outside this region (e.g., `run_packing()` or `visualize()`). The surrounding framework will insert your block automatically.
+
+### Output Requirements (must be obeyed)
+- **Only** the code that belongs inside the evolve block is to be printed.
+- No marker lines, no surrounding code, no explanatory text.
+- Every function, class, import, or variable referenced in your block must be **fully defined within the block**. Missing definitions will cause a runtime error.
+
+### Imports
+- You may add additional imports if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available; you do not need to re‑import them unless you want to alias them differently.
+
+### Focus of the Evolution
+- The goal is to improve the routine that constructs a placement of **26 circles inside the unit square** so that the sum of their radii (the score) is maximized while respecting non‑overlap and boundary constraints.
+- You may redesign the construction algorithm, add helper utilities, or replace the existing logic entirely, provided the final block still returns a valid packing configuration in the expected format.
+
+### Successful Strategies to Emphasize
+- **Hexagonal lattice seeding**: Generate candidate points on a hexagonal grid scaled to fit within the unit square, then prune or adjust points that violate constraints.
+- **Iterative radius optimization**: For a given set of centers, solve a linear program (or small convex program) that maximizes the radii subject to pairwise distance and boundary constraints.
+- **Local refinement**: After an initial feasible layout, apply a few rounds of gradient‑based or heuristic adjustments (e.g., small random perturbations followed by re‑optimization) to increase the total radius sum.
+- **Boundary handling**: Ensure each circle respects the unit‑square borders by treating the distances to the four sides as additional constraints in the optimization step.
+- **Numerical stability**: Clip very small negative radii to zero and avoid division by zero when computing distances.
+
+### Approaches That Led to Failures (must be avoided)
+- **Pure random placement without subsequent feasibility checks** – resulted in high rates of invalid packings.
+- **Over‑aggressive scaling of the hexagonal grid** – caused many points to lie outside the square, leading to immediate constraint violations.
+- **Using only a single linear program without re‑evaluating after adjustments** – prevented the algorithm from escaping local minima and reduced the final score.
+- **Neglecting to recompute pairwise distances after any coordinate change** – produced overlapping circles that the evaluator rejected.
+
+### Algorithmic Guidance (no specific function names)
+1. **Generate candidate centers** using a structured pattern (hexagonal or staggered grid). Scale the pattern so that the outermost points lie comfortably inside the unit square.
+2. **Filter out points** that are too close to the borders or to each other based on a provisional minimal radius.
+3. **Formulate a linear optimization problem** where each radius is a variable, the objective is to maximize the sum of radii, and constraints enforce:
+   - For every pair of centers: `r_i + r_j ≤ distance(center_i, center_j)`.
+   - For each center: `r_i ≤ min(x_i, 1‑x_i, y_i, 1‑y_i)`.
+4. **Solve the linear program** (e.g., with `scipy.optimize.linprog`). If the solver fails or returns infeasible, slightly relax the candidate set or adjust the grid spacing and retry.
+5. **Refine** the solution by optionally performing a few local perturbations of the centers followed by re‑solving the radius optimization. Keep any improvement that raises the total radius sum.
+6. **Return** the final list/array of centers and their corresponding radii in the format expected by the outer code.
+
+### Final Reminder
+- All code you output must be **self‑contained** within the evolve block.
+- Do not reference or assume the existence of any functions or variables that are not defined in your submission.
+- Respect the strict output format: only the Python code, nothing else.

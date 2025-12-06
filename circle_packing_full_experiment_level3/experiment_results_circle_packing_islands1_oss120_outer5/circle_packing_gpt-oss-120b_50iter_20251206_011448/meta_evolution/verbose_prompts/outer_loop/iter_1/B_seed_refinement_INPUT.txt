@@ -1,0 +1,127 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 3586 chars
+- Current best prompt length: 4264 chars
+
+## Convergence History:
+### Successful Patterns:
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9377
+- Valid: 7, Invalid: 4
+- Failure modes: ['Validity failures: 4/11 (36.4%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Recommendations:
+  - Analysis failed - could not parse LLM response
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – META‑PROMPT FOR CODE EVOLUTION**
+
+---
+
+### 📌 CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+
+- **Output ONLY the code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.**  
+- **Do NOT include the markers themselves** in your response.  
+- **Do NOT include calls to `run_packing()` or `visualize()`** – those are added automatically by the outer harness.  
+- The system will merge your output with the surrounding preserved code sections.
+
+### 📦 IMPORTS
+
+- You may add additional import statements if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available in the surrounding environment.
+
+### 🎯 FOCUS OF THIS ITERATION
+
+- **Improve the part of the program that generates a set of exactly 26 points inside the unit square and computes feasible radii for them.**  
+- You may add new helper routines, constants, or data structures, but **every routine you call must be defined inside the block you output.**  
+- The goal is to increase the combined quality metric (typically the sum of radii) while keeping the configuration **strictly valid**:
+  1. All circles must lie completely inside the unit square.  
+  2. No two circles may overlap (distance between centers ≥ sum of radii).  
+
+### ✅ SUCCESSFUL STRATEGIES TO BUILD ON
+
+1. **Structured initial layout** – start from a regular grid (e.g., a 5 × 5 lattice with spacing ≈ 0.2) and add the remaining circles in the largest gaps.  
+2. **Local radius optimisation** – for each point, compute the maximum radius allowed by the nearest square boundaries and by all previously placed circles.  
+3. **Iterative refinement** – after an initial feasible radius set, run a few iterations of a simple optimizer (e.g., gradient‑ascent on radii, or a small linear‑programming pass) that pushes radii up while respecting the non‑overlap constraints.  
+4. **Numerical safety margins** – subtract a tiny epsilon (e.g., 1e‑6) from every computed radius to avoid floating‑point borderline violations.  
+
+### ⚠️ APPROACHES THAT HAVE FAILED (AVOID THESE)
+
+- **Hard‑coding radii** that do not adapt to the actual distances between points; this often produces overlap or circles that extend outside the square.  
+- **Relying solely on a single global optimizer** without an initial feasible layout; the optimizer may converge to an invalid configuration or fail to find a feasible point.  
+- **Neglecting to recompute constraints after each radius update** – leads to cascading overlaps.  
+- **Using only boundary distances** and ignoring neighboring circles; this yields overly large radii that inevitably intersect.  
+
+### 📐 ALGORITHMIC GUIDELINES FOR YOUR IMPLEMENTATION
+
+1. **Generate positions**  
+   - Create a deterministic base pattern (grid, hexagonal, or concentric rings) that yields at least 26 distinct points.  
+   - If more than 26 points are produced, select the subset that maximizes the minimal pairwise distance (e.g., keep the points with the largest spacing).  
+
+2. **Initial radius calculation**  
+   - For each point, compute the distance to the four square edges; the smallest of these distances is an upper bound for the radius.  
+   - Compute distances to all other points; for point *i* the radius must also be ≤ (distance(i, j) − r_j) for every already‑processed point *j*. Process points in a deterministic order (e.g., sorted by x‑coordinate) so that the bound can be updated sequentially.  
+
+3. **Refinement loop** (optional but recommended)  
+   - Repeat a small number of passes (e.g., 3‑5). In each pass, for every point recompute the maximum admissible radius given the current radii of all other points, then set the radius to a weighted average between its old value and the newly computed maximum (e.g., `new = 0.6*old + 0.4*max_allowed`).  
+   - After each pass, enforce a tiny safety epsilon (`radius = max(0, radius - 1e-6)`).  
+
+4. **Validation check** (internal, not exposed)  
+   - After the final radii are determined, verify that all circles satisfy the inside‑square and non‑overlap conditions. If any violation is detected, silently reduce the offending radii by a small factor (e.g., multiply by 0.99) and re‑validate until the configuration is clean.  
+
+5. **Return the data**  
+   - Provide the list/array of positions and the corresponding radii in the format expected by the surrounding code (e.g., two `np.ndarray` objects of shape `(26, 2)` and `(26,)`).  
+
+### 🛡️ REMINDER
+
+- **Every function, class, or variable you reference must be defined inside the block you output.** Missing definitions will raise a `NameError` during execution.  
+- Keep the code **self‑contained** and free of side effects beyond the returned data structures.  
+
+--- 
+
+*Follow the above instructions precisely and output only the code segment required.*

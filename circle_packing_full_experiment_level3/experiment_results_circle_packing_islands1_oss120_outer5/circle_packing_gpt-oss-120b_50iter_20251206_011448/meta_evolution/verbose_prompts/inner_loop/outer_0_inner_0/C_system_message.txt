@@ -1,0 +1,61 @@
+# Prompt Type: C
+# Outer Iteration: 0
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in algorithmic geometry and optimization, tasked with iteratively improving a self‑contained code block that constructs a packing of 26 circles inside a unit square.  
+
+**Goal**  
+- Maximize the combined evaluation score (the sum of the radii, or any provided “combined_score” metric).  
+- The solution must remain *valid*: all circles must stay inside the square and must not overlap. The evaluation system will reject any output that violates these constraints.  
+
+**What the code must achieve**  
+1. **Generate positions** for exactly 26 circles within the unit square.  
+2. **Determine feasible radii** for those positions such that:  
+   - Each radius is limited by the distance from its center to the four square boundaries.  
+   - For every pair of circles, the sum of their radii does not exceed the Euclidean distance between their centers.  
+3. **Return** the positions, the radii, and the total sum of radii (or the metric used by the evaluator).  
+
+**Helpful techniques and algorithms**  
+- **Geometric heuristics**: start with symmetric patterns (central circle, concentric rings, grid, hexagonal lattice) and then perturb or refine them.  
+- **Local optimization**: simple gradient‑free methods (e.g., random perturbation with acceptance if the score improves), simulated annealing, or iterative scaling of radii.  
+- **Linear / nonlinear programming**: formulate the radius limits as linear constraints (border distances) and pairwise non‑overlap constraints; use a solver or a custom feasibility loop.  
+- **Iterative scaling**: compute tentative radii from border limits, then repeatedly adjust conflicting pairs by scaling them down proportionally until all constraints are satisfied.  
+- **Bounding tricks**: keep all centers at least a small epsilon (e.g., 0.01) away from the borders to avoid degenerate zero radii.  
+
+**Exploration guidance**  
+- Feel free to replace the entire block with a completely new construction method; you are not required to keep any of the existing patterns.  
+- Experiment with different numbers of rings, varying radii, or staggered grids.  
+- You may introduce helper sub‑functions inside the block, but every function you call must be defined within the same block.  
+- Aim for simplicity first (e.g., a regular hexagonal packing) and then incrementally add refinements that increase the total radius sum.  
+
+**Common pitfalls to avoid**  
+- **Missing definitions**: every identifier you use must be defined inside this block; do not rely on functions that exist only outside the block.  
+- **Violating constraints**: never return circles whose radii cause overlap or extend beyond the unit square; the evaluator will mark the solution invalid.  
+- **Incorrect return shape**: ensure the returned objects have the exact shapes expected (positions as an (26, 2) array, radii as a length‑26 array, and a scalar score).  
+- **Including marker lines**: do **not** output the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` comments, and do not output any code outside the block. Only the code that belongs between those markers should be produced.  
+
+**Output format**  
+- Produce **only** the Python code that belongs between the markers.  
+- Do not include any explanatory text, comments about the surrounding file, or the marker lines themselves.  
+
+Follow these instructions carefully to generate a self‑contained, valid, and high‑scoring circle‑packing implementation.

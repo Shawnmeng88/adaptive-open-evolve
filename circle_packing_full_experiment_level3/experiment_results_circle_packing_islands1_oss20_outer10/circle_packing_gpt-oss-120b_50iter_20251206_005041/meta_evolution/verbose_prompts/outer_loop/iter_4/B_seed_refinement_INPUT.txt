@@ -1,0 +1,150 @@
+# Prompt Type: B
+# Outer Iteration: 4
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 4
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 4779 chars
+- Current best prompt length: 3441 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+- Change that helped: condensed by 1151 chars
+- Change that helped: removed 'step'; condensed by 780 chars
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9596
+- Valid: 5, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **Ring-based deterministic placement** (1 attempts, struggled)
+    Places one large centre circle and two concentric rings of fixed radii, then computes the maximum radii via a helper LP.
+  - **Grid + LP + random search** (1 attempts, mixed)
+    Starts from a 5×5 grid plus centre, solves a linear program to maximise radii, then performs a short random‑search perturbation of centres to improve the layout.
+  - **Grid + LP + simulated annealing refinement** (1 attempts, worked)
+    Uses the same 5×5 grid + centre initialization, solves the LP, and then iteratively moves one centre at a time with a gradually shrinking Gaussian step size, accepting only moves that increase the total radius.
+  - **Far‑point sampling + LP + hill‑climb** (1 attempts, struggled)
+    Generates an initial set of centres by far‑point sampling, solves the LP, and then applies a stochastic hill‑climb with Gaussian perturbations and a decaying step size.
+
+### Best Result (score: 0.9596):
+  **Main Idea:** Begin with a deterministic 5×5 grid plus centre, solve a linear program to obtain the maximal radii for that fixed layout, then refine the centres using a simulated‑annealing style search that moves one centre at a time with a shrinking step size to further increase the total radius.
+  **Placement:** Deterministic 5×5 grid of 25 points plus the centre of the square, giving 26 initial centres.
+  **Radius:** Linear programming that maximises the sum of radii subject to (1) each radius ≤ distance to the four square edges and (2) for every pair of circles r_i + r_j ≤ Euclidean distance between their centres.
+  **Constraints:** All overlap and boundary constraints are encoded directly in the LP; the refinement step only accepts moves that keep the LP feasible, so validity is guaranteed.
+
+### Score Improvements:
+  - Iter 1: +0.5466 - Switched from ring‑based deterministic layout to a 5×5 grid + centre and added an LP to compute radii.
+  - Iter 9: +0.0488 - Added a simulated‑annealing style refinement that moves one centre at a time with a shrinking step size.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Early deterministic layouts (rings) produce low scores and provide little room for exploration.
+  - Pattern 2: Syntax errors introduced by mismatched parentheses or brackets during code generation cause the entire run to fail and reset the score to 0.
+
+### Novel Discoveries:
+  - Use of a simulated‑annealing style refinement that moves a single centre at a time with a decaying step size.
+  - Far‑point sampling as a deterministic way to initialise centres before solving the LP.
+
+### Error Patterns:
+  - SyntaxError: closing parenthesis ')' does not match opening parenthesis '[': 1 occurrences
+    Likely cause: The code generation process truncated or mis‑paired brackets, leading to an unbalanced expression.
+
+### Convergence Analysis:
+  - Trend: improving until iteration 9, then plateauing/declining due to a syntax error at iteration 10.
+  - Best Score: 0.9596
+  - Iterations Since Improvement: 1
+  - Approach Diversity: high
+
+### Recommendations:
+  - Fix the syntax error in the far‑point sampling + LP + hill‑climb approach and evaluate whether the far‑point initialisation can further improve the best score.
+  - Combine the far‑point sampling with the simulated‑annealing refinement used in the best run to start from a more spread out configuration while still benefiting from the proven refinement strategy.
+  - Introduce an adaptive step‑size schedule or a gradient‑based local search after each LP solve to fine‑tune the radii and centres, potentially squeezing out a few more percentage points.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_4):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You are to generate **only** the Python source that will replace the code placed between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+- **Do not** output the markers themselves.  
+- **Do not** include any calls to the outer driver functions (e.g., `run_packing()`, `visualize()`). Those are added automatically outside the block.  
+- The snippet you provide must be **self‑contained**: every routine that your code invokes must be defined somewhere within this block.  
+
+**IMPORTS**  
+You may add any `import` statements you need (e.g., `from scipy.optimize import linprog`, `from scipy.optimize import minimize`, etc.).  
+`numpy` as `np` and `scipy.optimize.linprog` are already available from outside the block, but you may re‑import them if you wish.
+
+**FOCUS OF IMPROVEMENT**  
+- Concentrate on the construction routine that creates the initial set of circle centres and computes their radii.  
+- You may add helper utilities (e.g., for sampling points, solving linear programs, performing local search, or managing step‑size schedules).  
+
+**WHAT HAS WORKED WELL**  
+- Starting from a deterministic grid (e.g., a 5×5 lattice plus the centre) provides a solid baseline.  
+- Formulating a linear program that maximises the sum of radii while enforcing (a) each radius ≤ distance to the four square edges and (b) pairwise non‑overlap constraints (`r_i + r_j ≤ distance(i, j)`) yields a feasible, high‑quality packing.  
+- A refinement phase that moves one centre at a time with a Gaussian perturbation, accepts only moves that keep the linear program feasible, and gradually reduces the perturbation magnitude (simulated‑annealing style) further improves the total radius.  
+- Explicitly stating all constraints in the optimisation model helps the solver and improves robustness.  
+
+**WHAT TO AVOID**  
+- Purely deterministic ring‑based layouts or other overly regular patterns tend to produce low scores and limit exploration.  
+- Introducing syntax errors (unmatched parentheses/brackets, missing commas, etc.) will abort the entire run. Double‑check that every opening symbol has a matching closing one.  
+- Allowing moves that violate the feasibility of the optimisation model will cause invalid packings and score penalties. Ensure any perturbation is tested for feasibility before acceptance.  
+
+**RECOMMENDED STRATEGY**  
+1. **Initialisation**  
+   - Generate a well‑spread set of centres. You may combine a regular grid with a far‑point sampling technique to increase spatial diversity.  
+2. **Linear‑Program Solving**  
+   - Build the LP that maximises the total radius under the boundary and non‑overlap constraints. Solve it using `scipy.optimize.linprog`.  
+3. **Iterative Refinement**  
+   - Loop for a fixed budget of iterations:  
+     a. Randomly select a centre and propose a small Gaussian displacement (step size governed by a decaying schedule).  
+     b. Re‑solve the LP with the updated centre set.  
+     c. Accept the move only if the new LP is feasible and the objective (total radius) improves; otherwise reject and keep the previous state.  
+   - Optionally, after a certain number of accepted moves, perform a short gradient‑free local search (e.g., Nelder‑Mead) on the most promising centres to fine‑tune positions.  
+4. **Output**  
+   - Return the final arrays of centres and radii in the format expected by the surrounding code.  
+
+**MANDATORY OUTPUT FORMAT INSTRUCTION**  
+- Output **only** the code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the markers themselves or any surrounding driver code.  
+- Ensure that every function or class you call is defined within this block.  
+
+Follow these guidelines carefully to produce a robust, high‑scoring packing implementation.

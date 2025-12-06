@@ -1,0 +1,118 @@
+# Prompt Type: A
+# Outer Iteration: 0
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# INITIAL SEED PROMPT GENERATION
+# ================================
+
+## Input to MetaLLM:
+- Problem: Optimize the given code to maximize the evaluation score while maintaining validity....
+- Code length: 3942 chars
+- Evaluation: Maximize 'combined_score' metric while ensuring 'validity' equals 1.0
+
+## Format Requirements Added:
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+## CRITICAL: FUNCTION DEFINITIONS (READ CAREFULLY)
+- **EVERY function you call MUST be defined in your output**
+- The evolve block is a COMPLETE REPLACEMENT - nothing from previous code versions is preserved
+- If you call `solve_optimal_radii_lp()`, you MUST include its complete definition
+- If you call `compute_max_radii()`, you MUST include its complete definition
+- If you call ANY helper function, you MUST include its complete definition
+- Common error: calling functions without defining them causes NameError and score = 0.0
+- **Check: before calling any function, ensure you've defined it in your code**
+
+# ================================
+# FINAL PROMPT (seed_prompt_0):
+# ================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+## CRITICAL: FUNCTION DEFINITIONS (READ CAREFULLY)
+- **EVERY function you call MUST be defined in your output**
+- The evolve block is a COMPLETE REPLACEMENT - nothing from previous code versions is preserved
+- If you call `solve_optimal_radii_lp()`, you MUST include its complete definition
+- If you call `compute_max_radii()`, you MUST include its complete definition
+- If you call ANY helper function, you MUST include its complete definition
+- Common error: calling functions without defining them causes NameError and score = 0.0
+- **Check: before calling any function, ensure you've defined it in your code**
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in geometric optimization and algorithmic code improvement, specializing in dense packing problems.  
+Your task is to rewrite **only** the code that appears between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` comments. Do **not** output the marker lines themselves, and do not include any code outside this block. The surrounding code will be merged automatically, so the block you produce must be a self‑contained replacement that defines all functions it uses.
+
+### Optimization Goal
+- **Primary metric**: Maximize the combined evaluation score (e.g., total sum of radii or any provided composite metric).  
+- **Constraint**: The solution must remain *valid* (e.g., circles stay inside the unit square, do not overlap, and all required return values are produced). The validity score must be exactly 1.0.
+
+### Guidance for Improving the Packing Algorithm
+1. **Geometric Reasoning**  
+   - Consider well‑known packing patterns (hexagonal lattice, concentric rings, spiral placements, etc.).  
+   - Use symmetry and uniform spacing to increase total radius while respecting boundary limits.  
+
+2. **Radius Computation**  
+   - For each candidate center, compute the distance to the four square edges and to every other center.  
+   - The admissible radius is the minimum of these distances, possibly scaled to avoid pairwise overlap.  
+   - Implement an efficient method (e.g., vectorized NumPy operations) to evaluate all pairwise distances and update radii iteratively until no overlaps remain.
+
+3. **Iterative Refinement**  
+   - Start with an initial layout (e.g., a central circle plus rings).  
+   - Apply a simple optimization loop: adjust positions slightly, recompute admissible radii, and keep changes that increase the total score.  
+   - Limit iterations to keep runtime reasonable.
+
+4. **Linear / Quadratic Programming (optional)**  
+   - Formulate the radius limits as linear constraints and solve a small LP/QP to maximize the sum of radii given fixed centers.  
+   - If you introduce such a solver, ensure the required library (e.g., `scipy.optimize.linprog` or `scipy.optimize.minimize`) is imported at the top of the file (outside the evolve block) and that the call is self‑contained.
+
+5. **Numerical Stability**  
+   - Clip coordinates to a safe margin (e.g., `[0.001, 0.999]`) before distance calculations.  
+   - Guard against division by zero when two centers coincide.
+
+### Output Format Requirements
+- **Only** the Python code that replaces the content between the evolve markers.  
+- Do **not** include the `# EVOVE-BLOCK-START` / `# EVOVE-BLOCK-END` lines themselves.  
+- Do **not** output any explanatory text, comments outside the code block, or any other characters.  
+- All functions you call must be defined within this block; do not rely on external functions that are not already present in the surrounding script.
+
+### Exploration Advice
+- Experiment with different geometric patterns and simple heuristics; keep the code readable and fast.  
+- If a new approach yields a higher score without breaking validity, adopt it.  
+- You may add helper functions, constants, or small classes as needed, as long as they reside inside the block.
+
+### Common Pitfalls to Avoid
+- Referencing or calling functions that are not defined within the block.  
+- Forgetting to respect the unit‑square boundaries, leading to invalid configurations.  
+- Introducing heavy external dependencies that are not already imported.  
+- Producing code that runs indefinitely or exceeds typical execution time limits.  
+- Outputting anything other than pure Python code for the evolve block.
+
+Follow these instructions carefully to generate a high‑scoring, valid solution.

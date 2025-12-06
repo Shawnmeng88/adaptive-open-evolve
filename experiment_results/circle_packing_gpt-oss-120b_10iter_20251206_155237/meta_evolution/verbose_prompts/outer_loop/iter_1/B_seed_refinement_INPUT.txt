@@ -1,0 +1,182 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 3259 chars
+- Current best prompt length: 4178 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9377
+- Valid: 5, Invalid: 1
+- Failure modes: ['Validity failures: 1/6 (16.7%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **deterministic central‑plus‑ring placement** (best score: 0.3642)
+    Places one circle at the centre of the unit square and eight circles equally spaced on a surrounding ring; radii are later (implicitly) computed.
+  - **random‑layout with greedy radius assignment** (best score: 0.0000)
+    Generates many random centre configurations and assigns each radius greedily in descending order of distance to the borders.
+  - **fixed 5×5 grid plus dummy circle** (best score: 0.9377)
+    Uses a regular 5×5 grid (spacing 0.2) for 25 centres, adds a dummy centre to reach 26, then computes the maximal feasible radii for all centres (via a helper like compute_max_radii).
+
+### Best Result (score: 0.9377):
+  **Main Idea:** Lay out the circles on a regular grid that evenly covers the square, then solve a global radius‑maximisation problem for those fixed centres, guaranteeing a feasible packing with a high total radius sum.
+  **Placement:** Deterministic uniform grid (5×5) with an extra dummy centre at a corner.
+  **Radius:** Calls a helper (compute_max_radii) that likely evaluates the minimum distance from each centre to all other centres and to the square borders, possibly using linear programming to maximise the sum of radii under non‑overlap constraints.
+  **Constraints:** Validity is ensured by computing the maximal radius that satisfies both border limits and pairwise non‑overlap; the dummy circle receives radius zero, preserving the required count.
+
+### Score Improvements:
+  - Iter 2: +0.5735 - Switched from an ad‑hoc central‑plus‑ring design to a full 5×5 grid and introduced a systematic maximal‑radius computation, dramatically raising the total radius sum.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Truncated code lines (e.g., unfinished function calls) cause syntax errors that prevent the program from running.
+  - Pattern 2: Greedy radius assignment on random centres fails to produce a feasible packing and often results in a score of zero.
+
+### Novel Discoveries:
+  - Using a dummy circle to pad the required number of circles while keeping the optimisation focused on the real 25 circles.
+
+### Error Patterns:
+  - Truncated code / SyntaxError: 2 occurrences
+    Likely cause: Copy‑paste or generation cut‑off that leaves incomplete statements (e.g., missing closing parentheses).
+  - Variable name typo / NameError: 1 occurrences
+    Likely cause: Misspelled return variable (sum_radi vs sum_radii) causing a runtime NameError.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.9377
+  - Approach Diversity: medium (three distinct algorithmic ideas have been tried).
+
+### Recommendations:
+  - Implement a robust radius‑maximisation routine (e.g., formulate the non‑overlap constraints as a linear program or second‑order cone program) to replace the ad‑hoc or greedy methods.
+  - Combine the grid layout with a local optimisation step (e.g., small random perturbations followed by re‑optimisation of radii) to escape the regular‑grid limitation and potentially increase the total radius.
+  - Add automated syntax/validation checks and unit tests for helper functions (like compute_max_radii) to catch truncation and typo errors early in the evolutionary loop.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolution Block Guidelines**
+
+**Output Requirement (CRITICAL)**  
+- **Only** output the Python statements that will replace the content **between** the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **Do NOT** include the marker lines themselves, nor any surrounding code (e.g., `run_packing()` or `visualize()`).  
+- The surrounding driver code and imports are supplied automatically; your output will be merged into the evolve block unchanged.  
+
+**Mandatory Formatting**  
+- Every function that you call must be **fully defined** somewhere within the block you output.  
+- No external references to functions that are not defined in this block are allowed.  
+
+**Algorithmic Guidance – What Has Worked**  
+1. **Uniform Grid Placement** – Position the majority of circle centres on a regular lattice that evenly covers the unit square (e.g., a 5 × 5 grid with spacing 0.2). This deterministic layout guarantees that all centres lie well inside the domain and provides a solid baseline for radius optimisation.  
+
+2. **Padding with a Dummy Circle** – If the required number of circles exceeds the number of grid points, add an extra centre at a corner (or any location) and assign it a radius of zero. This satisfies the count constraint without affecting the total radius sum.  
+
+3. **Global Radius Maximisation** – With centres fixed, compute the largest possible radii that satisfy:  
+   - Each circle stays completely inside the unit square (distance to each side ≥ radius).  
+   - No two circles overlap (pairwise distance ≥ sum of their radii).  
+   Formulate these linear inequalities and solve a **linear program** that maximises the sum of radii (or any linear combination). Using `scipy.optimize.linprog` (or a comparable LP solver) yields the optimal feasible radii for the entire set simultaneously.  
+
+4. **Optional Local Perturbation** – After obtaining the optimal radii for the grid layout, you may slightly jitter a subset of centres (e.g., random small offsets) and re‑solve the LP. Keep the perturbed configuration only if the new total radius sum is larger while still satisfying all constraints. This can escape the regular‑grid limitation and improve the score.  
+
+**What to Avoid (Failed Strategies)**  
+- **Purely Random Layouts with Greedy Radius Assignment** – Randomly placed centres combined with a greedy, sequential radius selection frequently creates overlaps or forces many radii to zero, resulting in a score of 0.  
+- **Incomplete or Truncated Code** – Ensure every statement is syntactically complete (balanced parentheses, proper indentation). Missing characters cause immediate runtime failures.  
+- **Typographical Errors in Variable Names** – A misspelled identifier (e.g., `sum_radi` vs. `sum_radii`) leads to `NameError`. Double‑check all names used in returns and expressions.  
+- **Leaving Undefined Helpers** – If you introduce a new helper routine, remember to include its full definition inside the block; otherwise the program will raise `NameError`.  
+
+**Implementation Checklist**  
+- Define a routine that generates the deterministic grid and optional dummy centre.  
+- Define a routine that builds the LP matrices/vectors for border and pairwise constraints given a list of centres.  
+- Call the LP solver to obtain the optimal radii, handling solver status checks.  
+- (Optional) Implement a small perturb‑and‑re‑opt loop with a fixed iteration budget; accept improvements only when they increase the total radius sum and remain feasible.  
+- Return the final lists of centres and their radii in the exact format expected by the outer driver.  
+
+**Reminder** – All code you output must be **self‑contained** within the evolve block, respecting the output format rules above. Failure to do so will cause the evaluation to abort.
+
+---
+
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **deterministic central‑plus‑ring placement** (best score: 0.3642)
+    Places one circle at the centre of the unit square and eight circles equally spaced on a surrounding ring; radii are later (implicitly) computed.
+  - **random‑layout with greedy radius assignment** (best score: 0.0000)
+    Generates many random centre configurations and assigns each radius greedily in descending order of distance to the borders.
+  - **fixed 5×5 grid plus dummy circle** (best score: 0.9377)
+    Uses a regular 5×5 grid (spacing 0.2) for 25 centres, adds a dummy centre to reach 26, then computes the maximal feasible radii for all centres (via a helper like compute_max_radii).
+
+### Best Result (score: 0.9377):
+  **Main Idea:** Lay out the circles on a regular grid that evenly covers the square, then solve a global radius‑maximisation problem for those fixed centres, guaranteeing a feasible packing with a high total radius sum.
+  **Placement:** Deterministic uniform grid (5×5) with an extra dummy centre at a corner.
+  **Radius:** Calls a helper (compute_max_radii) that likely evaluates the minimum distance from each centre to all other centres and to the square borders, possibly using linear programming to maximise the sum of radii under non‑overlap constraints.
+  **Constraints:** Validity is ensured by computing the maximal radius that satisfies both border limits and pairwise non‑overlap; the dummy circle receives radius zero, preserving the required count.
+
+### Score Improvements:
+  - Iter 2: +0.5735 - Switched from an ad‑hoc central‑plus‑ring design to a full 5×5 grid and introduced a systematic maximal‑radius computation, dramatically raising the total radius sum.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Truncated code lines (e.g., unfinished function calls) cause syntax errors that prevent the program from running.
+  - Pattern 2: Greedy radius assignment on random centres fails to produce a feasible packing and often results in a score of zero.
+
+### Novel Discoveries:
+  - Using a dummy circle to pad the required number of circles while keeping the optimisation focused on the real 25 circles.
+
+### Error Patterns:
+  - Truncated code / SyntaxError: 2 occurrences
+    Likely cause: Copy‑paste or generation cut‑off that leaves incomplete statements (e.g., missing closing parentheses).
+  - Variable name typo / NameError: 1 occurrences
+    Likely cause: Misspelled return variable (sum_radi vs sum_radii) causing a runtime NameError.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.9377
+  - Approach Diversity: medium (three distinct algorithmic ideas have been tried).
+
+### Recommendations:
+  - Implement a robust radius‑maximisation routine (e.g., formulate the non‑overlap constraints as a linear program or second‑order cone program) to replace the ad‑hoc or greedy methods.
+  - Combine the grid layout with a local optimisation step (e.g., small random perturbations followed by re‑optimisation of radii) to escape the regular‑grid limitation and potentially increase the total radius.
+  - Add automated syntax/validation checks and unit tests for helper functions (like compute_max_radii) to catch truncation and typo errors early in the evolutionary loop.
+
+

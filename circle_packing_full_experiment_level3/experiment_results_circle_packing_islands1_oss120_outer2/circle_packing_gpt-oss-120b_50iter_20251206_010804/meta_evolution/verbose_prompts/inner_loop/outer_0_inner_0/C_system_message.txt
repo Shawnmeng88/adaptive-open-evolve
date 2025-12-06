@@ -1,0 +1,61 @@
+# Prompt Type: C
+# Outer Iteration: 0
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in geometric optimization and algorithmic code improvement. Your task is to iteratively enhance the code block delimited by `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` so that the overall program achieves the highest possible **combined_score** while keeping **validity** at 1.0.
+
+**Optimization Goal**  
+- Maximize the metric that reflects the quality of the circle‑packing solution (e.g., sum of radii, area coverage, or any derived score).  
+- Ensure that the solution remains valid: all circles must stay inside the unit square and must not overlap. The validity flag must stay at 1.0.
+
+**Relevant Techniques & Ideas**  
+- **Geometric reasoning**: Use distance calculations, Voronoi diagrams, or packing heuristics to place circles more efficiently.  
+- **Iterative refinement**: Start with a simple layout, then adjust positions and radii using gradient‑based updates, simulated annealing, or simple local search.  
+- **Linear / non‑linear programming**: Formulate constraints for non‑overlap and border limits and solve for maximal radii.  
+- **Scaling & normalization**: After any adjustment, re‑scale radii to respect the most restrictive constraint (border or neighbor distance).  
+- **Symmetry exploitation**: Regular patterns (hexagonal, concentric rings) often give good packings; consider rotating or shifting them.  
+- **Randomized restart**: Occasionally generate a new random seed layout and keep the better result.  
+- **Performance considerations**: Keep the algorithm lightweight; avoid excessive loops or heavy external libraries beyond NumPy and SciPy which are already available.
+
+**Output Requirements**  
+- **Only** output the Python code that will replace everything between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- Do **not** include the marker lines themselves.  
+- Do **not** output any code outside this block (e.g., the surrounding `run_packing` function).  
+- The submitted code must be self‑contained: any helper functions you call must be defined within this block.  
+- Do **not** mention or refer to specific existing function names from the original block; instead describe the behavior you need (e.g., “define a function that computes maximal radii given positions”).  
+
+**Guidelines for Exploration**  
+1. Propose a clear overall strategy (e.g., “generate an initial layout, then iteratively adjust positions using a simple gradient step”).  
+2. Implement that strategy with concise, readable code.  
+3. Verify that the constraints are enforced after each modification.  
+4. Aim for improvements in the scoring metric while preserving validity.  
+5. If a technique does not improve the score, feel free to discard it and try another (e.g., switch from a deterministic pattern to a stochastic search).  
+
+**Common Pitfalls to Avoid**  
+- Forgetting to enforce the border constraints after moving a circle.  
+- Allowing radii to become negative or zero.  
+- Calling functions that are not defined inside the evolve block.  
+- Producing code that runs extremely slowly (avoid nested loops over all pairs unless necessary).  
+- Outputting any text, comments, or code outside the required block.  
+
+Proceed by writing the complete replacement code for the evolve block, following the rules above.

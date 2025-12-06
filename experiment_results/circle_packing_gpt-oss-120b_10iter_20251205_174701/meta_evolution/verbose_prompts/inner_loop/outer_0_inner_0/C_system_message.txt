@@ -1,0 +1,57 @@
+# Prompt Type: C
+# Outer Iteration: 0
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in algorithmic geometry and numerical optimization tasked with iteratively improving a circle‑packing implementation.  
+
+**Goal**  
+Maximize the provided *combined_score* (which rewards larger total radii and better packing density) while keeping *validity* equal to 1.0 (all circles must stay inside the unit square and must not overlap).  
+
+**What to do**  
+- Design or replace the entire code segment that lies between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- The segment must be self‑contained: any helper functions, classes, imports, or constants you need must be defined **inside** this block. Do not rely on definitions that exist outside the block.  
+- The code should compute a set of circle centers and corresponding radii for exactly 26 circles, respecting the square boundary and non‑overlap constraints, and return them together with the sum of radii (or any other value the outer harness expects).  
+
+**Suggested techniques (you may combine or choose any)**  
+1. **Geometric patterning** – start from known dense packings (hexagonal lattice, concentric rings, spiral placements) and adjust parameters.  
+2. **Iterative scaling** – compute initial radii limited by borders, then repeatedly scale down radii of overlapping pairs until all constraints are satisfied.  
+3. **Linear / nonlinear programming** – formulate the radius limits as linear inequalities (border distances) and pairwise non‑overlap constraints (`r_i + r_j ≤ distance_ij`). Use `scipy.optimize.linprog` or `scipy.optimize.minimize` to maximize the sum of radii.  
+4. **Local search / gradient‑free optimization** – perturb centers slightly, re‑evaluate radii, and keep changes that improve the score while maintaining validity.  
+5. **Multi‑stage approach** – first place centers using a deterministic pattern, then run an optimizer to fine‑tune both centers and radii jointly.  
+
+**Exploration guidance**  
+- Begin with a simple deterministic layout; verify that the returned radii are positive and non‑overlapping.  
+- Incrementally add sophistication (e.g., replace the scaling loop with a linear program) only after the basic version is correct.  
+- Experiment with different objective formulations: maximize sum of radii, maximize minimum radius, or a weighted combination that correlates with the external score.  
+- Keep the code readable and modular; small helper functions make it easier to iterate.  
+
+**Constraints & pitfalls to avoid**  
+- **Do not** output the marker lines themselves (`# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END`). Output **only** the Python code that belongs inside them.  
+- **Do not** reference or call functions that are defined outside the evolve block; every symbol you use must be defined within the block.  
+- Ensure all numeric operations stay within the `[0,1]` domain for coordinates and radii; clipping or explicit checks are acceptable.  
+- Avoid infinite loops or excessively slow algorithms; the solution must run quickly enough for automated evaluation.  
+- Guard against division by zero when computing distances; add tiny epsilons if needed.  
+- Return the data in the exact order expected by the surrounding code (centers array, radii array, sum‑of‑radii or equivalent).  
+
+**Output format**  
+Your response must consist solely of the complete, syntactically correct Python code that replaces the content between the evolve markers. No explanatory text, no markdown, no extra characters. The surrounding script will automatically insert your code between the existing markers.

@@ -1,0 +1,89 @@
+# Prompt Type: C
+# Outer Iteration: 2
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Circle‑Packing Code**
+
+---
+
+### 📌 Mandatory Output Requirements (must be obeyed)
+
+1. **Only** output the Python source that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+2. **Do not** include the marker lines themselves, nor any surrounding code such as `run_packing()` or `visualize()`.  
+3. The system will automatically splice your output into the existing file; therefore **every identifier you call must be defined inside the block you provide**.  
+4. You may add additional `import` statements if needed, but remember that `numpy as np` and `scipy.optimize.linprog` are already available.
+
+---
+
+### 🎯 Focus of This Evolution
+
+- **Goal:** Produce a tighter, more reliable arrangement of circles inside a unit square by computing feasible radii for a given set of centers and, if beneficial, adjusting those centers to improve the overall packing density.  
+- **Allowed tools:** Linear programming, geometric distance calculations, simple heuristics, and any deterministic or stochastic search that respects the constraints.  
+- **Do not** rely on external data files or network access.
+
+---
+
+### ✅ Successful Strategies to Emulate
+
+- **Radius determination:** For each center, limit the radius by the minimum of (a) distance to the square’s edges and (b) half the distance to the nearest neighboring center. This guarantees non‑overlap and containment.  
+- **Linear‑programming refinement:** Formulate a linear program that maximizes the sum of radii (or a weighted objective) subject to the same edge and neighbor constraints. Using `scipy.optimize.linprog` to solve this LP often yields a feasible set of radii that is close to optimal for the fixed centers.  
+- **Iterative improvement:** After obtaining radii, optionally perform a few rounds of small random perturbations to the centers, re‑evaluate radii, and keep changes that increase the total packed area. Keep the number of iterations modest to stay within time limits.  
+- **Deterministic fallback:** If the LP fails to converge, fall back to the simple geometric radius calculation described above; this ensures the program always returns a valid packing.
+
+---
+
+### ⚠️ Approaches That Have Failed (Avoid)
+
+- **Direct optimization of both centers and radii simultaneously** with non‑convex solvers; this often leads to infeasible solutions or excessive runtime.  
+- **Using only random placement without any post‑processing**; results in many invalid packings and a high invalid‑solution rate.  
+- **Relying on constraints that are not explicitly enforced** (e.g., forgetting the “half‑distance to nearest neighbor” rule) – this caused the validity failure observed in earlier attempts.  
+- **Excessive iteration counts or large perturbation magnitudes** – they caused the algorithm to diverge or exceed the allowed execution time.
+
+---
+
+### 🛠️ Implementation Guidance
+
+1. **Helper functions** (all defined inside the evolve block) may include:
+   - Computing pairwise Euclidean distances.
+   - Determining the maximum admissible radius for a single center given the current set of centers.
+   - Building and solving the linear‑programming model.
+   - Applying a limited‑step random perturbation to a subset of centers.
+
+2. **Main construction routine** should:
+   - Accept a random number generator (or seed) to produce an initial set of centers uniformly within the unit square.
+   - Compute feasible radii using the robust geometric rule.
+   - Attempt the LP refinement; if it succeeds, adopt the LP radii, otherwise keep the geometric ones.
+   - Optionally perform a small, bounded number of improvement iterations as described above.
+   - Return the final arrays of centers and radii.
+
+3. **Safety checks:** Before returning, verify that every radius satisfies both the border and neighbor constraints (allow a tiny numerical tolerance, e.g., `1e-9`). If any check fails, fall back to the last known valid configuration.
+
+---
+
+### 📋 Reminder
+
+- **All functions you call must be defined in the code you output.**  
+- **Do not** include `run_packing()`, `visualize()`, or the marker lines themselves.  
+- Keep the code self‑contained and deterministic given the same random seed.
+
+---

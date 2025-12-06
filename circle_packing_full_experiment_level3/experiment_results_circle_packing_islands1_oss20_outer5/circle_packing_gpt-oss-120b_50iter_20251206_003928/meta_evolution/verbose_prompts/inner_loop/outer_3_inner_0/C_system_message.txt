@@ -1,0 +1,97 @@
+# Prompt Type: C
+# Outer Iteration: 3
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You are to supply **only** the Python source that belongs between the markers  
+
+```
+# EVOLVE-BLOCK-START
+…your code…
+# EVOLVE-BLOCK-END
+```  
+
+Do **not** output the markers themselves, and do **not** include `run_packing()` or `visualize()` – those sections are preserved automatically.  
+
+All functions that your new code calls must be fully defined **within** the block you output. If you introduce helper routines, include their definitions here.
+
+---
+
+### OUTPUT FORMAT (CRITICAL)
+
+- Output **only** the code that goes between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- Do **not** include the marker lines themselves.
+- Do **not** include `run_packing()` or `visualize()` – they are added automatically.
+- The system will merge your output with the surrounding preserved code.
+
+---
+
+### IMPORTS
+
+- You may add additional import statements if required (e.g., `from scipy.optimize import linprog`), but `numpy as np` and `scipy.optimize.linprog` are already available.
+
+---
+
+### FOCUS
+
+Improve the routine that constructs the packing of **26 circles** inside the unit square and any helper utilities it uses. You may replace or augment the existing implementation, but the final block must be self‑contained and executable.
+
+---
+
+### SUCCESSFUL STRATEGIES (DESCRIBED GENERICALLY)
+
+1. **Dense lattice generation** – Create a set of candidate center points using a hexagonal (triangular) lattice pattern that fits inside the unit square. Choose a lattice spacing that yields at least 26 points and leaves reasonable clearance from the borders.
+
+2. **Selection of promising points** – From the generated lattice, pick the 26 points that are farthest from the square edges (or that maximize the minimum pairwise distance). This gives a good initial layout with built‑in spacing.
+
+3. **Linear‑programming radius optimisation** – Formulate a linear program that maximizes the sum of radii subject to:
+   - each radius ≤ distance from its center to the nearest wall,
+   - for every pair of circles, radius_i + radius_j ≤ distance between the two centers.
+   Solve the LP with `scipy.optimize.linprog` (method “highs”).  
+   - If the LP solves to optimality, use the obtained radii.  
+   - If the LP is infeasible or fails, fall back to a simple deterministic radius calculation (e.g., half the minimum of the wall distance and the nearest‑neighbour distance).
+
+4. **Brief stochastic refinement** – Perform a short loop (e.g., 200–500 iterations) that randomly perturbs a randomly chosen center by a small amount, re‑evaluates the LP, and accepts the change only if the LP remains feasible and the total radius sum improves. This helps escape local optima without excessive computation.
+
+5. **Robust fallback** – Always keep the deterministic radius calculation as a safety net so that a valid packing is returned even when the LP cannot be solved.
+
+---
+
+### WHAT TO AVOID (COMMON FAILURE MODES)
+
+- **Missing helper definitions** – Do not reference any routine that is not defined in the same block (e.g., lattice generators, radius calculators, LP wrappers). Every called function must have its full definition present.
+- **Array‑shape mismatches** – When building the LP constraint matrix, ensure each row is a 1‑D numeric array of the correct length. Assigning a list of arrays or mismatched dimensions will raise “setting an array element with a sequence” errors.
+- **Undefined variables** – Double‑check variable names inside loops (e.g., use `proposal` consistently, not a misspelled version). Typos cause `NameError`.
+- **Uncaught LP failures** – Wrap the `linprog` call in `try/except` and inspect the returned status. Do not assume success; otherwise the subsequent radius usage may be invalid.
+- **Leaving centers outside the unit square** – Any perturbation must be clamped or rejected if it moves a center beyond `[0,1]` in either coordinate.
+
+---
+
+### REMINDERS
+
+- **Self‑containment** – The block you return must be a complete, runnable module fragment. All symbols referenced inside must be defined here.
+- **Safety first** – Prioritize producing a valid packing over marginal score improvements. The fallback radius method guarantees validity.
+- **Efficiency** – Keep the lattice generation and LP size modest (26 variables, ≤ 351 pairwise constraints) so that the solver runs quickly within the evaluation budget.
+
+Follow these guidelines to craft a robust, high‑scoring `construct_packing` implementation and any supporting helpers. Good luck!

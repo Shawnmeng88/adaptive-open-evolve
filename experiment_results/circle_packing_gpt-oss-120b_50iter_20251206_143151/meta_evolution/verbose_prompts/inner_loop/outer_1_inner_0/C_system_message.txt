@@ -1,0 +1,82 @@
+# Prompt Type: C
+# Outer Iteration: 1
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)**  
+- **Output ONLY** the Python code that belongs *between* the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **Do NOT** include the markers themselves, nor any surrounding code such as `run_packing()` or `visualize()`.  
+- The system will automatically merge your output with the preserved outer sections.  
+
+**IMPORTS**  
+- You may add additional import statements if needed (e.g., `from scipy.optimize import linprog`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available from the outer scope.  
+
+**FOCUS**  
+- Improve the central packing construction routine and any helper utilities it uses.  
+- You may create new helper functions, but every function you call must be defined within the block you output.  
+
+**ALGORITHMIC GUIDANCE (WHAT TO DO)**  
+
+1. **Diverse Seed Generation**  
+   - Produce several independent initial centre configurations:  
+     * a slightly perturbed hexagonal lattice,  
+     * a regular rectangular grid with a few points removed to reach the required count,  
+     * a set of uniformly random points respecting a small margin from the square edges.  
+   - These seeds should be generated deterministically where possible to ensure reproducibility, but include a modest random jitter to increase diversity.
+
+2. **Exact Geometric Radius Computation**  
+   - For any fixed set of centre coordinates, compute the maximal feasible radius for each circle as the minimum of:  
+     * distance to each of the four square boundaries,  
+     * half the Euclidean distance to every other centre.  
+   - This calculation guarantees a valid packing (no overlaps, all circles fully inside) without needing a linear program.
+
+3. **Stochastic Hill‑Climbing with Adaptive Step‑Size**  
+   - Iterate a large number of moves (e.g., tens of thousands).  
+   - At each iteration randomly select one centre and propose a displacement drawn from a zero‑mean normal distribution whose standard deviation decays over time (large steps early, fine adjustments later).  
+   - After the move, recompute the radii exactly as described above.  
+   - **Accept** the move only if the new radii remain non‑negative for all circles (i.e., the packing stays valid).  
+   - Keep track of the best‑scoring configuration seen so far (sum of radii or the evaluator’s combined score).
+
+4. **Occasional Linear‑Program Escape Mechanism**  
+   - Every few thousand iterations (or when improvement stalls), solve a linear program that maximises the sum of radii for the current centre positions, using the same border and non‑overlap constraints.  
+   - Replace the current radii with the LP solution if it yields a higher score, then resume hill‑climbing.  
+   - This hybrid step helps escape shallow local optima while keeping the overall pipeline lightweight.
+
+5. **Final Refinement**  
+   - After the main loop, perform a short “polish” phase with a very small step‑size and a few LP refinements to fine‑tune the radii.  
+
+**WARNINGS ABOUT FAILED APPROACHES (WHAT TO AVOID)**  
+
+- **Truncated or incomplete code blocks** – ensure every loop, conditional, and function definition is syntactically complete.  
+- **Duplicate import statements** – avoid re‑importing modules that are already available in the outer scope.  
+- **Excessive reliance on linear programming alone** – pure LP refinements quickly reach diminishing returns and limit exploration; combine them with geometric hill‑climbing.  
+- **Fixed step‑size moves** – using the same displacement magnitude throughout the search hampers both global exploration and local convergence.  
+- **Generating centres without a margin** – points placed too close to the square edges can produce negative radii after perturbation, causing invalid configurations.  
+
+**GENERAL REMINDERS**  
+
+- Every helper you invoke must be defined within the block you output.  
+- Keep the code self‑contained and free of external side effects; only return the data structure expected by the outer driver (e.g., a list/array of centre‑radius pairs).  
+- Maintain readability and avoid overly deep nesting; clear function boundaries help the evolutionary process produce syntactically correct mutations.  
+
+Follow these instructions precisely to produce a high‑quality, valid circle‑packing implementation.

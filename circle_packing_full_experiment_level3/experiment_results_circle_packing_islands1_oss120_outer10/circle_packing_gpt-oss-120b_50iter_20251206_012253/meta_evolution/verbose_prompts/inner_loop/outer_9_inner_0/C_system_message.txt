@@ -1,0 +1,81 @@
+# Prompt Type: C
+# Outer Iteration: 9
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – EVOLUTION BLOCK INSTRUCTION**
+
+You are to generate the Python code that will replace the contents of the evolution block (the region between `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END`). Follow **all** of the rules below precisely.
+
+---
+
+### 1. OUTPUT FORMAT (CRITICAL)
+- **Only** output the code that belongs *inside* the evolution block.  
+- **Do not** include the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers themselves.  
+- **Do not** include any calls to orchestration functions such as `run_packing()`, `visualize()`, or similar; those are added automatically by the outer framework.  
+- The code you provide will be merged with the surrounding scaffolding, so it must be a **self‑contained replacement** for everything inside the block.
+
+---
+
+### 2. IMPORTS
+- You may add additional import statements if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block; you do not need to re‑import them unless you require a different alias.
+
+---
+
+### 3. FOCUS
+- **Improve the core packing construction logic** and any helper routines it relies on.  
+- You may introduce new helper functions, but every function you call must be defined **within the code you output**.  
+- Aim for a deterministic yet diverse initialization (e.g., seeded random placement) followed by a global optimization step that respects non‑overlap constraints.  
+- Effective strategies that have worked in the past include:
+  * Formulating the non‑overlap constraints as a linear program (or mixed‑integer program) and solving with `linprog` or `scipy.optimize.minimize`.  
+  * Using an iterative scaling approach: start with a feasible configuration at a small radius, then repeatedly increase the common scale factor while re‑optimizing positions.  
+  * Applying a simple gradient‑based refinement after the LP step to reduce any residual overlaps and improve packing density.  
+  * Keeping the algorithm fast by limiting the number of LP solves (e.g., binary search on the scale factor) and avoiding exhaustive pairwise checks inside tight loops.
+
+---
+
+### 4. WHAT TO AVOID (based on previous failures)
+- **Do not** rely on undefined external functions or variables; every name you use must be defined in the submitted block.  
+- **Do not** embed hard‑coded “step” values that assume a specific number of circles; the code should compute dimensions from the input data.  
+- **Do not** use excessive nested loops that scale quadratically with the number of circles without early‑exit conditions, as this caused time‑outs in earlier attempts.  
+- **Do not** return partial results or raise exceptions for edge cases that the outer framework expects to handle gracefully.  
+- **Do not** omit the final return statement that provides the complete set of circle centers (and radii, if applicable) to the caller.
+
+---
+
+### 5. VALIDITY REQUIREMENTS
+- The returned data structures must match the expected format of the surrounding code (typically a NumPy array of shape `(n, 2)` for centers and a 1‑D array for radii).  
+- All numeric computations should be performed with `float` precision to avoid integer truncation.  
+- Ensure that the solution respects the non‑overlap constraints to the tolerance used by the evaluation harness.
+
+---
+
+### 6. GENERAL GUIDELINES
+- Write clear, well‑commented code; the evaluation platform does not execute comments, but they help prevent logical mistakes.  
+- Keep the overall function size reasonable; very long monolithic blocks tend to be error‑prone.  
+- Test mentally for edge cases such as `n = 0` or extremely small/large radius values.  
+- Remember that the outer framework will call your packing constructor automatically; you only need to provide the implementation and any required helpers.
+
+--- 
+
+When you are ready, output **only** the code that belongs between the evolution markers, adhering strictly to the format rules above.

@@ -1,0 +1,140 @@
+# Prompt Type: B
+# Outer Iteration: 2
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 2
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 4121 chars
+- Current best prompt length: 4221 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+- Change that helped: condensed by 1151 chars
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9108
+- Valid: 5, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **deterministic_ring_placement** (1 attempts, struggled)
+    Places a central circle and two concentric rings of fixed radius offsets, then attempts to compute maximal radii for the fixed layout.
+  - **grid_plus_center_with_lp** (1 attempts, worked)
+    Creates a 5×5 grid plus a central point, then solves a linear program that maximises the sum of radii subject to border and non‑overlap constraints.
+  - **random_perturbation_search** (1 attempts, mixed)
+    After the LP solution, performs a short random search that perturbs circle centres to escape local optima and potentially increase the total radius.
+
+### Best Result (score: 0.9108):
+  **Main Idea:** Use a structured grid of centres to provide a good initial placement, compute the optimal radii via a linear program, and then refine the layout with a small random search to avoid local optima.
+  **Placement:** A 5×5 grid of points spaced evenly between 0.1 and 0.9 plus an additional centre at (0.5,0.5).
+  **Radius:** Linear programming that maximises the sum of radii while enforcing that each radius is less than the distance to the square borders and that the sum of two radii is less than the distance between any two centres.
+  **Constraints:** All constraints are encoded as linear inequalities in the LP; the random search only accepts moves that keep the LP feasible, ensuring no overlap and containment in the unit square.
+
+### Score Improvements:
+  - Iter 1: +0.5466 - Switched from ring placement to a grid layout and added a linear‑programming radius optimisation followed by a random‑search refinement.
+
+### Stuck Patterns (AVOID THESE):
+  - Early attempts with fixed ring radii produced very low scores because the geometry forced many circles to be too small to fit.
+  - Incomplete or syntactically broken helper functions (e.g., compute_max_radii) caused runtime failures and prevented further optimisation.
+
+### Novel Discoveries:
+  - Using a linear program to compute radii for a fixed centre layout is an efficient way to handle many pairwise non‑overlap constraints simultaneously.
+  - A short random‑search perturbation after the LP step can escape local optima that arise from the deterministic grid.
+
+### Error Patterns:
+  - SyntaxError: 1 occurrences
+    Likely cause: Incomplete function call or missing parentheses in the code snippet.
+  - NameError: 1 occurrences
+    Likely cause: Reference to an undefined helper function such as compute_max_radii.
+  - LPInfeasibleError: 0 occurrences
+    Likely cause: Overly tight constraints or inconsistent centre placement that makes the linear program unsolvable.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.9108
+  - Iterations Since Improvement: 1
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Introduce stochastic initialisations (e.g., simulated annealing or random placement) to diversify the search space and avoid the bias of a fixed grid.
+  - Replace the linear program with a non‑linear optimisation (e.g., sequential quadratic programming) that can directly maximise the sum of radii while handling the non‑overlap constraints more tightly.
+  - Add a multi‑objective component that also minimises the maximum radius or maximises the minimum radius to produce more balanced packings.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_2):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You must generate **only** the Python source that will replace the code placed between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+- **Do not** output the markers themselves.  
+- **Do not** include any calls to `run_packing()` or `visualize()` – those are added automatically outside the block.  
+- The snippet you provide must be **self‑contained**: every routine that your code invokes must be defined somewhere within this block.  
+
+**IMPORTS**  
+You may add any `import` statements you need (e.g., `from scipy.optimize import linprog`, `from scipy.optimize import minimize`, etc.).  
+`numpy` as `np` and `scipy.optimize.linprog` are already available, but you may import additional modules if useful.
+
+**FOCUS OF IMPROVEMENT**  
+
+1. **Placement strategy** – a structured set of centre points works well. A regular grid (e.g., 5 × 5 points evenly spaced inside the unit square) combined with a central point provides a strong initial layout.  
+
+2. **Radius optimisation** – formulate a linear program that maximises the sum of radii while enforcing:  
+   * each radius ≤ distance from its centre to the four square edges,  
+   * for every pair of centres, the sum of their radii ≤ Euclidean distance between the centres.  
+   Solving this LP yields the largest feasible radii for the fixed centre layout.  
+
+3. **Post‑LP refinement** – after obtaining the LP solution, perform a short stochastic perturbation of the centre positions: randomly move a centre by a small amount, re‑solve the LP (or update the radii analytically) and keep the change only if the total radius sum improves and all constraints remain satisfied. This helps escape the deterministic grid’s local optimum.  
+
+**WHAT TO AVOID**  
+
+- Fixed‑radius ring constructions that force many circles to be tiny; they dramatically reduce the total packed area.  
+- Leaving any referenced helper routine undefined; missing definitions cause `NameError` and abort the evaluation.  
+- Over‑constraining the linear program (e.g., using distances that are too tight) which can make it infeasible.  
+
+**MANDATORY OUTPUT FORMAT INSTRUCTION**  
+
+- Output **only** the code that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the marker comments themselves or any surrounding code.  
+- Do **not** include calls to `run_packing()` or `visualize()`.  
+- Ensure that every function, class, or variable used inside your snippet is defined within the same snippet.  
+
+Follow these guidelines precisely; any deviation will cause the program to fail evaluation.

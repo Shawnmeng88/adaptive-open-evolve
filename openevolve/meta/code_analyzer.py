@@ -28,22 +28,33 @@ BATCH_ANALYSIS_PROMPT = """You are a code analyst. Analyze these code samples fr
 ## TASK
 Analyze ALL the samples together and provide a comprehensive report. You must fill in EVERY section below.
 
+## CRITICAL: DO NOT MENTION SPECIFIC FUNCTION NAMES
+When describing approaches, describe WHAT the code does algorithmically, NOT the names of functions.
+- BAD: "calls compute_max_radii to get radii"
+- GOOD: "computes maximal radii using linear programming"
+- BAD: "uses solve_lp helper function"  
+- GOOD: "solves a linear program to maximize total radius"
+- BAD: "via a helper like compute_max_radii"
+- GOOD: "via a radius optimization routine"
+
+The reader will write their own code - they need to understand the ALGORITHM, not copy function names.
+
 Respond in this EXACT JSON format:
 ```json
 {{
     "approaches_tried": {{
-        "approach_name": {{"count": N, "success_rate": "worked/struggled/mixed", "description": "1-2 sentence description of what this approach does"}}
+        "approach_name": {{"count": N, "best_score": SCORE, "description": "1-2 sentence description of the ALGORITHM (NO function names)"}}
     }},
     "best_result": {{
-        "main_idea": "2-3 sentences describing the algorithmic strategy of the best scoring code",
-        "placement_method": "How circle centers are positioned",
-        "radius_computation": "How radii are determined",
+        "main_idea": "2-3 sentences describing the ALGORITHMIC STRATEGY (NO function names)",
+        "placement_method": "How circle centers are positioned (describe algorithm, not function names)",
+        "radius_computation": "How radii are determined (describe algorithm, not function names)",
         "constraint_handling": "How validity is ensured",
         "score": SCORE,
         "iteration": ITER
     }},
     "score_improvements": [
-        {{"iteration": N, "improvement": DELTA, "what_changed": "brief description of what code change led to improvement"}}
+        {{"iteration": N, "improvement": DELTA, "what_changed": "brief description of algorithm change (NO function names)"}}
     ],
     "stuck_patterns": [
         "Pattern 1: Description of a recurring failure mode or dead end",
@@ -62,7 +73,7 @@ Respond in this EXACT JSON format:
         "diversity": "high/medium/low (are different approaches being tried?)"
     }},
     "recommendations": [
-        "Recommendation 1: Balanced, actionable suggestion",
+        "Recommendation 1: Balanced, actionable suggestion (describe algorithm, NOT function names)",
         "Recommendation 2: Another suggestion",
         "Recommendation 3: A third suggestion (diverse from the others)"
     ]
@@ -70,8 +81,10 @@ Respond in this EXACT JSON format:
 ```
 
 IMPORTANT:
+- **NEVER mention specific function names from the code** - describe algorithms only
 - Be SPECIFIC about what each approach does, not just a category name
 - For "approaches_tried", identify the ACTUAL algorithmic strategy, not just keywords
+- For "approaches_tried", provide the best_score (numeric) achieved with each approach from the samples
 - For "stuck_patterns", identify REPEATED failures or dead-ends
 - For "recommendations", give DIVERSE suggestions (not all the same direction)
 - Include at least 3 approaches if different methods were tried
@@ -346,9 +359,16 @@ class CodeAnalyzer:
             for approach_name, info in result.approaches_tried.items():
                 if isinstance(info, dict):
                     count = info.get('count', '?')
-                    status = info.get('success_rate', 'unknown')
+                    best_score = info.get('best_score', None)
                     desc = info.get('description', '')
-                    lines.append(f"  - **{approach_name}** ({count} attempts, {status})")
+                    # Show score if available, otherwise fall back to success_rate for backward compatibility
+                    if best_score is not None:
+                        score_str = f"{best_score:.4f}" if isinstance(best_score, (int, float)) else str(best_score)
+                        lines.append(f"  - **{approach_name}** (best score: {score_str})")
+                    else:
+                        # Fallback for old format
+                        status = info.get('success_rate', 'unknown')
+                        lines.append(f"  - **{approach_name}** ({count} attempts, {status})")
                     if desc:
                         lines.append(f"    {desc}")
                 else:

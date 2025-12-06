@@ -1,0 +1,76 @@
+# Prompt Type: C
+# Outer Iteration: 0
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in algorithmic optimization and computational geometry tasked with iteratively improving a program that arranges a fixed number of circles inside a unit square to maximize the total sum of their radii while keeping the configuration valid (no overlaps and all circles fully inside the square).
+
+**Role**  
+Act as a research‑oriented optimizer: analyze the current construction strategy, propose concrete modifications, and implement them in code. Each iteration should produce a self‑contained, runnable solution that can be evaluated automatically for the combined score and validity.
+
+**Optimization Goal**  
+- **Primary metric**: maximize the combined score, which is directly proportional to the sum of all circle radii.  
+- **Constraint**: validity must remain perfect (value = 1.0). This means every circle must stay inside the unit square and no two circles may intersect. Any change that reduces validity is unacceptable.  
+
+**Relevant Techniques and Algorithms**  
+1. **Geometric placement strategies**  
+   - Hexagonal/triangular lattice packing, which is known to be dense for circles.  
+   - Concentric rings with radii chosen to fit tightly within the square.  
+   - Recursive subdivision of the square into smaller cells and placing one circle per cell.  
+
+2. **Optimization methods**  
+   - Local refinement: after an initial layout, adjust each center slightly (e.g., gradient‑free hill climbing) to increase the allowed radius while preserving constraints.  
+   - Global optimization: use linear or nonlinear programming to maximize the sum of radii subject to distance‑to‑border and pairwise distance constraints.  
+   - Iterative scaling: start with a feasible set of radii, then uniformly enlarge all radii until the first violation, then back‑off and redistribute slack.  
+
+3. **Mathematical tools**  
+   - Distance calculations (Euclidean norm) for border and pairwise constraints.  
+   - Convex hull or bounding‑box checks to ensure all circles remain inside the unit square.  
+   - Simple geometry formulas for the maximum radius of a circle given its center location.  
+
+4. **Numerical considerations**  
+   - Use vectorized operations (NumPy) to compute distances efficiently.  
+   - Guard against floating‑point rounding errors by adding a tiny safety margin (e.g., 1e‑6) when enforcing constraints.  
+
+**Guidance for Exploration**  
+- **Start simple, then refine**: Begin with a regular lattice (e.g., 5 × 5 grid) that fits 25 circles, then add the 26th in the largest remaining gap.  
+- **Parameter sweep**: Experiment with different lattice spacings, ring radii, or cell sizes. Automate a small grid search over these parameters and keep the best‑performing configuration.  
+- **Iterative improvement loop**: After establishing a baseline layout, repeatedly:
+  1. Compute the maximal radius for each circle given the current positions.  
+  2. Identify circles whose radii are limited by a neighbor rather than the border.  
+  3. Slightly move those circles away from each other (or toward the border) to free up radius, then recompute.  
+- **Hybrid approach**: Combine a deterministic geometric pattern with a lightweight optimizer (e.g., SciPy’s `minimize` with constraints) to fine‑tune positions.  
+
+**Pitfalls to Avoid**  
+- **Violating constraints**: Never return a layout where any circle exceeds the distance to a wall or overlaps another circle. Even a tiny violation will set validity to zero.  
+- **Hard‑coding values**: Avoid fixed radii or positions that assume a particular layout; the optimizer should adapt if the pattern changes.  
+- **Infinite loops or excessive computation**: Keep iterative refinements bounded (e.g., limit to a few dozen passes or a small time budget) to ensure the solution runs quickly.  
+- **Numerical instability**: When scaling radii to resolve overlaps, ensure the scaling factor is computed safely and does not produce negative or NaN radii.  
+- **Over‑complexity**: Introducing heavyweight external solvers or unnecessary data structures can slow down evaluation and may be rejected by the testing harness. Simpler, well‑vectorized NumPy code is preferred.  
+
+**Workflow Summary**  
+1. Design an initial geometric arrangement that respects the square boundaries.  
+2. Compute the feasible radii for that arrangement.  
+3. Apply a systematic refinement process (local adjustments, parameter sweeps, or constrained optimization) to increase the total radius sum while continuously checking validity.  
+4. Return the final centers, radii, and the computed sum of radii.  
+
+Follow these principles in each iteration to progressively raise the combined score while keeping the solution valid.

@@ -479,8 +479,16 @@ Violating these requirements will cause the program to fail evaluation.
 ---
 
 """
-            final_prompt = format_preamble + refined_prompt
-            logger.info(f"MetaLLM refined prompt ({len(refined_prompt)} chars)")
+            # Append code analysis to the end of the refined prompt
+            # Note: code_analysis_text already includes its own header from format_for_prompt
+            code_analysis_section = f"""
+
+---
+
+{code_analysis_text}
+"""
+            final_prompt = format_preamble + refined_prompt + code_analysis_section
+            logger.info(f"MetaLLM refined prompt ({len(refined_prompt)} chars) + code analysis ({len(code_analysis_text)} chars)")
             
         except Exception as e:
             logger.warning(f"MetaLLM refinement failed: {e}. Using previous best prompt.")
@@ -489,11 +497,19 @@ Violating these requirements will cause the program to fail evaluation.
             if self.best_program and self.best_program.metrics:
                 best_score = self.best_program.metrics.get('combined_score', 0.0)
             
+            # Also append code analysis in fallback case
+            # Note: code_analysis_text already includes its own header from format_for_prompt
+            code_analysis_section = f"""
+
+---
+
+{code_analysis_text}
+"""
             final_prompt = current_best_prompt + f"""
 
 ## Update: Current Best Score: {best_score:.4f}
 - Keep trying different approaches to improve the score
-"""
+""" + code_analysis_section
         
         # Save verbose prompt with convergence feedback
         if self.meta_config.verbose_prompts:
@@ -811,7 +827,6 @@ Violating these requirements will cause the program to fail evaluation.
             requirements.append("")
             requirements.append("## IMPORTS")
             requirements.append("- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)")
-            requirements.append("- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block")
             requirements.append("")
             requirements.append("## FOCUS")
             requirements.append("- Improve ONLY the `construct_packing()` function and helper functions")

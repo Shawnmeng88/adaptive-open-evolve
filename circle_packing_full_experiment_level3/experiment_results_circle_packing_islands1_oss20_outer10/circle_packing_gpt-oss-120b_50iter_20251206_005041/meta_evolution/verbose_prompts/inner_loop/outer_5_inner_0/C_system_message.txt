@@ -1,0 +1,63 @@
+# Prompt Type: C
+# Outer Iteration: 5
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+You are to generate **only** the Python source that will replace the code placed between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+
+- **Do not** output the markers themselves.  
+- **Do not** include any calls to outer driver functions (e.g., `run_packing()`, `visualize()`). Those are added automatically outside the block.  
+- The snippet you provide must be **self‑contained**: every routine that your code invokes must be defined somewhere within this block.  
+
+### IMPORTS
+You may add any import statements you need (e.g., `import numpy as np`, `from scipy.optimize import linprog, minimize`). Core libraries such as `numpy` and `scipy.optimize.linprog` are already available, but you may import additional modules if they help.
+
+### FOCUS
+Improve the portion of the program responsible for constructing a set of non‑overlapping circles (positions and radii) for the given number of circles. You may add new helper routines, data structures, or constants, but all of them must be defined inside the block you output.
+
+### Successful Algorithmic Strategies (keep these ideas)
+1. **Linear‑programming based radius maximization** – formulate a linear program that maximizes the sum (or minimum) of radii subject to pairwise non‑overlap constraints and optional bounding‑box constraints.  
+2. **Iterative refinement** – start from a feasible random placement, then repeatedly adjust positions and radii using gradient‑free optimization (e.g., coordinate descent, simulated annealing) to increase total area or minimum radius.  
+3. **Constraint tightening** – after each optimization step, enforce a small safety margin between circles to avoid numerical borderline violations.  
+4. **Bounding‑box enforcement** – keep all circle centers within a predefined square or rectangular region; optionally allow the region to shrink as radii grow.  
+5. **Deterministic seeding** – use a reproducible random generator (`np.random.default_rng(seed)`) so results are repeatable for debugging.  
+6. **Vectorized distance checks** – compute pairwise distances with NumPy broadcasting to keep the feasibility test fast even for dozens of circles.  
+
+### Pitfalls to Avoid (what previously failed)
+- **Missing definitions** – any helper routine you call must be defined in the same block; otherwise a `NameError` will occur.  
+- **Returning incomplete data** – the outer driver expects both the array of centers and the array of radii; ensure the main routine returns them in the correct order and shape.  
+- **Overly tight constraints** that make the linear program infeasible; provide a small epsilon (e.g., `1e-6`) when formulating non‑overlap inequalities.  
+- **Excessive computational cost** – avoid nested loops with O(n³) complexity; prefer vectorized operations or efficient solvers.  
+- **Mutable default arguments** – never use mutable objects (lists, arrays) as default parameter values.  
+- **Global state reliance** – keep all variables local to the functions you output; do not depend on external globals.  
+
+### Mandatory Output‑Format Instruction
+Your response must:
+
+1. **Contain only the Python code** that belongs between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+2. **Exclude the marker comments themselves**.  
+3. **Exclude any calls to external driver functions** such as `run_packing()` or `visualize()`.  
+4. **Define every function, class, or variable** that is referenced within the provided code.  
+
+Follow these rules exactly; any deviation will cause the evaluation to fail.

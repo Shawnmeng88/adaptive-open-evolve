@@ -1,0 +1,186 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 3900 chars
+- Current best prompt length: 4524 chars
+
+## Convergence History:
+### Successful Patterns:
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9168
+- Valid: 5, Invalid: 1
+- Failure modes: ['Validity failures: 1/6 (16.7%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **deterministic_ring_pattern** (1 attempts, mixed)
+    Creates a fixed geometric layout of circles in concentric rings around the center and then computes the maximum radii that fit within the unit square.
+  - **stochastic_local_search** (1 attempts, worked)
+    Starts from a jittered 5×5 grid plus one random point and iteratively perturbs positions to increase the sum of radii, recomputing feasible radii after each move.
+  - **multi_restart_hill_climbing** (1 attempts, struggled)
+    Runs several independent hill‑climbing restarts from a jittered grid, aiming to escape local optima but suffers from an indexing bug that crashes the program.
+
+### Best Result (score: 0.9168):
+  **Main Idea:** A stochastic local‑search algorithm that evaluates the feasibility of circle radii based on border distances and nearest‑neighbour constraints, then greedily adjusts positions to maximize the total radius sum.
+  **Placement:** Initial centers are placed on a jittered 5×5 grid (25 points) with one additional random point, providing a dense yet diverse starting layout.
+  **Radius:** For each center, the radius is limited by the minimum of (distance to the square borders) and (half the distance to the nearest other center).
+  **Constraints:** The radius computation inherently enforces non‑overlap and boundary constraints; any configuration that violates these would simply yield a smaller radius, keeping the solution valid.
+
+### Score Improvements:
+  - Iter 1: +0.5526 - Replaced the rigid ring pattern with a stochastic local search that recomputed radii after each perturbation, leading to a large jump in the objective.
+
+### Stuck Patterns (AVOID THESE):
+  - Repeated indexing errors when attempting to access a 26th element in an array that only contains 25 points, causing runtime crashes.
+  - Incomplete code fragments (e.g., truncated function bodies) that prevent the program from executing fully and lead to validity failures.
+
+### Novel Discoveries:
+  - Using a jittered 5×5 grid as a starting point provides a good balance between coverage and randomness, which is effective for local search in circle packing.
+
+### Error Patterns:
+  - IndexError: 1 occurrences
+    Likely cause: Off‑by‑one indexing when selecting 26 points from a 25‑element array (e.g., using [:n] on a 25‑length array).
+
+### Convergence Analysis:
+  - Trend: improving then declining
+  - Best Score: 0.9168
+  - Iterations Since Improvement: 3
+  - Approach Diversity: high
+
+### Recommendations:
+  - Fix the off‑by‑one bug by ensuring that the array of centers always contains exactly 26 elements before any indexing operation.
+  - Replace the single‑restart hill‑climbing with a robust multi‑restart strategy that includes a proper termination condition and a fallback to the best found solution.
+  - Experiment with simulated annealing or a simple genetic algorithm to explore the search space more globally and avoid getting trapped in local optima.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Evolving the Packing Code**
+
+---
+
+### ❗ Mandatory Output Requirements (Do **not** violate)
+
+1. **Only** output the Python source that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+2. **Do not** include the marker lines themselves, nor any surrounding code such as `run_packing()` or `visualize()`.  
+3. The system will automatically splice your output into the existing file; therefore **every identifier you call must be defined inside the block** you provide.  
+4. You may add `import` statements if additional libraries are needed, but remember that `numpy as np` and `scipy.optimize.linprog` are already available.
+
+---
+
+### 🎯 Goal  
+
+Create a routine that, given a required number of circles ( n = 26 ) inside the unit square [0, 1] × [0, 1], returns:
+
+* a list/array of **exactly n centre coordinates**, and  
+* a matching list/array of **feasible radii**  
+
+such that:
+
+* each circle lies completely inside the square,  
+* no two circles overlap, and  
+* the **combined_score** (typically the sum of radii, possibly with extra weighting) is as large as possible.
+
+The solution must run without runtime errors for any random seed.
+
+---
+
+### ✅ Proven Strategies to Leverage  
+
+1. **Initial Layout – jittered dense grid**  
+   * Generate a regular 5 × 5 grid (25 points) covering the square.  
+   * Add a small random perturbation (e.g., uniform noise of magnitude ≤ 0.02) to each grid point to break symmetry.  
+   * Insert one additional point placed uniformly at random in the square, giving exactly 26 centres.  
+
+2. **Radius Computation – local feasibility**  
+   * For each centre, compute the distance to the four borders of the square.  
+   * Compute the Euclidean distance to every other centre, keep the smallest one, and halve it (the non‑overlap limit).  
+   * The admissible radius is the **minimum** of the border distance and the half‑nearest‑neighbour distance.  
+   * This simple rule guarantees a feasible packing; any violation automatically reduces the radius.
+
+3. **Stochastic Local Search (single‑step improvement)**  
+   * Repeatedly pick a centre at random and propose a small move (e.g., Gaussian displacement with σ ≈ 0.01).  
+   * Re‑evaluate all radii after the move using the rule above.  
+   * Accept the move **only if** the total score (sum of radii) does not decrease; otherwise revert.  
+   * Perform a large number of iterations (e.g., 10 000 – 50 000) to let the configuration settle into a locally optimal arrangement.
+
+4. **Multi‑Restart Strategy**  
+   * Run the whole local‑search procedure from several independent random seeds (e.g., 5 – 10 restarts).  
+   * Keep the best‑scoring packing across all runs.  
+   * This mitigates getting trapped in poor local optima.
+
+5. **Optional Global Exploration (if time permits)**  
+   * Simulated annealing: gradually lower a temperature parameter that controls the acceptance probability of worsening moves.  
+   * Simple genetic operators: maintain a small population of packings, crossover centre coordinates, and mutate them, always selecting the highest‑scoring individuals.  
+   * These are **optional**; the core stochastic local search already yields strong scores.
+
+---
+
+### 🚫 Pitfalls to Avoid  
+
+* **Off‑by‑one errors** – ensure the centre array length is exactly 26 before any indexing or slicing.  
+* **Indexing a non‑existent element** – never assume a grid of 25 points contains the 26th; always generate the extra random point explicitly.  
+* **Uncaught exceptions** – protect distance calculations against division by zero or empty neighbour sets (e.g., when n = 1, which does not occur here but defensive coding is cheap).  
+* **Returning incomplete data** – both centre and radius arrays must be returned; missing one will cause validation failures.  
+* **Hard‑coded constants tied to a specific n** – keep the algorithm generic (use the provided n value) so that future changes do not break the code.
+
+---
+
+### 📦 Implementation Checklist  
+
+1. **Imports** – add any needed modules (`random`, `math`, `numpy.random`, etc.).  
+2. **Helper routines** – you may define:
+   * a function to build the jittered grid plus the extra point,  
+   * a function that computes radii from a set of centres,  
+   * a function that performs one local‑search iteration,  
+   * a driver that orchestrates multiple restarts and selects the best result.  
+3. **Main packing routine** – this is the entry point that the outer script will call. It must:
+   * accept the required number of circles (n = 26) and the square size (implicitly 1 × 1),  
+   * return the final centre coordinates and radii as NumPy arrays (or Python lists).  
+4. **Determinism for testing** – optionally set a NumPy random seed at the start of the routine (e.g., based on a function argument) to make results reproducible during evaluation.
+
+---
+
+### 🛠️ Final Note  
+
+Remember: **every function you invoke must be defined within the block you output**. Keep the code self‑contained, respect the output format, and focus on a robust, stochastic local‑search with multi‑restart to push the combined_score as high as possible while maintaining validity. Good luck!
