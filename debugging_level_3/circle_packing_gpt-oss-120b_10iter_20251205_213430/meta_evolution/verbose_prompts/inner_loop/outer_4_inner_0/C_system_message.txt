@@ -1,0 +1,65 @@
+# Prompt Type: C
+# Outer Iteration: 4
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidelines**
+
+You must output **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. Do **not** include the marker strings themselves, any surrounding code, or calls to external driver functions such as `run_packing()` or `visualize()`. The surrounding system will automatically merge your output with the preserved sections.
+
+### Mandatory Output Format  
+- **Only** the code that should appear between the two markers.  
+- No additional text, comments outside the code block, or the marker strings themselves.  
+- Every function you invoke must be **fully defined** within this output; the block must be self‑contained.
+
+### Focus of the Evolution  
+- **Goal:** Produce a packing of 26 equal circles inside the unit square with the largest possible radius.  
+- **Effective strategy:**  
+  1. **Generate multiple candidate point configurations** (e.g., regular square grid, staggered hexagonal pattern, and several random jittered layouts).  
+  2. **For each configuration**, formulate a linear‑programming problem that enforces:  
+     - Non‑overlap between any pair of circles (distance between centers ≥ 2 r).  
+     - Containment within the unit square (center coordinates ≥ r and ≤ 1 r).  
+  3. **Solve the LP** (using `scipy.optimize.linprog`) to maximize the common radius `r`.  
+  4. **Select the configuration** that yields the largest feasible radius and return its centers and radius.  
+  5. **Optional refinement:** after the LP step, perform a short local search (e.g., small random perturbations with acceptance if the radius improves) to escape any local optimum.
+
+- **Helpful tools:**  
+  - `numpy` for vectorized distance calculations and layout generation.  
+  - `scipy.optimize.linprog` (already imported) for the LP formulation.  
+  - Small helper routines for building the constraint matrix, evaluating feasibility, and performing the optional refinement.
+
+### What to Avoid (Failed Approaches)  
+- **Omitting definitions** for any helper routine you call – this will raise `NameError`. All utilities must be defined inside the evolve block.  
+- **Returning layouts that violate constraints** (e.g., circles extending beyond the unit square or overlapping). Ensure the LP constraints are correctly assembled.  
+- **Hard‑coding a single layout** without exploring alternatives; this dramatically reduces the achievable radius.  
+- **Using global variables** or relying on state outside the evolve block. Keep everything self‑contained.  
+- **Including calls to `run_packing()` or `visualize()`** – these are automatically handled elsewhere and must not appear in your output.
+
+### Implementation Advice  
+- Structure the code with a clear main routine that orchestrates the steps above, and separate helper functions for:  
+  * layout generation (grid, hex, random jitter)  
+  * LP constraint construction  
+  * LP solving and radius extraction  
+  * optional local refinement  
+- Keep the API of the main routine simple: it should return a tuple `(centers, radius)` where `centers` is an `(26, 2)` NumPy array.  
+
+Follow the format rules strictly, and ensure the block is a complete, runnable replacement for the previous implementation.

@@ -1,0 +1,140 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 4503 chars
+- Current best prompt length: 4809 chars
+
+## Convergence History:
+### Successful Patterns:
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.8969
+- Valid: 4, Invalid: 1
+- Failure modes: ['Validity failures: 1/5 (20.0%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **structured_ring_pattern** (1 attempts, worked)
+    Places one large circle at the center and eight circles on a fixed ring around it, then adds the remaining circles arbitrarily.
+  - **candidate_centers_with_lp** (1 attempts, worked)
+    Generates several candidate center configurations, solves a linear program to maximize radii for each configuration, and selects the best.
+  - **nearest_neighbor_radius_heuristic** (1 attempts, worked)
+    Computes radii as the minimum of the distance to the square borders and half the distance to the nearest other center.
+  - **hexagonal_lattice_with_spacing** (1 attempts, struggled)
+    Builds a hexagonal lattice of points inside the unit square and assigns radii based on pairwise distances, but fails due to shape mismatches.
+
+### Best Result (score: 0.8969):
+  **Main Idea:** The algorithm first generates a set of circle centers (likely via a grid or random placement), then computes each circle's radius as the minimum of its distance to the square borders and half the distance to its nearest neighbor. This simple heuristic yields a high total radius while guaranteeing non‑overlap and containment.
+  **Placement:** Centers are produced by a deterministic grid or random sampling (the exact method is truncated but inferred to be a uniform or quasi‑uniform distribution).
+  **Radius:** Radii are calculated by `wall_dist = min(x, y, 1-x, 1-y)` and `nearest = min(pairwise_distances)/2`, then taking the element‑wise minimum of these two arrays.
+  **Constraints:** Non‑overlap is enforced by the half‑nearest‑neighbor rule, and containment is enforced by clipping radii to the wall distances. All radii are clipped to non‑negative values.
+
+### Score Improvements:
+  - Iter 1: +0.2585 - Switched from a fixed ring pattern to a candidate‑center LP approach, allowing radii to be optimized for each configuration.
+  - Iter 2: +0.2742 - Replaced the LP with a simple nearest‑neighbor radius heuristic, which dramatically increased the total radius while keeping the algorithm fast.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Early attempts used overly rigid geometric patterns (e.g., a single ring) that limited the achievable total radius.
+  - Pattern 2: The lattice‑based approach failed because the list of points was not converted into a proper NumPy array before radius calculation, leading to shape mismatches.
+
+### Novel Discoveries:
+  - Using the half‑nearest‑neighbor distance as a radius bound is an elegant, computationally cheap way to guarantee non‑overlap without solving a full LP.
+
+### Error Patterns:
+  - Invalid shapes: 1 occurrences
+    Likely cause: The list of lattice points was not reshaped into a 2‑D NumPy array before being passed to the radius computation, causing broadcasting errors.
+
+### Convergence Analysis:
+  - Trend: improving until iteration 2, then plateauing/declining
+  - Best Score: 0.8969
+  - Iterations Since Improvement: 2
+  - Approach Diversity: high
+
+### Recommendations:
+  - Introduce a global optimization step (e.g., simulated annealing or differential evolution) on top of the nearest‑neighbor heuristic to fine‑tune center positions and potentially increase the total radius further.
+  - Replace the simple nearest‑neighbor radius calculation with a linear‑programming formulation that includes all pairwise non‑overlap constraints; this can yield tighter radius bounds while still being tractable for 26 circles.
+  - Fix the lattice approach by ensuring the point list is converted to a NumPy array of shape (n,2) before radius computation, and then combine the lattice initialization with a local refinement (e.g., gradient descent on radii).
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidelines**
+
+You are to generate **only** the Python code that will appear between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. Do **not** output the markers themselves, any surrounding code (e.g., `run_packing()` or `visualize()`), or any explanatory text. The submitted snippet will be merged with the fixed outer program automatically.
+
+**Output Requirements**
+- Return **exactly** the code to fill the evolve block.  
+- No extra characters, comments, or markdown formatting outside the code.  
+- Every function or variable you reference must be defined within this block.  
+
+**Allowed Imports**
+- You may add additional import statements (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available, but you may import them again if you wish.
+
+**Goal**
+Create an algorithm that constructs positions for 26 circles inside the unit square and assigns each a feasible radius. The solution should maximize the total radius (and any hidden quality metric) while guaranteeing:
+1. All circles lie completely inside the square.
+2. No two circles overlap.
+
+**Proven Effective Strategies (keep these ideas)**
+- **Uniform / Quasi‑Uniform Center Generation**: Start with a deterministic grid, low‑discrepancy sequence, or well‑spaced random points to obtain an initial set of 26 centers that roughly fill the square.
+- **Nearest‑Neighbor Radius Rule**: For each center, compute the distance to the four square edges (`wall_dist = min(x, y, 1‑x, 1‑y)`) and the distance to the closest other center. Set the radius to the smaller of `wall_dist` and half of that nearest‑center distance. This guarantees non‑overlap and containment with minimal computation.
+- **Iterative Refinement**: After the initial radii are computed, optionally perform a few passes that slightly adjust centers (e.g., small random jitter or gradient‑based movement) followed by recomputation of radii, accepting changes only if the total radius improves and all constraints remain satisfied.
+- **Simple Local Optimization**: A lightweight optimizer (e.g., `scipy.optimize.minimize` with bounds) can be applied to each center individually while keeping the others fixed, using the same radius rule as the objective. This can fine‑tune positions without heavy global computation.
+
+**What to Avoid (failed approaches)**
+- **Rigid Geometric Patterns** (e.g., a single ring or fixed lattice) that severely limit the achievable total radius.
+- **Incorrect Data Shapes**: Ensure any list of points is converted to a NumPy array of shape `(n, 2)` before vectorized distance calculations. Broadcasting errors will cause runtime failures.
+- **Over‑Complex Global LPs**: Formulating a full linear program with all pairwise non‑overlap constraints can become intractable for 26 circles and may produce infeasible solutions if not carefully bounded.
+- **Unvalidated Radius Assignment**: Directly assigning radii without checking both wall and neighbor constraints leads to overlap or out‑of‑bounds circles, causing the validity check to fail.
+
+**Implementation Guidance**
+1. **Generate Centers** – Use a deterministic pattern (e.g., a jittered grid) or a low‑discrepancy sequence to obtain 26 points inside `(0,1)²`. Shuffle or perturb them slightly to avoid symmetry.
+2. **Compute Radii** – Implement a helper that, given an array of centers, returns a radius array using the nearest‑neighbor rule combined with wall distances. Clip any negative values to zero.
+3. **Refine Positions (optional)** – Loop a small number of times:
+   - Propose a tiny random displacement for a randomly chosen center.
+   - Re‑compute radii for the modified set.
+   - Accept the move only if the new total radius is larger and all constraints hold.
+4. **Return Results** – Provide the final centers and radii in the format expected by the outer code (typically two NumPy arrays).
+
+Remember: every helper you call must be defined within the block you output. Follow the output format strictly to ensure successful integration.

@@ -1,0 +1,71 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are to generate **only** the Python code that will replace the contents between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers. Do not include the marker lines themselves, any surrounding code, or any explanatory text outside of valid Python. The outer framework will insert `run_packing()` and `visualize()` automatically.
+
+### Mandatory Output Rules
+- Output **exactly** the code fragment to be placed inside the evolve block.  
+- No markdown fences, comments that are not part of the code, or any other non‑code characters.  
+- All functions that your code calls must be defined within this fragment. Missing definitions will cause a runtime error.
+
+### Imports
+- You may add additional import statements if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available.
+
+### Focus of the Implementation
+- Design a pipeline that constructs a high‑quality packing of 26 equal‑radius circles inside the unit square.
+- The algorithm should follow these proven steps, expressed in your own modular functions:
+
+1. **Dense Hexagonal Candidate Generation**  
+   - Create a hexagonal lattice that fully covers the unit square.  
+   - Use a spacing that yields roughly 40‑60 candidate points.  
+   - Optionally add a small random jitter to each candidate to break symmetry.
+
+2. **Linear‑Programmed Radius Maximization**  
+   - For the fixed candidate centers, formulate a linear program that maximizes the sum (or average) of radii.  
+   - Constraints: each radius ≤ distance to the four square borders; for every pair of candidates, radius_i + radius_j ≤ Euclidean distance between their centers.  
+   - Solve the LP to obtain a feasible radius for every candidate.
+
+3. **Selection of Top Candidates**  
+   - Sort candidates by the obtained radius and keep the 26 with the largest values.  
+   - Preserve their centers and radii as the initial packing.
+
+4. **Local Continuous Refinement**  
+   - Use a gradient‑based optimizer (e.g., `scipy.optimize.minimize` with method `SLSQP`) to jointly adjust the selected centers and radii.  
+   - Objective: maximize the minimum radius (or equivalently maximize the sum of radii).  
+   - Keep the same non‑overlap and border constraints as in the LP, but now allow the centers to move slightly for a tighter configuration.  
+   - Run the refinement for a modest number of iterations (e.g., 200‑300) to keep execution time reasonable.
+
+5. **Multiple Random Restarts**  
+   - Repeat steps 1‑4 a few times (e.g., 3‑5 restarts) with different jitter seeds or slightly varied lattice spacings.  
+   - Keep the packing that yields the largest minimum radius across all attempts.
+
+### What to Avoid (Common Failure Patterns)
+- **Undefined helpers**: Do not reference functions that are not defined in this block. Every called routine must have its own definition here.  
+- **Sparse candidate sets**: Grids with fewer than ~30 candidates typically cannot achieve high density; ensure the lattice is dense enough.  
+- **Shape mismatches**: When building the LP matrices, verify that vector and matrix dimensions align; mismatched shapes cause immediate crashes.  
+- **Missing constraints**: Forgetting either the border or the pairwise non‑overlap constraints leads to invalid packings and score penalties.  
+- **Excessive runtime**: Extremely large candidate pools or overly long optimizer runs can exceed the time budget; keep the total number of candidates and optimizer iterations modest.
+
+### Implementation Tips
+- Structure the code with clear helper functions: one for lattice generation, one for LP formulation/solution, one for the SLSQP refinement, and a driver that orchestrates the restarts and selects the best result.  
+- Return from the main construction routine a tuple or dictionary containing the final centers and radii in the format expected by the outer framework.  
+- Include appropriate `if __name__ == "__main__":` guard only if you need to test locally; it will be ignored when the block is inserted.  
+
+Follow these guidelines precisely to produce a self‑contained, robust solution that improves the packing density while satisfying all evaluation constraints.

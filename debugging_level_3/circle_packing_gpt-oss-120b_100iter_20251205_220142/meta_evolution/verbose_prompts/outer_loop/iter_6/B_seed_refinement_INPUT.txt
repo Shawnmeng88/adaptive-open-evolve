@@ -1,0 +1,152 @@
+# Prompt Type: B
+# Outer Iteration: 6
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 6
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 7286 chars
+- Current best prompt length: 5276 chars
+
+## Convergence History:
+### Successful Patterns:
+- Change that helped: expanded by 519 chars
+- Change that helped: expanded by 881 chars
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+- Change that helped: minor changes
+- Change that helped: condensed by 311 chars
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9980
+- Valid: 7, Invalid: 3
+- Failure modes: ['Validity failures: 3/10 (30.0%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **RegularGridDirectRadius** (1 attempts, struggled)
+    Places 26 circles on a 5×5 regular grid and clips radii to borders and nearest neighbours.
+  - **HexLatticeLP** (5 attempts, struggled)
+    Generates a hexagonal lattice of candidate centres, then solves a linear program to maximise the sum of radii under border and non‑overlap constraints.
+  - **LPRefineSLSQP** (3 attempts, worked)
+    After the LP, selects the top 26 circles and refines positions and radii with a short SLSQP optimisation, improving feasibility and objective.
+  - **RandomJitter** (2 attempts, struggled)
+    Adds a small random perturbation to lattice points to escape symmetric configurations, but alone does not yield valid solutions.
+
+### Best Result (score: 0.998):
+  **Main Idea:** A dense hexagonal lattice of candidate centres is first generated. A linear programme assigns maximal radii to all candidates while respecting borders and pairwise distance constraints. The 26 circles with the largest radii are then taken as an initial configuration and jointly optimised with SLSQP. Multiple random restarts are performed and the best solution is kept.
+  **Placement:** Hexagonal lattice covering the unit square with optional jitter.
+  **Radius:** Linear programming that maximises the sum of radii subject to linearised non‑overlap and border constraints.
+  **Constraints:** The LP guarantees feasibility; SLSQP further enforces non‑overlap and border constraints locally, and circles with zero radius are discarded to keep exactly 26 circles.
+
+### Score Improvements:
+  - Iter 28: +0.996 - Introduced LP radius optimisation with hexagonal lattice and SLSQP refinement, moving from a zero score to a high‑quality packing.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Simple grid or hexagonal placement without a refinement step consistently yields zero or invalid scores because the radii are clipped too aggressively or overlap constraints are not fully enforced.
+  - Pattern 2: Incomplete or syntactically incorrect code fragments (missing parentheses, undefined functions) prevent the solver from executing, leading to repeated failures.
+
+### Novel Discoveries:
+  - Using a linear programme to compute maximal radii for a large candidate set and then selecting the top 26 circles is an effective way to initialise a high‑quality packing.
+  - Combining the LP with a short SLSQP refinement and random restarts yields a significant jump in the objective.
+  - Adding a tiny random jitter to lattice points can help escape symmetric dead‑ends, though it must be coupled with a robust optimisation step.
+
+### Error Patterns:
+  - Invalid shapes: 1 occurrences
+    Likely cause: Mismatch between expected array dimensions in the LP formulation.
+  - name not defined: 1 occurrences
+    Likely cause: Missing function definition (e.g., generate_hex_centers) before use.
+  - unclosed parenthesis: 1 occurrences
+    Likely cause: Syntax error due to an unfinished string or function call.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.998
+  - Approach Diversity: high
+
+### Recommendations:
+  - Continue using the LP + SLSQP pipeline but increase the number of random restarts and diversify the initial lattice spacing to explore more configurations.
+  - Implement a robust error‑handling wrapper that catches syntax and shape errors early, allowing the evolutionary process to skip faulty candidates without halting.
+  - Experiment with a multi‑objective LP that directly maximises the minimum radius as well as the sum of radii, potentially yielding more uniform packings.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_6):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Generation**
+
+You must output **only** the Python code that will replace the contents of the evolve block (the region between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`). Do **not** include the marker lines themselves, any surrounding code, or calls such as `run_packing()` or `visualize()`. The outer framework will insert those automatically.
+
+### Mandatory Output Rules
+- **Exact content**: the submitted text must be a valid Python module fragment that can be placed directly between the two markers.
+- **No extra characters**: do not wrap the code in markdown fences, comments outside normal code, or any other non‑code text.
+- **All dependencies**: any function, class, or variable you reference must be defined within this fragment (or imported here). Missing definitions will cause a `NameError`.
+- **Imports**: you may add import statements if needed, but `numpy as np` and `scipy.optimize.linprog` are already available globally. Do not re‑import modules that are already present unless you need additional packages.
+
+### Focus of the Implementation
+- **Goal**: construct a high‑quality packing of exactly 26 circles inside the unit square, maximizing the total area (or equivalently the sum of radii) while respecting border and non‑overlap constraints.
+- **Effective strategy (keep)**  
+  1. **Generate a dense hexagonal lattice** of candidate centre points that covers the unit square. Optionally add a tiny random jitter to each point to break symmetry.  
+  2. **Formulate a linear program** that assigns a radius to every candidate point. The LP should:  
+     - Maximise the sum of all radii (or a weighted combination of sum and minimum radius).  
+     - Enforce that each radius is non‑negative and does not exceed the distance to the square’s edges.  
+     - Impose linearised non‑overlap constraints: for any pair of candidates, the sum of their radii must be ≤ the Euclidean distance between the centres.  
+  3. **Select the 26 candidates with the largest radii** from the LP solution; discard the rest.  
+  4. **Refine the chosen 26 circles** with a short, constrained local optimisation (e.g., `scipy.optimize.minimize` using the SLSQP method) that directly enforces the true (non‑linear) distance constraints and border limits.  
+  5. **Perform multiple random restarts**: repeat steps 1‑4 with different lattice spacings and jitter seeds, keeping the best feasible packing found.  
+  6. **Return** the final arrays of centre coordinates and radii in the format expected by the outer framework.
+
+- **Helper utilities** you may include:  
+  * Function to build the hexagonal lattice given a spacing parameter.  
+  * Function to compute pairwise distances efficiently (e.g., using NumPy broadcasting).  
+  * Wrapper that builds the LP matrices (`A_ub`, `b_ub`, `c`) from the candidate set.  
+  * Small routine that runs the SLSQP refinement for a given initial configuration.  
+  * Optional random‑restart driver that aggregates results and selects the best.
+
+### Patterns that Must Be Avoided (failed approaches)
+- **Plain regular grids** without any subsequent optimisation – they leave large unused space and often violate the radius constraints after clipping.
+- **Missing definitions**: any helper you call must be defined in this fragment; otherwise the program crashes before evaluation.
+- **Syntax errors** such as unmatched parentheses, stray commas, or incorrect indentation – these prevent the code from loading.
+- **Overly aggressive radius clipping** before the LP step, which reduces the feasible region and leads to zero‑score solutions.
+- **Skipping the non‑linear refinement**: relying solely on the LP solution can leave marginal overlaps because the LP uses linearised constraints.
+
+### Additional Guidance
+- Keep numerical tolerances reasonable (e.g., `1e-9`) when checking feasibility after refinement.
+- Ensure the LP is built with a feasible initial bound (e.g., set every radius ≤ 0.5) to avoid infeasibility due to overly tight constraints.
+- When performing random restarts, vary both the lattice spacing (e.g., between 0.07 and 0.15) and the jitter amplitude (e.g., up to 0.005) to explore diverse configurations.
+- Return the final result as two NumPy arrays: `centers` of shape `(26, 2)` and `radii` of shape `(26,)`.
+
+Follow the rules above precisely; the resulting code will be inserted into the evolve block and executed by the outer system. Good luck!

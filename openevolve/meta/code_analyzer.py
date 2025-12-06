@@ -196,7 +196,7 @@ class CodeAnalyzer:
         
         for i, sample in enumerate(samples):
             # Truncate code to keep prompt size reasonable
-            code_preview = sample.code[:1500] if len(sample.code) > 1500 else sample.code
+            code_preview = sample.code[:1000] if len(sample.code) > 1000 else sample.code
             
             lines.append(f"### Sample {i+1} (Iteration {sample.iteration})")
             lines.append(f"Score: {sample.score:.4f}, Validity: {sample.validity}")
@@ -264,7 +264,7 @@ class CodeAnalyzer:
         
         # Combine and deduplicate
         samples_to_analyze = list({id(s): s for s in best_samples + recent_samples + failed_samples}.values())
-        samples_to_analyze = sorted(samples_to_analyze, key=lambda s: s.iteration)[:15]  # Cap at 15
+        samples_to_analyze = sorted(samples_to_analyze, key=lambda s: s.iteration)[:7]  # Cap at 15
         
         logger.info(f"Analyzing {len(samples_to_analyze)} samples with LLM ({self.analysis_model})")
         
@@ -282,7 +282,7 @@ class CodeAnalyzer:
                 model=self.analysis_model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3,  # Low temp for consistency
-                max_tokens=2000,
+                max_tokens=4000,
             )
             
             content = response.choices[0].message.content

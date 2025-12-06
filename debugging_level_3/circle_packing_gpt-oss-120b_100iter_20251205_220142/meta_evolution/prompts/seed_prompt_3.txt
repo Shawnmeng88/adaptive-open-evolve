@@ -1,0 +1,59 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Code Evolution**
+
+You must output **only** the Python code that belongs between the `# EVOLVE‑BLOCK‑START` and `# EVOLVE‑BLOCK‑END` markers. Do **not** include the markers themselves, any surrounding explanatory text, or calls to `run_packing()` / `visualize()`. The surrounding framework will automatically insert those parts.
+
+### Mandatory Output Rules
+- Return **exactly** the code that will replace the contents of the evolve block.
+- No extra characters, markdown fences, or comments outside normal code comments.
+- Do **not** import modules that are already available unless you need additional functionality.
+- Every function, class, or variable you reference must be **fully defined** within the submitted code block.
+
+### Imports
+- `numpy as np` and `scipy.optimize.linprog` are already available.
+- You may add further imports (e.g., `from scipy.optimize import minimize`) if required.
+
+### Focus of the Implementation
+- Design an algorithm that constructs a high‑quality packing of **26 circles** inside the unit square.
+- The algorithm should follow the **successful pattern** identified in previous iterations:
+  1. **Initial layout** – generate a dense set of candidate positions using a hexagonal (or mixed hex‑rectangular) lattice that covers the unit square.  
+     • Optionally add a small random jitter to each point to break symmetry.  
+  2. **Linear‑programming radius assignment** – with the candidate positions fixed, formulate a linear program that maximizes the sum of radii while enforcing:
+     - each radius ≤ distance to the nearest square edge,
+     - pairwise distance between centers ≥ sum of the two radii.
+     Solve this LP to obtain a feasible set of radii.
+  3. **Non‑linear refinement** – use a constrained optimizer (e.g., SLSQP via `scipy.optimize.minimize`) to jointly adjust **both** positions and radii, directly maximizing the total radius sum.  
+     • Include the same boundary and non‑overlap constraints as inequality constraints.  
+     • Start the optimizer from the LP solution to improve convergence.  
+  4. **Optional post‑processing** – you may add a lightweight stochastic step (e.g., simulated‑annealing‑style perturbations) after the SLSQP run to escape shallow local optima, followed by a brief re‑optimization.
+
+### What to Avoid (Failed Approaches)
+- **Pure fixed‑grid LP** without subsequent refinement tends to get trapped in sub‑optimal configurations and may violate the exact count of circles.
+- **Greedy pruning** from an over‑dense lattice often leads to invalid shapes due to mismatched array dimensions and can produce duplicate or missing circles.
+- Using a **dummy circle** solely to reach the required count is fragile; ensure the final set contains exactly 26 real circles without placeholders.
+- Omitting any of the required constraints (boundary or pairwise non‑overlap) will cause validity failures.
+
+### Additional Guidance
+- Keep the code modular: you may introduce helper functions for lattice generation, LP formulation, constraint building, and optimization.
+- Validate the final configuration before returning: confirm that exactly 26 circles are produced, all radii are non‑negative, each circle lies completely inside the unit square, and no two circles overlap.
+- Aim for clarity and numerical stability; use vectorized NumPy operations where possible and avoid excessive loops.
+
+**Remember:** The only output you provide will be inserted directly into the evolve block. Ensure it is self‑contained, syntactically correct, and adheres to all rules above.

@@ -1,0 +1,124 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 4304 chars
+- Current best prompt length: 3994 chars
+
+## Convergence History:
+### Successful Patterns:
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9256
+- Valid: 6, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **Ring-based placement with radius maximization** (1 attempts, mixed)
+    Circles are placed in concentric rings around a central circle, then radii are computed by a helper that maximizes each circle’s radius while respecting non‑overlap and boundary constraints.
+  - **Hexagonal lattice uniform radius** (1 attempts, worked)
+    A regular hexagonal (triangular) grid is constructed inside the unit square; all circles share the same radius derived from the most restrictive spacing between rows and columns.
+  - **Linear‑programming radius optimization (imported but unused)** (0 attempts, mixed)
+    The code imports `linprog` suggesting an intention to formulate the radius‑maximization as a linear program, but this approach is not instantiated in the provided samples.
+
+### Best Result (score: 0.9256):
+  **Main Idea:** The best scoring code uses a hexagonal lattice to place 26 circles with a uniform radius that is the largest possible given the square’s width and height constraints.
+  **Placement:** Centers are arranged in 6 rows and 5 columns with alternating horizontal offsets of half the spacing, forming a staggered hexagonal pattern.
+  **Radius:** The horizontal spacing `s` is chosen as the minimum of the width‑limited and height‑limited values; the radius is then `s/2`.
+  **Constraints:** The spacing calculation guarantees that the entire lattice fits inside the unit square; the uniform radius ensures no overlap because the lattice spacing equals twice the radius.
+
+### Score Improvements:
+  - Iter 1: +0.5614 - Switched from a ring‑based layout to a hexagonal lattice, yielding a much larger uniform radius.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Ring‑based designs often leave large gaps or force very small radii to avoid overlap, limiting the achievable score.
+  - Pattern 2: Incomplete or syntactically broken code (e.g., missing parentheses, truncated functions) prevents the solver from running and masks potential improvements.
+
+### Novel Discoveries:
+  - Using a hexagonal lattice to achieve a high uniform radius is an effective strategy for this problem, as it naturally maximizes packing density within a square.
+
+### Error Patterns:
+  - SyntaxError: 2 occurrences
+    Likely cause: Truncated code blocks and missing parentheses caused the interpreter to raise syntax errors.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.9256
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Implement a linear‑programming routine that takes arbitrary center positions and solves for the maximum feasible radii; this would allow hybrid layouts that combine lattice structure with local adjustments.
+  - Add a stochastic local‑search (e.g., simulated annealing or gradient‑based perturbations) on top of the hexagonal lattice to fill remaining gaps and potentially increase the total radius sum.
+  - Introduce a validation step that automatically detects and corrects syntax or structural errors in generated code blocks before evaluation, ensuring that promising designs are not discarded due to trivial bugs.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are to generate **only** the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+
+- **Do not** output the marker lines themselves.  
+- **Do not** include calls to `run_packing()` or `visualize()` – those are added automatically.  
+- **All** functions that your code calls must be defined inside this block; missing definitions will cause a runtime error.  
+
+### What to Aim For  
+1. **Geometric construction** – Build the circle centers using a dense, regular pattern that fits naturally inside the unit square (e.g., a staggered/hexagonal lattice). Compute the uniform spacing that respects both horizontal and vertical limits, then derive the maximal feasible radius from that spacing.  
+
+2. **Radius maximization** – After placing the centers, optionally apply a small optimization step (such as a linear‑programming or simple gradient update) to increase each radius individually while still satisfying:  
+   - No two circles overlap (distance between centers ≥ sum of radii).  
+   - Every circle stays completely inside the unit square (center coordinate ± radius stays within [0, 1]).  
+
+3. **Local refinement** – If the uniform‑radius lattice leaves unused space, perform a lightweight local‑search (e.g., random perturbations with acceptance only when the total sum of radii improves). Limit the number of iterations to keep runtime low.
+
+### What to Avoid  
+- **Ring‑based or concentric‑circle layouts** – they tend to waste space and force very small radii, reducing the combined score.  
+- **Incomplete or syntactically broken code** – missing parentheses, unmatched brackets, or truncated statements will raise errors before evaluation.  
+- **Calling helpers that are not defined** – every referenced routine must appear in the output block.  
+
+### Implementation Tips  
+- Use `numpy` for vectorized distance calculations and candidate generation.  
+- You may import additional modules (e.g., `from scipy.optimize import linprog` or `minimize`) inside the block if they help with the radius‑optimization step.  
+- Keep the overall structure simple: a main construction routine, a helper that computes the maximal uniform spacing, an optional optimizer, and any small utility functions you need.  
+
+Remember: **the only output should be the complete, self‑contained code for the evolve block** following the format rules above.

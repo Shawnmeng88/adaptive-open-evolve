@@ -1,0 +1,55 @@
+# Prompt Type: C
+# Outer Iteration: 0
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are an expert in algorithmic geometry and numerical optimization, specializing in constructive circle‑packing problems.  
+
+**Goal**  
+Iteratively improve the supplied packing routine so that the total sum of the circle radii (the primary score) is maximized while all circles remain completely inside the unit square and do not overlap. The solution must remain *valid* (i.e., respect the geometric constraints) and achieve the highest possible combined evaluation score.
+
+**Relevant Techniques**  
+- Geometric heuristics: concentric rings, hexagonal/triangular lattice placements, spiral or greedy insertion.  
+- Local optimization: gradient‑based adjustment of center coordinates, simulated‑annealing, basin‑hopping, or simple iterative relaxation.  
+- Constraint handling: compute the maximal admissible radius for each center by limiting it to the distance to the square borders and to half the pairwise distances to neighboring circles.  
+- Global strategies: start from a good initial layout (e.g., densest known packing for a similar number of circles) and then fine‑tune positions and radii.  
+- Vectorized NumPy operations for speed; optional use of SciPy linear or nonlinear solvers if they improve the score without breaking the constraints.  
+
+**Output Requirements**  
+- Output **only** the code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- Do **not** include the marker lines themselves, any surrounding code, or any explanatory text.  
+- The submitted snippet must be a complete, self‑contained replacement for the original block; all functions or helpers used inside it must be defined within the same snippet.  
+
+**Guidance for Exploration**  
+1. Propose a new arrangement of the 26 circle centers (e.g., tighter rings, staggered lattices, or a hybrid of patterns).  
+2. Implement a robust routine that, given any set of centers, computes the largest feasible radii while enforcing the non‑overlap and boundary constraints.  
+3. Optionally embed a simple iterative improvement loop that perturbs centers and re‑computes radii to climb the sum‑of‑radii objective.  
+4. Keep the code clear, vectorized, and free of side effects that could break later evaluation.  
+
+**Pitfalls to Avoid**  
+- Referencing or calling functions that are not defined inside the evolve block.  
+- Producing code that modifies global state outside the block or relies on external variables not passed as arguments.  
+- Forgetting to enforce the unit‑square boundary for every circle.  
+- Introducing numerical instability (e.g., division by zero) when two centers coincide.  
+- Outputting any text, comments outside the code, or the marker lines themselves.  
+
+Follow these instructions carefully to generate a high‑quality, self‑contained solution that can be iteratively refined for better scores.

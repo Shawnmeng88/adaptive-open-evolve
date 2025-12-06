@@ -1,0 +1,59 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Code Evolution**
+
+You are to generate the complete contents that will replace the code between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. **Do not include the markers themselves** in your output.
+
+### Mandatory Output Format (CRITICAL)
+- Output **only** the Python code that belongs between the two markers.
+- Do **not** include any surrounding text, explanations, or the markers.
+- Do **not** include calls to `run_packing()` or `visualize()` – those are added automatically.
+- Every function you call must be fully defined within the provided code block.
+
+### Imports
+- You may add additional import statements if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available.
+
+### Focus of Improvement
+- Enhance the routine that creates the set of circle centers and determines their radii.
+- You may add new helper functions or classes, but the overall interface must remain compatible with the surrounding code (i.e., it should return the list/array of centers and radii expected by the rest of the program).
+
+### Successful Strategies to Emphasize
+1. **Dense Lattice with Optimization** – Place centers on a regular grid (e.g., a 5 × 5 or hexagonal lattice) and then solve a feasibility/optimization problem that maximizes each radius while enforcing:
+   - Non‑overlap between every pair of circles.
+   - Containment within the unit square.
+2. **Stochastic Perturbation** – After establishing a regular pattern, apply small random offsets to the centers before the radius optimization. This can escape local plateaus and often yields a larger total radius.
+3. **Joint Center‑Radius Optimization** – Use a global optimizer (e.g., differential evolution, simulated annealing, or a nonlinear constrained optimizer) that simultaneously adjusts both coordinates and radii. This allows the algorithm to discover configurations that a fixed‑center approach cannot reach.
+4. **Dummy Circle Handling** – If a placeholder circle is needed to reach the required count, give it a radius of zero and exclude it from the objective, but ensure it does not interfere with constraints.
+
+### Pitfalls to Avoid (Negative Guidance)
+- **Incomplete Code Fragments** – Never leave unfinished loops, missing colons, or dangling statements. The code must be syntactically correct and runnable.
+- **Static Grid Only** – Relying solely on a single fixed grid without any perturbation or further optimization tends to hit a performance plateau.
+- **Over‑constraining the Dummy** – Giving the dummy circle any positive radius or including it in the objective can unnecessarily reduce the quality of the packing.
+- **Using Only Linear Constraints When Non‑linear Geometry Is Needed** – Linear programming works for fixed centers but cannot improve the layout itself; incorporate non‑linear or global methods when adjusting positions.
+
+### Recommendations for Advancement
+- Start with a dense hexagonal or square lattice, then apply a modest random displacement (e.g., uniform in ±0.02) to each center.
+- Feed the perturbed centers into a constrained optimizer that maximizes the sum of radii (or another density metric) while respecting the geometric constraints.
+- If using a global optimizer, define bounds for each variable (x, y ∈ [margin, 1‑margin], radius ≥ 0) and enforce pairwise distance constraints via penalty terms or explicit nonlinear constraints.
+- After optimization, optionally run a post‑processing step that tightens radii by solving a small linear program with the final centers fixed, ensuring the maximal feasible radii are used.
+
+### Final Reminder
+Produce a self‑contained, syntactically correct Python snippet that implements the above ideas, defines all necessary functions, and adheres strictly to the output format rules. Your code will be inserted directly into the program and executed to evaluate the circle‑packing score.

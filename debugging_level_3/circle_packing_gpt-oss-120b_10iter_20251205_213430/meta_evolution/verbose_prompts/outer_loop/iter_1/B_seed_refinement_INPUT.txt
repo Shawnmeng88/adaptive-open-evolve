@@ -1,0 +1,144 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 4079 chars
+- Current best prompt length: 4711 chars
+
+## Convergence History:
+### Successful Patterns:
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.6848
+- Valid: 2, Invalid: 1
+- Failure modes: ['Validity failures: 1/3 (33.3%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **Ring-based deterministic placement** (1 attempts, mixed)
+    Places a central circle, then two concentric rings of circles at fixed radii. Radii are later computed by a helper function.
+  - **Hexagonal lattice with LP** (1 attempts, struggled)
+    Generates up to n points on a hexagonal grid inside the unit square and attempts to solve a linear program for radii. The LP formulation was incomplete, leading to shape errors.
+  - **Grid with jitter and LP** (1 attempts, worked)
+    Creates a 6×5 grid (trimmed to 26 points), optionally adds random jitter, and solves a linear program that maximizes the sum of radii while respecting wall and pairwise non‑overlap constraints.
+
+### Best Result (score: 0.6848):
+  **Main Idea:** Use a structured yet flexible grid of centers and compute optimal radii via linear programming. The grid provides a good initial layout, while jitter helps escape local optima.
+  **Placement:** A 6×5 regular grid spanning 0.05–0.95 in both axes is generated; the first 26 points are kept. Optional random jitter (±0.01) is added and points are clipped to remain inside the unit square.
+  **Radius:** A linear program is set up with objective to maximize the sum of radii. Constraints include: each radius ≤ distance to the nearest wall, and for every pair of circles r_i + r_j ≤ distance between centers. The LP is solved with `scipy.optimize.linprog`.
+  **Constraints:** All constraints are encoded in the LP; clipping ensures centers stay inside the square. The LP guarantees no overlap and wall compliance, so the solution is always valid.
+
+### Score Improvements:
+  - Iter 2: +0.3206 - Switched from rigid ring placement to a jittered grid and added a complete LP for radii.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Using a fixed lattice (hexagonal or ring) without any perturbation often leads to sub‑optimal radii because the layout cannot adapt to the LP’s optimal solution.
+  - Pattern 2: Incomplete LP formulations (missing constraints or mismatched array shapes) cause the solver to fail or return invalid solutions, halting progress.
+
+### Novel Discoveries:
+  - Adding a small random jitter to a regular grid allows the LP to find larger radii by breaking symmetry and exploring nearby feasible configurations.
+
+### Error Patterns:
+  - Invalid shapes: 1 occurrences
+    Likely cause: Mismatch between the number of variables and the shape of the constraint matrices when building the LP.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.6848
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Introduce adaptive jitter: gradually increase jitter magnitude if the LP solution stagnates, to explore new center configurations without destroying feasibility.
+  - Experiment with non‑linear or quadratic programming for radii, or use a force‑directed simulation to refine centers after the LP step.
+  - Incorporate symmetry or packing heuristics (e.g., hexagonal close packing) as a prior, then use the LP to fine‑tune radii, potentially achieving higher sums.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidelines**
+
+You are to generate **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. Do **not** output the markers themselves, any surrounding code, or calls to `run_packing()` / `visualize()`. The surrounding framework will automatically insert your code into the correct place.
+
+### Mandatory Output Format
+- **Only** the code that should appear between the two markers.
+- No additional text, comments outside the code block, or marker strings.
+- Every function you call must be fully defined within this output (the block must be self‑contained).
+
+### Imports
+- You may add extra import statements if needed (e.g., `from scipy.optimize import linprog`), but `numpy as np` and `scipy.optimize.linprog` are already available.
+
+### Objective
+Create a method that constructs a valid packing of **26 circles** inside the unit square and maximizes the provided `combined_score`. Validity must remain 1.0 (no overlaps, all circles fully inside the square).
+
+### Successful Strategies to Embrace
+1. **Structured but Flexible Layout**  
+   - Begin with a regular grid of points that spans the interior of the unit square (e.g., evenly spaced rows and columns, leaving a small margin from the edges).  
+   - Keep exactly 26 points; if the grid produces more, truncate or selectively drop points while preserving overall uniformity.  
+
+2. **Small Random Perturbations**  
+   - Apply a modest jitter (±0.01–0.02) to each grid point to break symmetry.  
+   - After jittering, clip coordinates to stay inside the unit square. This helps the subsequent optimization escape degenerate configurations and often yields larger feasible radii.
+
+3. **Linear‑Programming Radius Optimization**  
+   - Formulate a linear program that **maximizes the sum of radii** (or any linear combination that correlates with the hidden score).  
+   - Constraints:  
+     * For each circle, radius ≤ distance to the nearest wall (left, right, bottom, top).  
+     * For every unordered pair of circles, radius_i + radius_j ≤ Euclidean distance between their centers.  
+   - Solve with `scipy.optimize.linprog`.  
+   - Verify that the solution is feasible (all radii ≥ 0) before returning.
+
+4. **Adaptive Jitter (Optional Enhancement)**  
+   - If the LP solution yields a low total radius, increase the jitter magnitude slightly and resolve. Iterate a few times, keeping the best feasible result. This adaptive step should be lightweight to avoid excessive runtime.
+
+### Pitfalls to Avoid
+- **Fixed Lattice Without Perturbation** – Using a perfectly regular pattern (e.g., hexagonal or concentric rings) without jitter often forces many radii to be tiny due to symmetry‑induced constraints.
+- **Incomplete or Mis‑shaped LP** – Missing wall constraints, forgetting to include a pairwise constraint, or providing mismatched matrix dimensions will cause the solver to fail or return an invalid solution.
+- **Leaving Centers Outside the Unit Square** – Any jitter or clipping step that allows a coordinate < 0 or > 1 will break validity.
+- **Calling Undefined Helpers** – Every helper or utility you reference must be defined inside the block; otherwise a `NameError` will occur.
+
+### Implementation Guidance
+- Write a primary routine that orchestrates the steps: generate the base grid → apply jitter → clip → build and solve the LP → return the final arrays of centers and radii.  
+- You may split the logic into clear helper functions (e.g., for grid creation, jitter application, LP construction), but ensure each helper is included in the output.  
+- Keep the code concise, avoid heavy loops over all pairs when possible (use vectorized NumPy operations to build the constraint matrix efficiently).  
+- After solving, perform a quick sanity check: confirm that for every pair the radii sum does not exceed the center distance (allow a tiny epsilon for numerical tolerance). If the check fails, fall back to a slightly reduced jitter and resolve.
+
+Follow these instructions precisely; the resulting code will be inserted into the larger program and evaluated for score and validity. Good luck!

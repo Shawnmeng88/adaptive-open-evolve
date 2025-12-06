@@ -1,0 +1,109 @@
+# Prompt Type: B
+# Outer Iteration: 3
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 3
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 7304 chars
+- Current best prompt length: 3921 chars
+
+## Convergence History:
+### Successful Patterns:
+- Negative guidance (what to avoid) helped
+- Change that helped: added 'step'; expanded by 258 chars
+- Change that helped: condensed by 1048 chars
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.7792
+- Valid: 1, Invalid: 1
+- Failure modes: ['Validity failures: 1/2 (50.0%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Recommendations:
+  - Analysis failed - could not parse LLM response
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_3):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidelines**
+
+You must output **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. Do **not** include the markers themselves, any surrounding code, or calls to external driver functions such as `run_packing()` or `visualize()`. The system will automatically merge your output with the preserved code sections.
+
+### Mandatory Output Format  
+- **Only** the code that should appear between the two markers.  
+- No additional text, comments outside the code block, or the marker strings themselves.  
+- Every function you invoke must be fully defined within this output; the block must be self‑contained.
+
+### Imports  
+- You may add extra import statements if needed.  
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block.
+
+### Focus  
+Improve the circle‑packing construction logic. You may add new helper functions, adjust existing ones, or reorganize the flow, but all referenced functions must be defined in the block you produce.
+
+### Successful Approaches to Emulate (algorithmic description, not specific names)  
+1. **Generate Diverse Candidate Layouts**  
+   - Create several sets of circle centers inside the unit square, e.g., a jittered hexagonal grid, a perturbed regular lattice, and a purely random placement.  
+   - Ensure each candidate respects the square boundaries (center coordinates in `[r, 1‑r]` for any radius `r`).  
+
+2. **Solve a Linear Program for Uniform Radii**  
+   - For each candidate layout, formulate a linear program that maximizes a single scalar radius `r` subject to:  
+     * Pairwise non‑overlap constraints: `||c_i‑c_j|| ≥ 2r` for all `i < j`.  
+     * Boundary constraints: `r ≤ c_i.x ≤ 1‑r` and `r ≤ c_i.y ≤ 1‑r`.  
+   - Use `scipy.optimize.linprog` (or an equivalent convex optimizer) to obtain the maximal feasible `r`.  
+
+3. **Select the Best Feasible Packing**  
+   - Evaluate all candidates, keep the one with the largest radius that satisfies all constraints within a small tolerance (e.g., `1e‑8`).  
+   - Return the chosen centers and the corresponding radius.  
+
+4. **Robust Feasibility Check**  
+   - After solving the LP, recompute distances to confirm that every pair and every boundary satisfies the constraints, correcting for numerical error if necessary.  
+
+### What to Avoid (failed strategies)  
+- **Skipping the feasibility verification step** – this caused many solutions to be rejected as invalid.  
+- **Using non‑convex or gradient‑based optimization without proper bounds** – resulted in radii that violated constraints or produced NaNs.  
+- **Returning radii larger than the distance to the nearest wall** – leads to immediate validity failures.  
+- **Hard‑coding a single layout** – reduces the chance of finding a high‑quality packing for the target number of circles.  
+
+### Reminders  
+- All functions you call (including any new helpers) must be defined within the code you output.  
+- Keep the code concise but clear; excessive verbosity can introduce bugs.  
+- Preserve numerical stability by using a small epsilon when comparing distances.  
+
+Proceed to implement the improved packing construction logic following the guidelines above.

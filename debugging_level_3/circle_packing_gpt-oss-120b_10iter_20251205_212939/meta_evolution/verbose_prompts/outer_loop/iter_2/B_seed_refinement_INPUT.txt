@@ -1,0 +1,145 @@
+# Prompt Type: B
+# Outer Iteration: 2
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 2
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 4858 chars
+- Current best prompt length: 3990 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Change that helped: added 'step'; expanded by 330 chars
+- Negative guidance (what to avoid) helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.8109
+- Valid: 2, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **Manual ring placement** (1 attempts, struggled)
+    Circles are arranged in concentric rings around a central circle, with radii computed by a helper function. The layout is hand‑crafted and does not adapt to the geometry of the square.
+  - **Hexagonal lattice + LP + hill climbing** (1 attempts, worked)
+    A dense hexagonal lattice is generated, the most interior points are selected, and a linear program maximises the sum of radii under non‑overlap and boundary constraints. The resulting centers are then locally refined by hill‑climbing.
+  - **Local hill‑climbing refinement** (1 attempts, mixed)
+    After the LP step, the centers are perturbed in small steps to escape local optima. The refinement improves packing density but is sensitive to step size and iteration count.
+
+### Best Result (score: 0.8109):
+  **Main Idea:** Use a hexagonal lattice to generate a dense set of candidate centers, pick the most interior ones, solve a linear program to maximise the sum of radii while respecting non‑overlap and boundary constraints, then locally refine the centers with hill‑climbing.
+  **Placement:** Centers are first placed on a hexagonal lattice (spacing 0.13) and the 26 points with the largest minimum distance to the square borders are selected.
+  **Radius:** A linear program maximises the sum of radii with constraints: each radius ≤ distance to the nearest border and ≤ half the distance to every other center.
+  **Constraints:** The LP guarantees that all circles stay inside the unit square and do not overlap. The hill‑climbing step only accepts moves that keep the solution feasible.
+
+### Score Improvements:
+  - Iter 1: +0.4467 - Switched from manual ring placement to a hexagonal lattice + LP + hill‑climbing pipeline.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Manual ring placement often places circles too close to the square edges, forcing radii to shrink and yielding low scores.
+  - Pattern 2: Incomplete code fragments (missing function bodies or parentheses) cause syntax errors that halt execution before any optimisation can run.
+
+### Novel Discoveries:
+  - The combination of a hexagonal lattice for initial placement with a linear‑programming radius optimiser and a subsequent hill‑climbing refinement is an effective hybrid strategy that outperforms purely manual layouts.
+
+### Error Patterns:
+  - SyntaxError (incomplete code): 2 occurrences
+    Likely cause: Truncated code snippets missing closing parentheses or assignment statements.
+  - NameError (undefined functions): 2 occurrences
+    Likely cause: Helper functions such as _refine_centers or compute_max_radii are referenced but not defined in the snippet.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.8109
+  - Iterations Since Improvement: 1
+  - Approach Diversity: high
+
+### Recommendations:
+  - Implement the full linear‑programming formulation with all non‑overlap constraints and test on a larger set of candidate centers to ensure robustness.
+  - Replace the deterministic hill‑climbing with a stochastic optimisation (e.g., simulated annealing or genetic algorithm) to explore a wider neighbourhood and avoid local optima.
+  - Add a post‑processing step that checks for and repairs any small overlaps that may arise after refinement, ensuring strict feasibility for the final packing.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_2):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+---
+
+### 📋 OUTPUT REQUIREMENTS  
+- **Only** output the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do not** include the markers themselves, nor any surrounding code such as `run_packing()` or `visualize()`.  
+- The evaluation harness will automatically merge your fragment with the preserved outer code.  
+
+### 📦 IMPORTS  
+- You may add additional import statements (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available globally.  
+
+### 🎯 FOCUS OF THIS EVOLUTION  
+- Improve the routine that **generates the circle packing** and any helper utilities it uses.  
+- You may add new helper utilities, but **every function you call must be defined within the block** you output.  
+
+### ✅ WHAT HAS WORKED WELL (keep these ideas)  
+1. **Dense candidate generation** – create a fine hexagonal lattice of points inside the unit square; this gives many well‑spaced potential centers.  
+2. **Selection of interior points** – choose the subset of candidate points that have the largest minimum distance to the square’s edges; this tends to maximise feasible radii.  
+3. **Linear‑programming radius optimisation** – formulate a linear program that maximises the sum (or another aggregate) of radii subject to:  
+   - each radius ≤ distance from its center to the nearest square side,  
+   - each radius ≤ half the Euclidean distance to every other selected center (non‑overlap).  
+   Solving this LP yields a feasible set of radii that respects all constraints.  
+4. **Post‑LP local refinement** – after the LP, perform a local search (e.g., hill‑climbing) that perturbs centers and/or radii in small steps, accepting only moves that keep the solution feasible. This can increase the total covered area without breaking constraints.  
+
+### ⚠️ WHAT TO AVOID (common failures)  
+- **Manual geometric patterns** (e.g., fixed concentric rings) that do not adapt to the square boundaries; they usually force many circles to shrink and lower the score.  
+- **Incomplete code fragments** – missing parentheses, unfinished statements, or references to undefined helpers cause syntax or `NameError` failures before any optimisation runs.  
+- **Hard‑coding the number of candidates** without enough density; too few points limit the LP’s ability to find a good arrangement.  
+- **Refinement steps that ignore feasibility** – moving a circle into an overlap or outside the square will break the final solution.  
+
+### 🛠️ IMPLEMENTATION SUGGESTIONS  
+- **Generate a hexagonal lattice** with a configurable spacing (e.g., `dx ≈ 0.12–0.15`) covering the whole unit square.  
+- **Compute border distances** for each lattice point and keep the `k` points with the largest values (`k = number of circles required`).  
+- **Build the LP matrices** (`c`, `A_ub`, `b_ub`) reflecting the border and pairwise distance constraints, then call `linprog`.  
+- **Extract radii** from the LP solution and pair them with their centers.  
+- **Apply a simple local optimizer**: for a fixed number of iterations, randomly pick a circle, propose a small random shift (e.g., Gaussian with σ ≈ 0.01), recompute the maximal admissible radius for that center, and accept the move only if all constraints remain satisfied and the total radius sum improves.  
+- **Return the final list/array of centers and radii** in the format expected by the outer code.  
+
+### 📌 FINAL REMINDER  
+- Every identifier you invoke must be defined somewhere inside the block you output.  
+- Adhere strictly to the output format described at the top of this message.  
+
+Good luck!

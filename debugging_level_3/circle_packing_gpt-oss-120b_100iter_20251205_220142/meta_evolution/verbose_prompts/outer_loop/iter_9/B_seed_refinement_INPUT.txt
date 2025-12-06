@@ -1,0 +1,144 @@
+# Prompt Type: B
+# Outer Iteration: 9
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 9
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 8457 chars
+- Current best prompt length: 5266 chars
+
+## Convergence History:
+### Successful Patterns:
+- Change that helped: expanded by 519 chars
+- Change that helped: expanded by 881 chars
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+- Change that helped: minor changes
+- Change that helped: condensed by 311 chars
+- Change that helped: added 'step'; condensed by 498 chars
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9983
+- Valid: 7, Invalid: 3
+- Failure modes: ['Validity failures: 3/10 (30.0%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **RegularGridDummy** (1 attempts, struggled)
+    Placed 25 circles on a fixed 5×5 grid with a dummy zero‑radius circle; radii were computed directly from border distances.
+  - **HexLatticeJitterLP** (1 attempts, struggled)
+    Generated a hexagonal lattice with optional jitter, then attempted a linear‑programming (LP) step to maximize radii, but the implementation was incomplete.
+  - **CandidateLP_SLSQP** (2 attempts, worked)
+    Created a dense set of hexagonal candidate centers, solved an LP to obtain maximal radii, kept the top 26 circles, and refined the layout with SLSQP (several restarts).
+
+### Best Result (score: 0.9983):
+  **Main Idea:** Use a large, randomly jittered hexagonal candidate grid, compute radii via LP, select the 26 largest circles, then jointly optimize positions and radii with SLSQP and a few local perturbations.
+  **Placement:** Dense hexagonal lattice with random spacing and jitter to cover the unit square uniformly.
+  **Radius:** First maximize the sum of radii with an LP that enforces border and non‑overlap constraints; then refine radii (and positions) using SLSQP.
+  **Constraints:** LP guarantees feasibility; SLSQP enforces constraints during refinement; local perturbations are applied only if they keep all constraints satisfied.
+
+### Score Improvements:
+  - Iter 38: +0.002 - Added random restarts and a local‑perturbation phase to the CandidateLP_SLSQP pipeline.
+  - Iter 56: +0.0003 - Increased the number of candidate grids and jitter amplitude, slightly improving the final packing.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Code fragments were truncated or missing helper functions (e.g., hex_lattice, generate_hex_centers), leading to NameError failures.
+  - Pattern 2: Shape mismatches in array construction caused ValueError, often due to incorrect broadcasting when building candidate grids.
+
+### Novel Discoveries:
+  - Using a two‑stage optimization: LP for a fast, globally feasible radius set followed by SLSQP for fine‑tuning positions and radii.
+
+### Error Patterns:
+  - NameError: 3 occurrences
+    Likely cause: Missing or incorrectly named helper functions that were referenced but never defined.
+  - ValueError: 1 occurrences
+    Likely cause: Mismatched array shapes when constructing candidate grids or assembling LP constraints.
+  - RuntimeError: 2 occurrences
+    Likely cause: Execution aborted due to earlier NameError or ValueError, reported as a generic runtime failure.
+
+### Convergence Analysis:
+  - Trend: improving with a plateau after iteration 38
+  - Best Score: 0.9983
+  - Approach Diversity: medium – several distinct strategies were tried, but the final best solution relies on a single core approach with variations.
+
+### Recommendations:
+  - Introduce a stochastic local search (e.g., simulated annealing) after the SLSQP refinement to escape local optima and potentially push the score above 0.9985.
+  - Enrich the candidate set adaptively: after each refinement, add new centers near the boundaries or in sparse regions to allow tighter packing.
+  - Refactor the code into modular functions with unit tests for each helper (hex_lattice, LP solver, SLSQP wrapper) to eliminate NameError and shape‑related crashes.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_9):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Generation**
+
+You must output **only** the Python code that will replace the contents of the evolve block (the region between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`).  
+
+**Output Rules**
+- Do **not** include the marker lines themselves, any surrounding code, or calls such as `run_packing()` or `visualize()`.  
+- Do **not** wrap the code in markdown fences or add any non‑code text.  
+- The submitted text must be a syntactically valid Python fragment that can be inserted directly between the two markers.  
+
+**Imports**
+- You may add additional import statements if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available.
+
+**Focus**
+- Improve the packing construction logic and any helper routines it uses.  
+- You may create new helper functions, but **every function that is called must be defined within this block**; missing definitions will cause a `NameError`.  
+
+**Algorithmic Guidance (what has worked)**
+1. **Dense, jittered hexagonal candidate set** – generate many candidate circle centers using a hexagonal lattice that covers the unit square, then add a small random displacement to each point. This creates a rich, uniform search space.  
+2. **Linear‑programming radius maximization** – formulate a linear program that maximizes the sum of radii while enforcing:
+   - each radius stays inside the unit square,
+   - pairwise non‑overlap constraints between every candidate pair.  
+   Solving this LP yields a feasible set of radii for all candidates.  
+3. **Select the largest N circles** – after the LP, keep the N circles (N = 26) with the greatest radii.  
+4. **Non‑linear refinement** – run a constrained optimizer (e.g., `scipy.optimize.minimize` with method `'SLSQP'`) on the selected circles, optimizing both positions and radii simultaneously while preserving the border and non‑overlap constraints.  
+5. **Stochastic local search (optional but beneficial)** – after the SLSQP stage, perform a short simulated‑annealing or random‑perturbation loop that accepts only moves that keep all constraints satisfied. This can escape local minima and push the packing density higher.  
+6. **Adaptive candidate enrichment (optional)** – if the layout leaves large empty regions, generate additional candidate centers near the boundaries or in sparse zones and re‑run the LP/refinement steps to allow tighter packing.
+
+**Pitfalls to Avoid (what has failed)**
+- **Missing helper definitions** – referencing functions that are not defined in the block leads to `NameError`. Ensure every invoked routine is present.  
+- **Shape mismatches** – when constructing the candidate grid or assembling LP constraint matrices, verify that all arrays have compatible dimensions; broadcasting errors cause `ValueError`.  
+- **Infeasible constraints** – overly aggressive radius bounds or jitter amplitudes can make the LP or SLSQP infeasible; keep constraints realistic and add small safety margins (e.g., subtract `1e-6` from border distances).  
+- **Excessive runtime** – generating an extremely large candidate set or using too many optimizer restarts can exceed time limits; balance candidate count (e.g., a few thousand) with performance.  
+
+**Reminder**
+All functions you call—whether existing, modified, or newly created—must be defined inside this block. The outer framework will automatically supply `run_packing()` and `visualize()`, so you should not reference them here.  
+
+Follow the rules above exactly; any deviation will cause the evaluation to fail.

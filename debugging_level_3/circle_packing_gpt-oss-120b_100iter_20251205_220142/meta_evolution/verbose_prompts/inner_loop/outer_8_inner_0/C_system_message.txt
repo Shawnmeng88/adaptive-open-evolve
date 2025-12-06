@@ -1,0 +1,57 @@
+# Prompt Type: C
+# Outer Iteration: 8
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are to generate **only** the Python fragment that will be placed between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+
+**OUTPUT REQUIREMENTS**  
+- Do **not** include the marker lines themselves.  
+- Do **not** include any surrounding code, calls such as `run_packing()` or `visualize()`, or markdown fences.  
+- The submitted text must be a syntactically correct Python module fragment that can be inserted directly.  
+
+**IMPORTS**  
+- You may add additional import statements if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available.  
+
+**ALGORITHMIC GUIDELINES (DO NOT NAME SPECIFIC FUNCTIONS)**  
+1. **Candidate generation** – Create a dense set of points covering the unit square using a hexagonal lattice. Adjust the lattice spacing so that the number of candidates comfortably exceeds the required number of circles (e.g., 40‑50 candidates for 26 circles). Optional small random jitter can be added to avoid perfect symmetry.  
+2. **Linear‑program relaxation** – With the candidate centers fixed, formulate a linear program that maximizes the sum of radii subject to:  
+   - Border constraints: each radius ≤ distance from its center to the nearest side of the unit square.  
+   - Non‑overlap constraints: for every pair of candidates, `r_i + r_j ≤ distance(center_i, center_j)`.  
+   Solve this LP to obtain a feasible radius for every candidate.  
+3. **Selection** – Keep the `n` candidates (where `n` is the target number of circles) that received the largest radii from the LP solution. This reduces the problem size while preserving high‑quality circles.  
+4. **Non‑linear refinement** – Starting from the selected centers and radii, run a short constrained nonlinear optimizer (e.g., SLSQP via `scipy.optimize.minimize`) that jointly adjusts positions and radii to further increase the minimal radius while respecting the same border and pairwise‑distance constraints.  
+5. **Random restarts** – Optionally repeat the refinement a few times with slight random perturbations of the initial positions to escape shallow local optima; keep the best feasible result.  
+
+**WHAT TO AVOID (FAILED APPROACHES)**  
+- Relying solely on a regular grid without an LP step; this often yields low‑quality packings and many validity failures.  
+- Generating an excessive number of candidates or using large jitter, which can make the linear‑program infeasible.  
+- Omitting any helper routine that is later called (e.g., a function to produce the hexagonal lattice or to build constraint matrices); missing definitions cause `NameError`.  
+- Constructing constraint matrices with mismatched dimensions, leading to `ValueError` during the LP solve.  
+- Forgetting to enforce the border constraints inside the nonlinear refinement, which can produce circles that extend outside the unit square.  
+
+**COMPLETENESS CHECK**  
+All functions that your code calls must be defined within this fragment. If you introduce new helpers (e.g., a lattice generator, constraint builder, or refinement routine), provide their full definitions here.  
+
+**SUMMARY**  
+Implement the described pipeline (dense hexagonal candidate set → LP for maximal feasible radii → keep top‑`n` circles → short SLSQP refinement with optional random restarts), ensuring every referenced routine is defined and all constraints are correctly encoded. Follow the strict output format rules above.

@@ -1,0 +1,63 @@
+# Prompt Type: C
+# Outer Iteration: 2
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidelines**
+
+You are to generate **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. Do **not** output the markers themselves, any surrounding code, or calls to the outer driver functions (they are inserted automatically).
+
+### Mandatory Output Format  
+- **Only** the code that should appear between the two markers.  
+- No additional text, comments outside the code block, or the marker strings themselves.  
+- Every function you invoke must be fully defined within this output; the block must be self‑contained.
+
+### Imports  
+- You may add extra import statements if needed.  
+- `numpy as np` and `scipy.optimize.linprog` are already available.
+
+### Focus of the Implementation  
+- **Goal:** Place exactly 26 circles inside the unit square, maximizing the total sum of radii while guaranteeing no overlap and staying inside the boundaries.  
+- **Effective strategy (keep):**  
+  1. Generate several candidate layouts using a staggered hexagonal lattice (rows offset) and add a small random jitter to each point.  
+  2. If the lattice yields fewer than 26 points, fill the remainder with random interior points.  
+  3. For each layout, formulate a linear program that maximizes the sum of radii. Include constraints that each radius does not exceed the distance to the nearest wall and that for every pair of circles the sum of their radii is bounded by the Euclidean distance between their centers.  
+  4. Solve the LP for each candidate, keep the solution with the highest objective value, and return the corresponding centers and radii.  
+  5. Use a modest number of layout trials (e.g., 30–50) and vary the jitter magnitude adaptively to explore a broader region.
+
+- **Enhancements to consider:**  
+  * Increase the number of layout trials and allow the jitter magnitude to shrink or grow based on previous successes.  
+  * Optionally add a simple post‑processing step that perturbs the best layout with a short simulated‑annealing or hill‑climbing loop to escape local optima that the pure LP cannot improve.  
+  * Ensure the pairwise constraint matrix is built with correct dimensions ( `num_pairs × num_circles` ) to avoid shape‑mismatch errors.
+
+### Pitfalls to Avoid (do not use)  
+- Constructing the LP constraint matrix with off‑by‑one indexing, which leads to shape‑mismatch exceptions.  
+- Relying on a single deterministic layout; this quickly plateaus and limits score improvements.  
+- Omitting the wall‑distance constraints or using an incorrect distance metric, which can produce invalid packings.  
+- Calling helper functions that are not defined within the block; this will raise `NameError`.
+
+### Reminder  
+All helper routines you create (e.g., layout generators, LP builders, post‑processing refinements) must be defined inside the provided code region. The outer framework will automatically call the main packing routine you implement; you do not need to reference or include `run_packing()` or `visualize()`.
+
+---  
+
+Proceed to write the code that satisfies the above requirements.

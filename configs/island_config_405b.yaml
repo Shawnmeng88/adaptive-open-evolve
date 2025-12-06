@@ -75,4 +75,4 @@ evaluator:
 # Full rewrites are more reliable with Llama models
 diff_based_evolution: false
 allow_full_rewrites: true
-max_code_length: 10000
+max_code_length: 20000

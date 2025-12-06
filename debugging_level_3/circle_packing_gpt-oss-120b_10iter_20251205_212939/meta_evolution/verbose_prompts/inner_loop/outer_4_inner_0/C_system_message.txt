@@ -1,0 +1,84 @@
+# Prompt Type: C
+# Outer Iteration: 4
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+---
+
+### 📌 REQUIRED OUTPUT FORMAT  
+- **Only** output the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do not** include the markers themselves, nor any surrounding code such as `run_packing()` or `visualize()`.  
+- The evaluation harness will automatically merge your fragment with the preserved outer code.
+
+### 📦 IMPORTS  
+- You may add additional import statements (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available globally.
+
+### 🛠️ FOCUS OF THIS EVOLUTION  
+Your task is to improve the circle‑packing generation logic. Follow these algorithmic guidelines **without naming any existing functions**:
+
+#### Successful Strategies to Embrace  
+1. **Randomized Hexagonal Lattice Initialization**  
+   - Generate a hexagonal lattice of points with a spacing chosen randomly within a reasonable range.  
+   - Apply a random rotation to the lattice to diversify the orientation.  
+   - Clip the rotated lattice to the unit square and keep the points that lie inside.
+
+2. **Selection of Interior Centers**  
+   - From the clipped lattice, select a fixed number of points (the required number of circles) that are farthest from the square’s borders.  
+   - This encourages larger feasible radii and reduces boundary conflicts.
+
+3. **Linear‑Programmed Radius Maximisation**  
+   - For any set of candidate centers, formulate a linear program that maximises the sum of radii (or another suitable objective) subject to:  
+     * Non‑overlap: distance between any two centers ≥ sum of their radii.  
+     * Boundary: each radius ≤ distance from its center to the nearest square edge.  
+   - Solve the LP to obtain the optimal radii for the current centers.
+
+4. **Stochastic Local Refinement (Hill‑Climbing / Simulated‑Annealing)**  
+   - Repeatedly propose small random displacements of individual centers.  
+   - After each move, re‑solve the LP for radii.  
+   - Accept the move only if the LP remains feasible (i.e., all constraints satisfied) and the objective improves (or, for simulated‑annealing, probabilistically accept modest deteriorations).  
+
+5. **Multiple Random Restarts**  
+   - Run the entire pipeline (steps 1‑4) several times with different random seeds, lattice spacings, and rotation angles.  
+   - Keep the best feasible configuration across all restarts.
+
+6. **Final Tiny Perturbations**  
+   - After the main optimisation, apply a very small random tweak to a single center (or a few) and resolve the LP.  
+   - Keep the tweak if it yields a higher objective while remaining feasible; otherwise discard it.  
+
+#### Patterns to Avoid  
+- **Deterministic Rigid Layouts** (e.g., fixed concentric rings) that cannot adapt to the square’s geometry.  
+- **Insufficient Randomisation**: using a single lattice orientation or spacing severely limits exploration and leads to premature convergence.  
+- **Skipping the LP Re‑solve after a move**: this can produce overlapping circles or boundary violations that remain undetected.  
+- **Leaving any referenced helper undefined**: every function or utility you call must be defined within the evolve block; otherwise a `NameError` will occur.  
+- **Syntax or structural truncation**: ensure all function definitions are complete, with matching parentheses, colons, and proper indentation.
+
+### 📏 IMPLEMENTATION NOTES  
+- You may introduce new helper utilities (e.g., lattice generators, rotation helpers, LP builders, local‑search loops) as long as they are fully defined inside the evolve block.  
+- Keep the overall runtime reasonable; a moderate number of restarts (e.g., 5‑10) and a limited hill‑climbing budget (e.g., a few thousand iterations) are sufficient for improvement without excessive computation.  
+- Prioritise code clarity and correctness: clearly separate the stages (initialisation → radius optimisation → refinement) and comment key sections.
+
+--- 
+
+**Remember:** Every function you invoke must be present in the code you output, and the output must strictly adhere to the format rules above. Good luck!

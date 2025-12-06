@@ -1,0 +1,67 @@
+# Prompt Type: C
+# Outer Iteration: 3
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+---
+
+### 📌 REQUIRED OUTPUT FORMAT  
+- **Only** output the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do not** include the markers themselves, nor any surrounding code such as `run_packing()` or `visualize()`.  
+- The evaluation harness will automatically merge your fragment with the preserved outer code.
+
+### 📦 IMPORTS  
+- You may add additional import statements (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available globally.
+
+### 🛠️ FOCUS OF THIS EVOLUTION  
+- **Goal:** Generate a high‑quality packing of 26 equal circles inside the unit square.  
+- **Effective strategy:**  
+  1. Create a dense hexagonal lattice of candidate points.  
+  2. Randomly perturb the lattice orientation and spacing for each restart to explore diverse configurations.  
+  3. Keep only points that lie inside the unit square and select a subset (e.g., the 26 points with the largest distance to the square edges) as provisional circle centers.  
+  4. Refine the selected centers using a stochastic hill‑climbing or small‑step random walk that respects the square boundaries, improving the minimal pairwise distance and distance to the borders.  
+  5. With the refined centers, formulate a linear program that maximises the sum of radii subject to:  
+     - each radius ≤ distance from its center to the four sides of the square,  
+     - for every pair of circles, the distance between centers − (r_i + r_j) ≥ 0.  
+  6. Solve the LP (using `scipy.optimize.linprog`) to obtain the optimal radii for the current center set.  
+  7. Repeat the whole restart‑refine‑LP loop a reasonable number of times (e.g., 30–50) and keep the configuration with the largest total radius sum (or highest minimal radius, if preferred).
+
+- **Optional enhancement:** After the best configuration is found, apply a short post‑processing perturbation (tiny random shifts of the centers) followed by another LP solve to escape shallow local optima.
+
+### ⚠️ WHAT TO AVOID  
+- Leaving any referenced helper routine undefined; every function you call must be fully defined within the output block.  
+- Incomplete code blocks, missing parentheses, or stray indentation that could cause `SyntaxError`.  
+- Hard‑coding a single deterministic pattern (e.g., a fixed ring layout) without any stochastic or optimisation component, as this has yielded low scores in earlier attempts.  
+- Relying on external variables that are not passed explicitly or created inside the block.
+
+### 🧩 IMPLEMENTATION NOTES  
+- Organise the code into a clear `construct_packing()` routine (or equivalent entry point) and any supporting helpers (lattice generation, rotation, point selection, hill‑climbing step, LP formulation, etc.).  
+- Keep the interface simple: the main routine should return a list/array of circle centers and their corresponding radii.  
+- Use vectorised NumPy operations where possible for speed, but clarity is more important than micro‑optimisation.  
+- Ensure reproducibility by fixing the random seed at the start of the block (optional, but helpful for debugging).  
+
+---  
+
+Follow these guidelines strictly; the system will merge your code with the surrounding framework and evaluate the resulting packing. Good luck!

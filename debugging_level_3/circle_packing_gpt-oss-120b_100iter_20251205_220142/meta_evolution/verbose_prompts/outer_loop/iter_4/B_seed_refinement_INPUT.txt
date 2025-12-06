@@ -1,0 +1,159 @@
+# Prompt Type: B
+# Outer Iteration: 4
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 4
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 6923 chars
+- Current best prompt length: 4395 chars
+
+## Convergence History:
+### Successful Patterns:
+- Change that helped: expanded by 519 chars
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+- Change that helped: minor changes
+- Change that helped: condensed by 311 chars
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9960
+- Valid: 6, Invalid: 4
+- Failure modes: ['Validity failures: 4/10 (40.0%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **Regular grid baseline** (1 attempts, struggled)
+    Places 25 circles on a 5×5 grid with a fixed margin, adds a dummy point, and attempts to compute radii directly without optimization.
+  - **Hexagonal lattice with LP** (1 attempts, struggled)
+    Generates a hexagonal lattice of candidate centers, then formulates a linear program to maximize the sum of radii subject to border and pairwise distance constraints.
+  - **Grid perturbation + LP** (1 attempts, mixed)
+    Starts from a regular grid, perturbs the points randomly, and solves an LP for radii; the perturbation improves feasibility but the packing remains sub‑optimal.
+  - **Hex + LP + SLSQP** (2 attempts, worked)
+    Creates a dense hexagonal lattice, obtains an initial feasible radius set via LP, then refines both positions and radii with a nonlinear SLSQP optimizer to maximize the total radius.
+  - **Iterative removal via LP** (1 attempts, mixed)
+    Builds a very dense hex lattice, repeatedly removes the circle with the smallest feasible radius (found by LP) until exactly 26 circles remain, then tests small jittered variants.
+  - **Direct radius computation (compute_max_radii)** (1 attempts, struggled)
+    Computes the maximal feasible radius for each center analytically from border distances and nearest‑neighbor distances, but does not enforce global non‑overlap constraints.
+
+### Best Result (score: 0.996):
+  **Main Idea:** The algorithm starts with a dense hexagonal lattice of candidate centers, solves a linear program to get an initial feasible radius assignment, and then uses a nonlinear SLSQP optimizer to jointly adjust positions and radii for maximum total radius while strictly enforcing boundary and non‑overlap constraints.
+  **Placement:** Centers are placed on a regular hexagonal grid that covers the unit square; the grid spacing is chosen to allow at least 26 points with some redundancy.
+  **Radius:** Initial radii are obtained by solving a linear program that maximizes the sum of radii with linear constraints for borders and pairwise distances. The SLSQP step then treats radii as continuous variables and refines them together with the positions.
+  **Constraints:** Border constraints are linear inequalities (x‑radius ≥ 0, x+radius ≤ 1, etc.). Pairwise non‑overlap constraints are expressed as radius_i + radius_j ≤ distance(i,j). The SLSQP optimizer enforces these constraints during the nonlinear refinement.
+
+### Score Improvements:
+  - Iter 15: +0.9488 - Added random perturbation to grid points and switched from a pure LP to a two‑stage LP + SLSQP approach.
+  - Iter 19: +0.0448 - Replaced the simple LP with a nonlinear SLSQP refinement that jointly optimizes positions and radii.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Using a fixed grid or lattice without any optimization leads to zero or very low scores because radii cannot be increased beyond the hard‑coded margin.
+  - Pattern 2: Relying solely on a linear program for radii (without refining positions) often yields feasible but highly sub‑optimal packings, especially when the candidate grid is not dense enough.
+
+### Novel Discoveries:
+  - The iterative removal strategy (remove the smallest radius circle until the target count is reached) is a creative way to prune an over‑dense lattice.
+  - The compute_max_radii helper demonstrates a quick analytic feasibility check that can be used for warm‑starting or pruning candidate centers.
+
+### Error Patterns:
+  - Invalid shapes: 1 occurrences
+    Likely cause: Mismatched array dimensions when constructing the constraint matrices for the LP.
+  - name 'generate_hex_centers' is not defined: 1 occurrences
+    Likely cause: A helper function was referenced but never defined or imported.
+  - Program execution failed: 1 occurrences
+    Likely cause: Runtime error due to incomplete code (e.g., truncated function body) or missing imports.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.996
+  - Iterations Since Improvement: 9
+  - Approach Diversity: high
+
+### Recommendations:
+  - Continue refining the two‑stage LP + SLSQP pipeline: experiment with different initial lattice spacings and add a small random jitter before the SLSQP step to escape local optima.
+  - Incorporate a global search technique such as simulated annealing or a genetic algorithm to perturb both positions and radii after the SLSQP refinement, potentially achieving a marginal gain over the current best score.
+  - Implement a dynamic candidate‑center generation that adapts the lattice density based on the current radius distribution, allowing the algorithm to focus computational effort on regions where circles are tightly packed.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_4):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are to generate the complete replacement for the evolve block. **Output ONLY the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers** – do not include the markers themselves, any surrounding text, or calls such as `run_packing()` or `visualize()`. The surrounding framework will insert those automatically.
+
+### Mandatory Output Rules
+- Return **exactly** the code that will replace the contents of the evolve block.  
+- No markdown fences, extra characters, or comments outside normal code comments.  
+- Do not import modules that are already available unless you need additional functionality; you may add imports (e.g., `from scipy.optimize import minimize`) if required.  
+- Every function, class, or helper that your code calls must be **defined within the output**; missing definitions will cause a runtime error.  
+
+### Algorithmic Guidance (what to implement)
+
+1. **Generate a dense candidate set of circle centers** covering the unit square using a hexagonal (triangular) lattice. Choose a lattice spacing that ensures at least 30‑35 candidate points so that after pruning you can keep exactly 26 circles.  
+2. **Optionally add a small random jitter** to each candidate center (e.g., uniform noise with magnitude ≈ 0.01 × spacing) to break symmetry and help later non‑linear optimization escape local minima.  
+3. **Formulate a linear program** that maximizes the sum of radii subject to:
+   - Border constraints: for each circle `i`, `x_i - r_i ≥ 0`, `x_i + r_i ≤ 1`, `y_i - r_i ≥ 0`, `y_i + r_i ≤ 1`.
+   - Pairwise non‑overlap constraints: for every pair `(i, j)`, `r_i + r_j ≤ distance(center_i, center_j)`.
+   - Non‑negativity of radii.
+   Solve the LP to obtain a feasible set of radii for **all** candidate centers.
+
+4. **Select the 26 circles with the largest radii** from the LP solution. Keep their centers and the corresponding radii as the initial configuration for the next stage.
+
+5. **Refine positions and radii jointly** using a nonlinear optimizer (e.g., `scipy.optimize.minimize` with method `'SLSQP'`). Define a variable vector that concatenates the `x`, `y`, and `r` values of the 26 circles.  
+   - Objective: maximize the total sum of radii (or equivalently minimize the negative sum).  
+   - Constraints: same border and pairwise non‑overlap inequalities as in the LP, now applied to the mutable positions as well as radii.  
+   - Provide reasonable bounds: `0 ≤ r ≤ 0.5`, `0 ≤ x ≤ 1`, `0 ≤ y ≤ 1`.  
+   - Use a tolerance that allows the optimizer to converge (e.g., `ftol=1e-9`).  
+
+6. **After optimization, verify feasibility** by checking all constraints; if any violation exceeds a tiny epsilon (e.g., `1e-6`), optionally perform a short corrective projection step or re‑run the optimizer with tightened tolerances.
+
+7. **Return the final list/array of circles** (centers and radii) in the format expected by the surrounding framework.
+
+### Pitfalls to Avoid (what NOT to do)
+
+- **Do not rely solely on a fixed regular grid** without any optimization; this yields very low scores because radii are limited by hard‑coded margins.  
+- **Do not stop after the linear program**; using only the LP radii without adjusting positions leaves substantial slack and limits packing density.  
+- **Do not omit the definition of any helper you call** (e.g., lattice generator, distance calculator, constraint builders). Every referenced name must be defined in the output.  
+- **Do not create mismatched array shapes** when building the LP constraint matrices; ensure each inequality row aligns with a single variable or pair of variables.  
+- **Do not forget to include border constraints** for both `x` and `y`; forgetting any side leads to circles extending outside the unit square and invalid solutions.  
+- **Do not use overly large jitter** that pushes candidates outside the unit square before clipping; keep jitter small relative to the lattice spacing.  
+
+### Imports
+
+- `numpy as np` and `scipy.optimize.linprog` are already available.  
+- You may add additional imports such as `from scipy.optimize import minimize` or `from itertools import combinations` if needed.
+
+### Final Reminder
+
+Your submitted code must be **self‑contained**: all functions used within the block must be defined there, and the block must respect the strict output format described above. Follow the algorithmic steps and avoid the listed pitfalls to produce a high‑quality circle‑packing solution.

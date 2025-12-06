@@ -1,0 +1,52 @@
+# Prompt Type: C
+# Outer Iteration: 1
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are to generate **only** the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+
+- **Do not** output the marker lines themselves.  
+- **Do not** include calls to `run_packing()` or `visualize()` – those are added automatically.  
+- **All** functions that your code calls must be defined inside this block; missing definitions will cause a runtime error.  
+
+### What to Aim For  
+1. **Geometric construction** – Build the circle centers using a dense, regular pattern that fits naturally inside the unit square (e.g., a staggered/hexagonal lattice). Compute the uniform spacing that respects both horizontal and vertical limits, then derive the maximal feasible radius from that spacing.  
+
+2. **Radius maximization** – After placing the centers, optionally apply a small optimization step (such as a linear‑programming or simple gradient update) to increase each radius individually while still satisfying:  
+   - No two circles overlap (distance between centers ≥ sum of radii).  
+   - Every circle stays completely inside the unit square (center coordinate ± radius stays within [0, 1]).  
+
+3. **Local refinement** – If the uniform‑radius lattice leaves unused space, perform a lightweight local‑search (e.g., random perturbations with acceptance only when the total sum of radii improves). Limit the number of iterations to keep runtime low.
+
+### What to Avoid  
+- **Ring‑based or concentric‑circle layouts** – they tend to waste space and force very small radii, reducing the combined score.  
+- **Incomplete or syntactically broken code** – missing parentheses, unmatched brackets, or truncated statements will raise errors before evaluation.  
+- **Calling helpers that are not defined** – every referenced routine must appear in the output block.  
+
+### Implementation Tips  
+- Use `numpy` for vectorized distance calculations and candidate generation.  
+- You may import additional modules (e.g., `from scipy.optimize import linprog` or `minimize`) inside the block if they help with the radius‑optimization step.  
+- Keep the overall structure simple: a main construction routine, a helper that computes the maximal uniform spacing, an optional optimizer, and any small utility functions you need.  
+
+Remember: **the only output should be the complete, self‑contained code for the evolve block** following the format rules above.

@@ -1,0 +1,168 @@
+# Prompt Type: B
+# Outer Iteration: 5
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 5
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 7286 chars
+- Current best prompt length: 5276 chars
+
+## Convergence History:
+### Successful Patterns:
+- Change that helped: expanded by 519 chars
+- Change that helped: expanded by 881 chars
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+- Change that helped: minor changes
+- Change that helped: condensed by 311 chars
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9980
+- Valid: 6, Invalid: 4
+- Failure modes: ['Validity failures: 4/10 (40.0%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **grid_based_fixed_centers** (1 attempts, struggled)
+    Placed 26 circles on a regular 5×5 grid plus a dummy point, then computed radii directly from border and pairwise distances.
+  - **hex_lattice_fixed_centers_with_lp** (4 attempts, mixed)
+    Generated a hexagonal lattice (with optional jitter), solved a linear program to maximize the sum of radii while respecting border and non‑overlap constraints, but kept centers fixed.
+  - **hex_lattice_fixed_centers_with_lp_and_slsqp_refinement** (3 attempts, worked)
+    After the LP step, used SLSQP to jointly adjust circle centers and radii, improving packing density and ensuring all constraints are satisfied.
+  - **multi_start_lp_slsqp_with_perturbation** (1 attempts, struggled)
+    Repeated random restarts of the hex lattice + LP + SLSQP pipeline, adding a short stochastic perturb‑re‑opt loop to escape local optima.
+
+### Best Result (score: 0.996):
+  **Main Idea:** The winning code first constructs a dense hexagonal lattice of candidate centers, solves a linear program to obtain an initial feasible set of radii, then refines both the positions and radii using SLSQP to maximize the total radius while strictly enforcing non‑overlap and border constraints.
+  **Placement:** A hexagonal lattice with a fixed spacing (≈0.18) and a small jitter (≈0.006) is generated inside the unit square. 26 points are selected from this lattice, ensuring a regular distribution.
+  **Radius:** An LP with variables for each radius is solved: the objective is to maximize the sum of radii, subject to linear constraints that each radius is bounded by its distance to the square borders and half the distance to every other center.
+  **Constraints:** The LP guarantees feasibility for the initial radii.  SLSQP then optimizes a nonlinear objective (total radius) while enforcing the same constraints as nonlinear inequalities, ensuring no overlap and all circles stay inside the square.
+
+### Score Improvements:
+  - Iter 28: +0.996 - Introduced a two‑stage optimization: LP for radii followed by SLSQP refinement of both centers and radii.
+
+### Stuck Patterns (AVOID THESE):
+  - Repeated failures due to incomplete or broken code fragments (e.g., missing function definitions, truncated loops).
+  - Attempts to compute radii directly from pairwise distances without an optimization step consistently produced zero or invalid radii, leading to a score of 0.0000.
+
+### Novel Discoveries:
+  - Using a linear program to compute an initial feasible radius set for a fixed lattice, then refining with a nonlinear optimizer, proved to be a surprisingly effective hybrid strategy for this packing problem.
+
+### Error Patterns:
+  - Invalid shapes: 1 occurrences
+    Likely cause: Attempted to reshape or stack arrays of mismatched dimensions.
+  - name 'generate_hex_centers' is not defined: 1 occurrences
+    Likely cause: Reference to a helper function that was never implemented or imported.
+
+### Convergence Analysis:
+  - Trend: oscillating
+  - Best Score: 0.996
+  - Iterations Since Improvement: 8
+  - Approach Diversity: low
+
+### Recommendations:
+  - Maintain the hexagonal lattice foundation but experiment with adaptive spacing and jitter ranges to explore more diverse initial configurations.
+  - Replace the single SLSQP refinement with a multi‑objective evolutionary algorithm (e.g., differential evolution) that can simultaneously adjust centers and radii while preserving feasibility via penalty terms.
+  - Implement a robust error‑handling wrapper that logs and skips incomplete code blocks, ensuring that partial failures do not reset the entire optimization pipeline.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_5):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidance**
+
+You are to supply **only** the Python source that will replace everything between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- Do **not** output the markers themselves.  
+- Do **not** include any surrounding code such as `run_packing()` or `visualize()` – those are added automatically.  
+- The result must be a self‑contained block: every function, class, or variable referenced inside it must be defined within the block (or imported if truly needed).  
+
+### Imports
+- `numpy as np` and `scipy.optimize.linprog` are already available.  
+- You may add additional imports (e.g., `from scipy.optimize import minimize, differential_evolution`) if the algorithm requires them, but avoid unnecessary dependencies.
+
+### Core Objective
+Create a high‑quality packing of **exactly 26 circles** inside the unit square `[0,1] × [0,1]`. The goal is to maximize the sum of the radii (or equivalently the average radius) while respecting two constraints for **every** circle:
+
+1. **Border constraint** – the circle must stay completely inside the square.  
+2. **Non‑overlap constraint** – the distance between any two circle centers must be at least the sum of their radii.
+
+### Proven Strategy (to retain)
+1. **Generate a dense hexagonal lattice** of candidate points inside the square.  
+   - Use a spacing slightly less than the optimal hex‑packing distance (≈ 0.18) and add a tiny random jitter (≈ 0.005–0.01) to avoid perfect symmetry.  
+   - Select the first 26 points that lie fully inside the unit square; if more than 26 are generated, keep the most uniformly distributed subset (e.g., by greedy farthest‑point selection).
+
+2. **Initial radii via linear programming**:  
+   - For each of the 26 fixed centers introduce a variable `r_i`.  
+   - Maximize the total sum of radii.  
+   - Add linear constraints:  
+     * `r_i ≤ min(x_i, 1‑x_i, y_i, 1‑y_i)` for the border.  
+     * `r_i + r_j ≤ dist(i, j)` for every pair `i < j`.  
+   - Solve with `scipy.optimize.linprog`. The LP guarantees a feasible set of radii that respects all constraints.
+
+3. **Non‑linear refinement**:  
+   - Use a gradient‑based optimizer (e.g., `scipy.optimize.minimize` with method `'SLSQP'`) to jointly adjust **both** centers and radii, starting from the LP solution.  
+   - Objective: maximize the sum of radii (or equivalently minimize its negative).  
+   - Enforce the same border and non‑overlap constraints as nonlinear inequality functions.  
+   - Provide reasonable bounds for each variable (`0 ≤ x_i, y_i ≤ 1`, `0 ≤ r_i ≤ 0.5`).  
+   - Tune optimizer tolerances to ensure convergence without violating constraints.
+
+4. **Optional global search** (if you want to push the score higher):  
+   - After the SLSQP refinement, run a lightweight evolutionary algorithm such as `differential_evolution` on the full variable vector.  
+   - Use a penalty‑augmented objective that heavily penalizes any constraint violation, allowing the optimizer to explore beyond the local optimum while still being guided back to feasibility.  
+   - Limit the number of generations/evaluations to keep runtime reasonable.
+
+### Helper Utilities (must be defined)
+- A routine to build the hexagonal lattice with jitter and to select exactly 26 points.  
+- A function that assembles the linear‑program matrices (`c`, `A_ub`, `b_ub`) given the centers.  
+- A wrapper that calls the LP solver and returns the radii array.  
+- Constraint functions for the SLSQP optimizer (border and pairwise distance).  
+- (If using differential evolution) a penalty‑based objective function.
+
+### Pitfalls to Avoid
+- **Missing definitions**: any helper you reference must be present in the block; otherwise the program will raise `NameError`.  
+- **Incomplete arrays**: ensure that distance matrices and constraint vectors have matching dimensions; mismatches cause shape errors.  
+- **Direct radius computation without optimization**: simply taking half the minimum distance to neighbors usually yields zero or tiny radii and leads to poor scores.  
+- **Over‑aggressive jitter or spacing**: if points lie too close to the border or each other, the LP may become infeasible. Keep jitter modest and verify that every generated center satisfies the border margin before proceeding.  
+- **Unbounded optimizer variables**: always supply explicit bounds; otherwise the optimizer may wander outside the unit square.  
+- **Excessive runtime**: limit the number of evolutionary generations and the tolerance of SLSQP to keep execution time within reasonable limits for the evaluation environment.
+
+### Output Requirements (strict)
+- Return **only** the Python code that belongs between the evolve‑block markers.  
+- No markdown fences, no extra explanatory text, and no marker lines.  
+- The code must be syntactically complete and ready for insertion.  
+
+Follow these instructions closely to produce a robust, high‑scoring packing implementation.

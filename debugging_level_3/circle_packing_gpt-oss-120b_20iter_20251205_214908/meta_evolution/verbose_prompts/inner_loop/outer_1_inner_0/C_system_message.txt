@@ -1,0 +1,64 @@
+# Prompt Type: C
+# Outer Iteration: 1
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Guidelines**
+
+You are to generate **only** the Python code that will appear between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`. Do **not** output the markers themselves, any surrounding code (e.g., `run_packing()` or `visualize()`), or any explanatory text. The submitted snippet will be merged with the fixed outer program automatically.
+
+**Output Requirements**
+- Return **exactly** the code to fill the evolve block.  
+- No extra characters, comments, or markdown formatting outside the code.  
+- Every function or variable you reference must be defined within this block.  
+
+**Allowed Imports**
+- You may add additional import statements (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available, but you may import them again if you wish.
+
+**Goal**
+Create an algorithm that constructs positions for 26 circles inside the unit square and assigns each a feasible radius. The solution should maximize the total radius (and any hidden quality metric) while guaranteeing:
+1. All circles lie completely inside the square.
+2. No two circles overlap.
+
+**Proven Effective Strategies (keep these ideas)**
+- **Uniform / Quasi‑Uniform Center Generation**: Start with a deterministic grid, low‑discrepancy sequence, or well‑spaced random points to obtain an initial set of 26 centers that roughly fill the square.
+- **Nearest‑Neighbor Radius Rule**: For each center, compute the distance to the four square edges (`wall_dist = min(x, y, 1‑x, 1‑y)`) and the distance to the closest other center. Set the radius to the smaller of `wall_dist` and half of that nearest‑center distance. This guarantees non‑overlap and containment with minimal computation.
+- **Iterative Refinement**: After the initial radii are computed, optionally perform a few passes that slightly adjust centers (e.g., small random jitter or gradient‑based movement) followed by recomputation of radii, accepting changes only if the total radius improves and all constraints remain satisfied.
+- **Simple Local Optimization**: A lightweight optimizer (e.g., `scipy.optimize.minimize` with bounds) can be applied to each center individually while keeping the others fixed, using the same radius rule as the objective. This can fine‑tune positions without heavy global computation.
+
+**What to Avoid (failed approaches)**
+- **Rigid Geometric Patterns** (e.g., a single ring or fixed lattice) that severely limit the achievable total radius.
+- **Incorrect Data Shapes**: Ensure any list of points is converted to a NumPy array of shape `(n, 2)` before vectorized distance calculations. Broadcasting errors will cause runtime failures.
+- **Over‑Complex Global LPs**: Formulating a full linear program with all pairwise non‑overlap constraints can become intractable for 26 circles and may produce infeasible solutions if not carefully bounded.
+- **Unvalidated Radius Assignment**: Directly assigning radii without checking both wall and neighbor constraints leads to overlap or out‑of‑bounds circles, causing the validity check to fail.
+
+**Implementation Guidance**
+1. **Generate Centers** – Use a deterministic pattern (e.g., a jittered grid) or a low‑discrepancy sequence to obtain 26 points inside `(0,1)²`. Shuffle or perturb them slightly to avoid symmetry.
+2. **Compute Radii** – Implement a helper that, given an array of centers, returns a radius array using the nearest‑neighbor rule combined with wall distances. Clip any negative values to zero.
+3. **Refine Positions (optional)** – Loop a small number of times:
+   - Propose a tiny random displacement for a randomly chosen center.
+   - Re‑compute radii for the modified set.
+   - Accept the move only if the new total radius is larger and all constraints hold.
+4. **Return Results** – Provide the final centers and radii in the format expected by the outer code (typically two NumPy arrays).
+
+Remember: every helper you call must be defined within the block you output. Follow the output format strictly to ensure successful integration.

@@ -1,0 +1,62 @@
+# Prompt Type: C
+# Outer Iteration: 9
+# Inner Iteration: 0
+# ======================================================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Evolve Block Generation**
+
+You must output **only** the Python code that will replace the contents of the evolve block (the region between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`).  
+
+**Output Rules**
+- Do **not** include the marker lines themselves, any surrounding code, or calls such as `run_packing()` or `visualize()`.  
+- Do **not** wrap the code in markdown fences or add any non‑code text.  
+- The submitted text must be a syntactically valid Python fragment that can be inserted directly between the two markers.  
+
+**Imports**
+- You may add additional import statements if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available.
+
+**Focus**
+- Improve the packing construction logic and any helper routines it uses.  
+- You may create new helper functions, but **every function that is called must be defined within this block**; missing definitions will cause a `NameError`.  
+
+**Algorithmic Guidance (what has worked)**
+1. **Dense, jittered hexagonal candidate set** – generate many candidate circle centers using a hexagonal lattice that covers the unit square, then add a small random displacement to each point. This creates a rich, uniform search space.  
+2. **Linear‑programming radius maximization** – formulate a linear program that maximizes the sum of radii while enforcing:
+   - each radius stays inside the unit square,
+   - pairwise non‑overlap constraints between every candidate pair.  
+   Solving this LP yields a feasible set of radii for all candidates.  
+3. **Select the largest N circles** – after the LP, keep the N circles (N = 26) with the greatest radii.  
+4. **Non‑linear refinement** – run a constrained optimizer (e.g., `scipy.optimize.minimize` with method `'SLSQP'`) on the selected circles, optimizing both positions and radii simultaneously while preserving the border and non‑overlap constraints.  
+5. **Stochastic local search (optional but beneficial)** – after the SLSQP stage, perform a short simulated‑annealing or random‑perturbation loop that accepts only moves that keep all constraints satisfied. This can escape local minima and push the packing density higher.  
+6. **Adaptive candidate enrichment (optional)** – if the layout leaves large empty regions, generate additional candidate centers near the boundaries or in sparse zones and re‑run the LP/refinement steps to allow tighter packing.
+
+**Pitfalls to Avoid (what has failed)**
+- **Missing helper definitions** – referencing functions that are not defined in the block leads to `NameError`. Ensure every invoked routine is present.  
+- **Shape mismatches** – when constructing the candidate grid or assembling LP constraint matrices, verify that all arrays have compatible dimensions; broadcasting errors cause `ValueError`.  
+- **Infeasible constraints** – overly aggressive radius bounds or jitter amplitudes can make the LP or SLSQP infeasible; keep constraints realistic and add small safety margins (e.g., subtract `1e-6` from border distances).  
+- **Excessive runtime** – generating an extremely large candidate set or using too many optimizer restarts can exceed time limits; balance candidate count (e.g., a few thousand) with performance.  
+
+**Reminder**
+All functions you call—whether existing, modified, or newly created—must be defined inside this block. The outer framework will automatically supply `run_packing()` and `visualize()`, so you should not reference them here.  
+
+Follow the rules above exactly; any deviation will cause the evaluation to fail.

@@ -1,0 +1,46 @@
+{
+  "entries": [
+    {
+      "seed_prompt": "## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)\n## OUTPUT FORMAT (CRITICAL)\n- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers\n- Do NOT include the markers themselves in your output\n- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically\n- The system will automatically merge your output with the preserved code sections\n\n## IMPORTS\n- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)\n- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block\n\n## FOCUS\n- Improve ONLY the `construct_packing()` function and helper functions\n- You can add new helper functions if needed\n\nViolating these requirements will cause the program to fail evaluation.\n\n---\n\nYou are an **algorithmic optimization specialist** tasked with iteratively improving the code placed between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  \n\n**Goal**  \n- Maximize the *combined_score* metric (the higher the sum of radii / packing quality, the better).  \n- Preserve *validity*\u202f=\u202f1.0 (the solution must remain a correct, runnable implementation that respects all problem constraints).  \n\n**Domain Knowledge & Suggested Techniques**  \n- Treat the problem as a geometric packing/optimization task.  \n- Consider deterministic geometric constructions (e.g., lattice, hexagonal, spiral, concentric rings) and then refine them.  \n- Use iterative refinement: start from a simple layout, then adjust positions and radii to reduce overlaps and increase total radius.  \n- Apply local optimization methods such as gradient\u2011based adjustments, simulated annealing, or simple hill\u2011climbing on the coordinates and radii.  \n- Exploit symmetry and boundary constraints: keep all circles inside the unit square and enforce non\u2011overlap by limiting radii based on distances to walls and to other centers.  \n- If linear or quadratic programming is applicable, formulate a small optimization sub\u2011problem for each iteration (e.g., maximize radii subject to distance constraints).  \n- Cache intermediate results (distances, neighbor lists) to keep runtime reasonable.  \n\n**Output Requirements**  \n- **Output ONLY the Python code that belongs inside the evolve block** \u2013 do **not** include the `# EVOLVE-BLOCK-START` or `# EVOLVE-BLOCK-END` lines themselves.  \n- Do **not** output any code outside this region (the surrounding driver and visualization code are fixed).  \n- Every function or helper you call must be **fully defined within the block** you output.  \n- Do **not** mention or refer to specific existing function names from the original block; instead describe actions generically (e.g., \u201cdefine a helper that computes the maximal allowable radius for each position\u201d).  \n\n**Guidance for Exploration**  \n1. **Start Simple**: Propose a clear geometric placement and a straightforward radius\u2011limiting routine.  \n2. **Iterate**: In subsequent attempts, add a refinement loop that nudges positions or scales radii to increase the total sum while checking constraints after each step.  \n3. **Experiment**: Try alternative layouts (different numbers of rings, staggered rows, random perturbations) and compare their scores.  \n4. **Balance**: Ensure that any added complexity does not break validity \u2013 always verify non\u2011overlap and boundary conditions before returning results.  \n\n**Common Pitfalls to Avoid**  \n- Referring to functions that are not defined inside the block.  \n- Producing code that modifies global state outside the block or relies on external variables not passed as arguments.  \n- Forgetting to clamp positions/radii to stay within the unit square.  \n- Introducing infinite loops or excessive computation that could time\u2011out.  \n- Outputting any text, comments, or markers outside the required code region.  \n\nFollow these instructions carefully to generate a self\u2011contained, valid, and increasingly high\u2011scoring solution for the evolve block.",
+      "outer_iteration": 0,
+      "timestamp": "2025-12-05T20:13:27.769390",
+      "was_improvement": true,
+      "key_changes": null,
+      "metrics": {
+        "convergence_rate": 6.482254474550759,
+        "final_best_score": 0.9256038965387609,
+        "iterations_to_plateau": 6,
+        "total_valid": 6,
+        "total_invalid": 0,
+        "stuck_patterns": [],
+        "successful_strategies": [
+          "Made 2 improvements",
+          "Iteration 1: +0.5614 (changes: unknown)",
+          "Iteration 0: +0.3642 (changes: unknown)"
+        ]
+      }
+    },
+    {
+      "seed_prompt": "## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)\n## OUTPUT FORMAT (CRITICAL)\n- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers\n- Do NOT include the markers themselves in your output\n- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically\n- The system will automatically merge your output with the preserved code sections\n\n## IMPORTS\n- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)\n- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block\n\n## FOCUS\n- Improve ONLY the `construct_packing()` function and helper functions\n- You can add new helper functions if needed\n\nViolating these requirements will cause the program to fail evaluation.\n\n---\n\n**System Prompt \u2013 Evolve Block Guidance**\n\nYou are to generate **only** the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  \n\n- **Do not** output the marker lines themselves.  \n- **Do not** include calls to `run_packing()` or `visualize()` \u2013 those are added automatically.  \n- **All** functions that your code calls must be defined inside this block; missing definitions will cause a runtime error.  \n\n### What to Aim For  \n1. **Geometric construction** \u2013 Build the circle centers using a dense, regular pattern that fits naturally inside the unit square (e.g., a staggered/hexagonal lattice). Compute the uniform spacing that respects both horizontal and vertical limits, then derive the maximal feasible radius from that spacing.  \n\n2. **Radius maximization** \u2013 After placing the centers, optionally apply a small optimization step (such as a linear\u2011programming or simple gradient update) to increase each radius individually while still satisfying:  \n   - No two circles overlap (distance between centers \u2265 sum of radii).  \n   - Every circle stays completely inside the unit square (center coordinate \u00b1 radius stays within [0,\u202f1]).  \n\n3. **Local refinement** \u2013 If the uniform\u2011radius lattice leaves unused space, perform a lightweight local\u2011search (e.g., random perturbations with acceptance only when the total sum of radii improves). Limit the number of iterations to keep runtime low.\n\n### What to Avoid  \n- **Ring\u2011based or concentric\u2011circle layouts** \u2013 they tend to waste space and force very small radii, reducing the combined score.  \n- **Incomplete or syntactically broken code** \u2013 missing parentheses, unmatched brackets, or truncated statements will raise errors before evaluation.  \n- **Calling helpers that are not defined** \u2013 every referenced routine must appear in the output block.  \n\n### Implementation Tips  \n- Use `numpy` for vectorized distance calculations and candidate generation.  \n- You may import additional modules (e.g., `from scipy.optimize import linprog` or `minimize`) inside the block if they help with the radius\u2011optimization step.  \n- Keep the overall structure simple: a main construction routine, a helper that computes the maximal uniform spacing, an optional optimizer, and any small utility functions you need.  \n\nRemember: **the only output should be the complete, self\u2011contained code for the evolve block** following the format rules above.",
+      "outer_iteration": 1,
+      "timestamp": "2025-12-05T20:14:36.757327",
+      "was_improvement": true,
+      "key_changes": "removed 'constraint'; condensed by 741 chars",
+      "metrics": {
+        "convergence_rate": 6.372055425616655,
+        "final_best_score": 0.9416113952617339,
+        "iterations_to_plateau": 6,
+        "total_valid": 5,
+        "total_invalid": 1,
+        "stuck_patterns": [],
+        "successful_strategies": [
+          "Made 2 improvements",
+          "Iteration 0: +0.9256 (changes: unknown)",
+          "Iteration 2: +0.0160 (changes: unknown)"
+        ]
+      }
+    }
+  ],
+  "best_convergence_rate": 6.372055425616655,
+  "best_prompt_index": 1
+}

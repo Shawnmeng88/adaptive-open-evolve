@@ -1,0 +1,16 @@
+[
+  {
+    "iteration": 2,
+    "score": 0.7476005872130018,
+    "best_so_far": 0.8108868711237253,
+    "validity": 1.0,
+    "is_improvement": false
+  },
+  {
+    "iteration": 3,
+    "score": 0.7796575350538003,
+    "best_so_far": 0.8108868711237253,
+    "validity": 1.0,
+    "is_improvement": false
+  }
+]

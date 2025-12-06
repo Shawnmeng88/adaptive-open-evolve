@@ -1,0 +1,161 @@
+# Prompt Type: B
+# Outer Iteration: 4
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 4
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 4277 chars
+- Current best prompt length: 4173 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Change that helped: added 'step'; expanded by 330 chars
+- Negative guidance (what to avoid) helped
+- Change that helped: removed 'constraint'; added 'important'; condensed by 328 chars
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.8240
+- Valid: 2, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **structured_ring_pattern** (1 attempts, worked)
+    Places a central circle and two concentric rings of circles at fixed radii, then clips to the unit square.
+  - **hex_lattice_deterministic** (1 attempts, worked)
+    Generates a hexagonal lattice, selects the most interior points, refines them locally, and solves a linear program to maximize radii.
+  - **hex_lattice_randomized_with_perturbations** (2 attempts, worked)
+    Runs several random restarts of a rotated hex lattice, selects interior points, performs stochastic hill‑climbing, re‑optimises radii via LP, and applies tiny perturbations to escape local optima.
+
+### Best Result (score: 0.824):
+  **Main Idea:** The winning strategy combines a randomized hexagonal lattice with rotation, multiple restarts, stochastic hill‑climbing, and a linear‑programming step that maximises the sum of radii while enforcing non‑overlap and boundary constraints. Tiny random perturbations are applied at the end to fine‑tune the solution.
+  **Placement:** Centers are drawn from a hexagonal lattice whose spacing is chosen randomly in a narrow range. The lattice is rotated by a random angle, clipped to the unit square, and the 26 points farthest from the borders are selected as initial centers.
+  **Radius:** For a given set of centers, a linear program is solved where each radius variable is maximised subject to constraints that enforce a minimum distance of the sum of radii between any two circles and a distance from each circle to the square boundaries.
+  **Constraints:** The LP guarantees that all circles stay inside the square and do not overlap. The stochastic hill‑climbing step also checks for overlap and rejects moves that violate constraints, ensuring validity throughout the search.
+
+### Score Improvements:
+  - Iter 1: +0.4467 - Replaced the rigid ring layout with a hexagonal lattice and LP‑based radius optimisation.
+  - Iter 4: +0.0114 - Added random rotations, more restarts, smaller hill‑climbing step size, and final tiny perturbations.
+
+### Stuck Patterns (AVOID THESE):
+  - Early deterministic layouts (e.g., concentric rings) quickly hit a local optimum because the geometry is too rigid to adapt to the square boundaries.
+  - Without random restarts or perturbations, the hill‑climbing phase often converges to the same configuration, preventing further improvement.
+
+### Novel Discoveries:
+  - Using a random rotation of the hexagonal lattice to diversify initial placements.
+  - Applying a tiny random perturbation to a single center after the main optimisation to escape shallow local optima.
+  - Combining a linear‑programming radius solver with stochastic centre refinement.
+
+### Error Patterns:
+  - SyntaxError: 3 occurrences
+    Likely cause: The evolutionary process truncated code blocks, leaving incomplete function definitions or missing parentheses.
+
+### Convergence Analysis:
+  - Trend: improving with occasional plateaus
+  - Best Score: 0.824
+  - Approach Diversity: high
+
+### Recommendations:
+  - Increase the number of random restarts and vary the lattice spacing more widely to explore a broader search space.
+  - Introduce a simulated annealing or evolutionary algorithm to optimise centre positions globally, rather than relying solely on local hill‑climbing.
+  - Add a penalty term to the LP objective that discourages very small radii, encouraging a more balanced distribution of circle sizes.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_4):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – CODE EVOLUTION GUIDELINES**
+
+---
+
+### 📌 REQUIRED OUTPUT FORMAT  
+- **Only** output the Python code that belongs **between** the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- **Do not** include the markers themselves, nor any surrounding code such as `run_packing()` or `visualize()`.  
+- The evaluation harness will automatically merge your fragment with the preserved outer code.
+
+### 📦 IMPORTS  
+- You may add additional import statements (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available globally.
+
+### 🛠️ FOCUS OF THIS EVOLUTION  
+Your task is to improve the circle‑packing generation logic. Follow these algorithmic guidelines **without naming any existing functions**:
+
+#### Successful Strategies to Embrace  
+1. **Randomized Hexagonal Lattice Initialization**  
+   - Generate a hexagonal lattice of points with a spacing chosen randomly within a reasonable range.  
+   - Apply a random rotation to the lattice to diversify the orientation.  
+   - Clip the rotated lattice to the unit square and keep the points that lie inside.
+
+2. **Selection of Interior Centers**  
+   - From the clipped lattice, select a fixed number of points (the required number of circles) that are farthest from the square’s borders.  
+   - This encourages larger feasible radii and reduces boundary conflicts.
+
+3. **Linear‑Programmed Radius Maximisation**  
+   - For any set of candidate centers, formulate a linear program that maximises the sum of radii (or another suitable objective) subject to:  
+     * Non‑overlap: distance between any two centers ≥ sum of their radii.  
+     * Boundary: each radius ≤ distance from its center to the nearest square edge.  
+   - Solve the LP to obtain the optimal radii for the current centers.
+
+4. **Stochastic Local Refinement (Hill‑Climbing / Simulated‑Annealing)**  
+   - Repeatedly propose small random displacements of individual centers.  
+   - After each move, re‑solve the LP for radii.  
+   - Accept the move only if the LP remains feasible (i.e., all constraints satisfied) and the objective improves (or, for simulated‑annealing, probabilistically accept modest deteriorations).  
+
+5. **Multiple Random Restarts**  
+   - Run the entire pipeline (steps 1‑4) several times with different random seeds, lattice spacings, and rotation angles.  
+   - Keep the best feasible configuration across all restarts.
+
+6. **Final Tiny Perturbations**  
+   - After the main optimisation, apply a very small random tweak to a single center (or a few) and resolve the LP.  
+   - Keep the tweak if it yields a higher objective while remaining feasible; otherwise discard it.  
+
+#### Patterns to Avoid  
+- **Deterministic Rigid Layouts** (e.g., fixed concentric rings) that cannot adapt to the square’s geometry.  
+- **Insufficient Randomisation**: using a single lattice orientation or spacing severely limits exploration and leads to premature convergence.  
+- **Skipping the LP Re‑solve after a move**: this can produce overlapping circles or boundary violations that remain undetected.  
+- **Leaving any referenced helper undefined**: every function or utility you call must be defined within the evolve block; otherwise a `NameError` will occur.  
+- **Syntax or structural truncation**: ensure all function definitions are complete, with matching parentheses, colons, and proper indentation.
+
+### 📏 IMPLEMENTATION NOTES  
+- You may introduce new helper utilities (e.g., lattice generators, rotation helpers, LP builders, local‑search loops) as long as they are fully defined inside the evolve block.  
+- Keep the overall runtime reasonable; a moderate number of restarts (e.g., 5‑10) and a limited hill‑climbing budget (e.g., a few thousand iterations) are sufficient for improvement without excessive computation.  
+- Prioritise code clarity and correctness: clearly separate the stages (initialisation → radius optimisation → refinement) and comment key sections.
+
+--- 
+
+**Remember:** Every function you invoke must be present in the code you output, and the output must strictly adhere to the format rules above. Good luck!

@@ -1,0 +1,148 @@
+# Prompt Type: B
+# Outer Iteration: 2
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 2
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 4269 chars
+- Current best prompt length: 4883 chars
+
+## Convergence History:
+### Successful Patterns:
+- Negative guidance (what to avoid) helped
+- Change that helped: minor changes
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9154
+- Valid: 5, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **Manual ring pattern** (1 attempts, struggled)
+    Explicitly places one large circle at the center and eight surrounding circles in a fixed ring, with the rest left uninitialized.
+  - **LP radius optimization with candidate centers** (1 attempts, mixed)
+    Generates several random or structured center sets, solves a linear program to maximize the sum of radii for each set, and keeps the best.
+  - **Geometry-based radius calculation (wall + nearest neighbor)** (1 attempts, mixed)
+    Computes radii as the minimum of the distance to the square borders and half the distance to the nearest other center, without any optimization.
+  - **Hexagonal lattice initialization + geometry radius** (2 attempts, worked)
+    Places centers on a triangular (hexagonal) lattice inside the unit square, then applies the geometry-based radius calculation.
+  - **Jittered grid initialization + geometry radius** (1 attempts, mixed)
+    Starts from a regular grid, adds small random jitter to each center, and then uses the geometry-based radius calculation.
+  - **Hexagonal lattice with bug (invalid shapes)** (1 attempts, struggled)
+    Attempts a hexagonal lattice but incorrectly constructs the array of centers, leading to shape mismatches during radius computation.
+
+### Best Result (score: 0.9154):
+  **Main Idea:** Use a dense hexagonal (triangular) lattice to place circle centers, then compute each radius as the minimum of the distance to the square borders and half the distance to the nearest other center. A small perturbation of the lattice points further improves packing.
+  **Placement:** Centers are arranged on a triangular grid that fits inside the unit square, offsetting every other row by half the horizontal spacing.
+  **Radius:** For each center, the radius is set to the smaller of (i) the minimum distance to any of the four square borders, and (ii) half the Euclidean distance to the nearest other center. The result is clipped to be non‑negative.
+  **Constraints:** The min operation guarantees no overlap between circles and no circle extends beyond the square. Non‑negative clipping ensures all radii are valid.
+
+### Score Improvements:
+  - Iter 1: +0.2585 - Replaced the manual ring pattern with LP-based radius optimization over multiple center candidates.
+  - Iter 2: +0.2742 - Switched from LP to a simple geometry-based radius calculation, eliminating the LP step.
+  - Iter 4: +0.0105 - Introduced a hexagonal lattice for center placement, which improved packing density.
+
+### Stuck Patterns (AVOID THESE):
+  - Repeated failures when generating a hexagonal lattice due to incorrect array shapes, causing the entire packing to be invalid.
+  - Manual ring pattern stagnated at low scores and did not benefit from subsequent tweaks.
+
+### Novel Discoveries:
+  - Using a linear program to optimize radii for a given set of centers can jump the score from 0.36 to 0.62.
+  - A simple geometry-based radius rule (wall distance vs. half nearest neighbor) is surprisingly effective when combined with a dense lattice.
+
+### Error Patterns:
+  - Invalid shapes: 1 occurrences
+    Likely cause: The list of center coordinates was not converted to a NumPy array of shape (n,2), leading to broadcasting errors during distance calculations.
+
+### Convergence Analysis:
+  - Trend: improving but plateauing after iteration 4
+  - Best Score: 0.9154
+  - Iterations Since Improvement: 3
+  - Approach Diversity: high
+
+### Recommendations:
+  - Combine the hexagonal lattice placement with the LP radius optimization: first place centers on the lattice, then run a small LP to fine‑tune radii while respecting the geometry constraints.
+  - Introduce a stochastic perturbation phase (e.g., simulated annealing or evolutionary mutation) on the lattice centers to escape local packing configurations and explore slightly irregular arrangements.
+  - Add an explicit minimum distance constraint between centers during the radius calculation to prevent very small radii that could be improved by shifting centers slightly.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_2):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+You are to generate **only** the Python code that will be placed between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+
+**Output Requirements**  
+- Return exactly the code that belongs inside those markers.  
+- Do **not** include the markers themselves, any surrounding code, or any explanatory text.  
+- Do **not** use markdown formatting, extra comments, or characters outside the Python code.  
+
+**Imports**  
+- You may add additional import statements if needed (e.g., `from scipy.optimize import linprog`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available.  
+
+**Algorithmic Guidance**  
+
+1. **Placement Strategy**  
+   - Begin with a dense triangular/hexagonal lattice of points that fits inside the unit square.  
+   - Offset every other row horizontally by half the lattice spacing so the points form a staggered pattern.  
+   - Optionally apply a small random jitter to each lattice point to break perfect symmetry and potentially increase packing density.  
+
+2. **Radius Determination**  
+   - For each point compute the distance to the four sides of the square; the maximum allowable radius with respect to the walls is the minimum of those distances.  
+   - Compute the Euclidean distance from the point to every other point; the non‑overlap constraint requires the radius to be at most half of the smallest such distance.  
+   - Set the radius for the point to the smaller of the wall‑distance bound and the half‑nearest‑neighbor distance, clipping to a non‑negative value.  
+
+3. **Optional Fine‑Tuning**  
+   - After the geometric radius assignment, you may formulate a small linear program that maximizes the sum of radii while keeping the same two types of constraints (wall distances and pairwise non‑overlap).  
+   - Use the previously computed radii as an initial feasible solution to speed convergence.  
+
+4. **Stochastic Improvement (Optional)**  
+   - Perform a limited number of iterations where a random subset of points is perturbed slightly, recompute radii using the geometric rule, and keep the perturbation only if the total summed radius improves.  
+
+**Failure Avoidance**  
+- Ensure that the collection of point coordinates is a NumPy array of shape `(n, 2)` before any distance calculations; mismatched shapes cause runtime errors.  
+- Do not rely on external functions that are not defined within this block. Every function you call must be defined here.  
+- Avoid leaving any circles with zero or negative radius; always clip radii to be ≥ 0.  
+- Do not use incomplete or partially‑constructed data structures that could break later visualization or evaluation steps.  
+
+**General Requirements**  
+- All helper functions you introduce must be fully defined inside the provided code block.  
+- The outer program will automatically call the packing construction routine and then `run_packing()` / `visualize()`, which you must not modify or duplicate.  
+
+Follow these instructions precisely to produce a self‑contained, valid Python implementation that improves the circle‑packing score.

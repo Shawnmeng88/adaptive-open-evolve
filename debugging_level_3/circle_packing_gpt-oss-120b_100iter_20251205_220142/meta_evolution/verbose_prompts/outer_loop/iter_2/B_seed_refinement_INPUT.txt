@@ -1,0 +1,147 @@
+# Prompt Type: B
+# Outer Iteration: 2
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 2
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 6882 chars
+- Current best prompt length: 4763 chars
+
+## Convergence History:
+### Successful Patterns:
+- Change that helped: expanded by 519 chars
+- Negative guidance (what to avoid) helped
+- Explicit constraint mentions helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.9936
+- Valid: 10, Invalid: 2
+- Failure modes: ['Validity failures: 2/12 (16.7%)']
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **Manual ring pattern** (1 attempts, mixed)
+    Places a large central circle and eight surrounding circles in a fixed ring, then attempts to assign radii heuristically.
+  - **Regular lattice + LP** (1 attempts, worked)
+    Generates a 6×5 lattice of 30 points, truncates to 26, and solves a linear program to maximize the sum of radii while respecting border and non‑overlap constraints.
+  - **Grid + direct radius optimization** (2 attempts, worked)
+    Uses a 5×5 grid (25 points) plus a dummy point, then computes the maximal feasible radius for each fixed center by solving a simple feasibility problem (often via linear programming or analytic bounds).
+  - **Greedy removal from dense lattice** (2 attempts, mixed)
+    Starts with a 6×5 dense lattice, then iteratively removes the circle with the smallest feasible radius, recomputing radii after each removal to tighten the configuration.
+  - **Incomplete/invalid code** (1 attempts, struggled)
+    Contains syntax or logic errors (e.g., truncated radius computation), leading to a zero score and invalid packing.
+
+### Best Result (score: 0.9377):
+  **Main Idea:** Fix the circle centers on a regular 5×5 grid and compute the largest possible radius for each center while ensuring all circles stay inside the unit square and do not overlap. The dummy circle provides the 26th point without affecting feasibility.
+  **Placement:** Centers are placed on a 5×5 lattice with coordinates 0.1, 0.3, 0.5, 0.7, 0.9 in both x and y, giving 25 equally spaced points. A 26th dummy point at (0,0) is added to satisfy the required count.
+  **Radius:** For each fixed center, the radius is set to the minimum of the distances to the square boundaries and half the distance to the nearest other center. This is implemented either directly or via a small linear program that maximizes the radius subject to linear constraints.
+  **Constraints:** Border constraints are enforced by limiting each radius to be less than or equal to the distance from its center to the nearest side of the unit square. Non‑overlap constraints are enforced by ensuring the sum of radii of any two circles does not exceed the Euclidean distance between their centers.
+
+### Score Improvements:
+  - Iter 1: +0.4581 - Switched from a manual ring pattern to a regular lattice with linear‑programming radius maximization.
+  - Iter 2: +0.1154 - Replaced the 6×5 lattice with a 5×5 grid and used direct radius feasibility computation, yielding a tighter packing.
+
+### Stuck Patterns (AVOID THESE):
+  - Repeated plateau at a score of 0.9377: subsequent attempts (greedy removal, alternative dummy placement) failed to surpass this value.
+  - Incomplete or truncated code leading to zero scores: missing radius computation or syntax errors caused invalid packings.
+
+### Novel Discoveries:
+  - Using a dummy circle to pad the required number of circles without affecting feasibility.
+  - A greedy removal strategy that recomputes radii after each deletion, though it did not improve the best score.
+  - Direct analytic radius calculation based on boundary and nearest‑neighbor distances, avoiding full LP solves.
+
+### Error Patterns:
+  - Incomplete radius computation: 1 occurrences
+    Likely cause: Code was truncated or missing the section that assigns radii, resulting in a zero or undefined radius array.
+
+### Convergence Analysis:
+  - Trend: plateauing
+  - Best Score: 0.9377
+  - Iterations Since Improvement: 11
+  - Approach Diversity: medium
+
+### Recommendations:
+  - Explore non‑grid initial placements such as hexagonal or random dense configurations, then apply the direct radius feasibility computation to see if a higher packing density can be achieved.
+  - Introduce a simulated‑annealing or gradient‑based adjustment of center positions while keeping radii fixed to the maximal feasible values, allowing the packing to escape local optima.
+  - Implement a full evolutionary algorithm that simultaneously mutates both centers and radii, using a fitness function that penalizes overlaps and boundary violations, to search for configurations beyond the current grid‑based optimum.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_2):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**System Prompt – Guidance for Code Evolution**
+
+You must output **only** the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers. Do **not** include the markers themselves, any surrounding text, or calls to `run_packing()` / `visualize()`. The surrounding framework will automatically add those parts.
+
+**Mandatory Output Rules**
+- The response must consist solely of valid Python code for the evolve block.
+- No explanatory comments outside of normal code comments are allowed.
+- Every function or class you reference must be fully defined within this block.
+- Do not import modules that are already available unless you need additional functionality; you may add import statements if required.
+
+**Algorithmic Guidance**
+
+*What has worked well:*
+- Start with a dense arrangement of points (e.g., hexagonal lattice, tightly packed random set) that fits inside the unit square.
+- For each fixed center, compute the largest possible radius that satisfies:
+  1. Distance to each side of the square.
+  2. Half the Euclidean distance to the nearest neighboring center.
+- This radius can be obtained analytically or by solving a small linear program that maximizes a single radius under linear constraints.
+- After initial radii are assigned, optionally refine the positions of the centers using a local optimization step (gradient‑based or simple coordinate perturbations) while re‑computing maximal feasible radii after each move. This can escape local optima and improve overall packing density.
+- If the required number of circles exceeds the number of points generated by the lattice, add “dummy” points that are placed far outside the feasible region; they will receive a radius of zero and thus do not affect validity.
+
+*Techniques to try for improvement:*
+1. **Hexagonal / staggered grids** – they provide tighter packing than square grids.
+2. **Random dense seeding** followed by pruning – generate many points, keep the subset that yields the best minimal radius after radius computation.
+3. **Iterative removal** – repeatedly drop the circle with the smallest feasible radius, recompute radii, and stop when the target count is reached.
+4. **Local position adjustment** – perturb each center slightly (e.g., small random shifts) and accept the change only if the minimal radius across all circles does not decrease. Perform several passes to converge.
+5. **Full evolutionary loop** – mutate both center coordinates and radii simultaneously, evaluate a fitness that penalizes overlaps and boundary violations, and keep the best individuals.
+
+*What to avoid (common failure modes):*
+- Leaving any radius undefined or zero for a non‑dummy circle; this makes the packing invalid.
+- Omitting the definition of any helper function you call, which leads to `NameError`.
+- Introducing syntax errors or incomplete code blocks; the program must run without interruption.
+- Relying solely on a fixed grid without any refinement; this often caps the score at a plateau.
+- Using constraints that are not linear when you intend to solve them with `linprog`; ensure all constraints passed to the linear program are linear expressions.
+
+**Implementation Tips**
+- Use `numpy` for vectorized distance calculations.
+- Use `scipy.optimize.linprog` for any linear‑programming step; formulate each radius maximization as a separate LP with variables `[r]` and constraints `r <= distance_to_border` and `r <= distance_to_neighbor - other_radius`.
+- Keep the code modular: separate point generation, radius computation, and optional refinement into distinct helper functions.
+- Ensure the final returned data structure matches the expected format of the outer framework (e.g., a tuple or dict containing arrays of centers and radii).
+
+Follow these instructions precisely to produce a valid, self‑contained code block that improves the circle‑packing solution.
