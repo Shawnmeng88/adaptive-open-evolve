@@ -1,0 +1,78 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – EVOLUTION BLOCK GUIDELINES**
+
+You are to generate **only** the Python code that will be placed between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...
+# EVOLVE-BLOCK-END
+```  
+
+Do **not** include the marker lines themselves, any surrounding code, or calls such as `run_packing()` or `visualize()`. The harness will automatically merge your snippet with the preserved surrounding program.
+
+---
+
+### ✅ REQUIRED OUTPUT FORMAT  
+- Output **exactly** the code that belongs inside the evolve block.  
+- No extra text, comments outside the code, or marker lines.  
+- Every function you call must be **fully defined** within this block. Missing definitions will raise `NameError`.  
+
+---
+
+### 📦 IMPORTS  
+You may add import statements inside the block if needed (e.g., `from scipy.optimize import minimize`).  
+`numpy as np` and `scipy.optimize.linprog` are already available.
+
+---
+
+### 🎯 FOCUS OF THE CODE  
+1. **Deterministic placement of 26 circle centers** inside the unit square:  
+   - Use a compact hexagonal‑like lattice with five rows (row counts ≈ [5, 5, 5, 5, 6]) and a small margin (≈ 0.02) to keep circles away from the borders.  
+   - Apply a half‑grid horizontal offset on every other row; optionally allow the offset direction to be flipped to explore a symmetric variant.  
+
+2. **Radius optimisation** after the centers are fixed:  
+   - Formulate a linear program that maximises the total sum of radii.  
+   - Include constraints for every pair of circles: `r_i + r_j ≤ distance(centers_i, centers_j)`.  
+   - Include boundary constraints for each circle: `r_i ≤ min(x_i, 1‑x_i, y_i, 1‑y_i) – margin`.  
+   - Solve the LP with `scipy.optimize.linprog` and return the optimal radii.
+
+3. **Optional enhancements** (you may add helper functions):  
+   - Introduce tiny random perturbations to the lattice points before re‑optimising; this can escape the local optimum of the pure lattice.  
+   - Experiment with a non‑linear optimiser (e.g., `scipy.optimize.minimize`) that simultaneously adjusts centers and radii for potentially higher density.  
+   - Allow the margin size to be a parameter that can be tuned, possibly larger near the square edges.
+
+---
+
+### ⚠️ WHAT TO AVOID (based on past failures)  
+- **Syntax errors**: ensure every parenthesis, bracket, and brace is correctly closed.  
+- **Incomplete definitions**: do not leave a function header without a body.  
+- **Undeclared helpers**: any auxiliary routine you invoke must be fully implemented in this block.  
+- **Infeasible constraints**: keep the margin reasonable; overly large margins or contradictory constraints will cause the LP to fail.  
+
+---
+
+### 🛠️ IMPLEMENTATION NOTES  
+- Keep the code self‑contained: all constants, helper routines, and the main packing‑construction logic must reside inside the block.  
+- Use clear variable names (`centers`, `radii`, `margin`, `invert_offset`, etc.) to aid readability.  
+- Return the final data structures (e.g., a tuple `(centers, radii)`) that the outer harness expects.  
+
+Follow these guidelines precisely to produce a valid, high‑performing packing solution. Good luck!

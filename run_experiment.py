@@ -449,10 +449,10 @@ def plot_comparison(
     print(f"\nPlot saved to: {output_path}")
     
     # Also show if in interactive mode
-    try:
-        plt.show()
-    except:
-        pass
+    # try:
+    #     plt.show()
+    # except:
+    #     pass
 
 
 def create_summary_report(

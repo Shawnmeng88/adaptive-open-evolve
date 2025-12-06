@@ -1,0 +1,141 @@
+# Prompt Type: B
+# Outer Iteration: 1
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 1
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 4260 chars
+- Current best prompt length: 5031 chars
+
+## Convergence History:
+### Successful Patterns:
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.6157
+- Valid: 3, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **Ring-based deterministic placement with LP radius optimization** (2 attempts, mixed)
+    Centers are arranged as a central circle plus one or two concentric rings. Radii are then optimized with linear programming to maximize the sum while respecting non-overlap and boundary constraints.
+  - **Hexagonal lattice deterministic placement with LP radius optimization** (1 attempts, worked)
+    Centers are placed on a hexagonal-like grid inside the unit square, using a margin to keep circles away from the borders. Radii are optimized via linear programming.
+  - **Linear programming radius optimization** (3 attempts, worked)
+    For any given set of centers, a linear program maximizes the sum of radii subject to pairwise distance and boundary constraints.
+
+### Best Result (score: 0.6157):
+  **Main Idea:** Use a hexagonal lattice of 26 circle centers inside the unit square, then solve a linear program to assign the largest possible radii that keep all circles inside the square and non-overlapping.
+  **Placement:** 5 rows with counts [5,5,5,5,6] are placed on a hexagonal grid with a small margin (0.02) from the square edges. Odd rows are offset by half a grid spacing to achieve the hexagonal pattern.
+  **Radius:** A linear program maximizes the sum of radii, with constraints ensuring that the distance between any two centers is at least the sum of their radii and that each radius keeps the circle within the unit square.
+  **Constraints:** All constraints are encoded in the LP; the solver returns a feasible solution with validity 1.0, guaranteeing no overlap and full containment.
+
+### Score Improvements:
+  - Iter 1: +0.1444 - Switched from a single-ring to a two-ring concentric layout, increasing the number of circles and allowing a larger total radius.
+  - Iter 2: +0.1071 - Replaced concentric rings with a hexagonal lattice, which packs circles more efficiently and yields a higher LP objective.
+
+### Stuck Patterns (AVOID THESE):
+  - Pattern 1: Over-reliance on concentric rings leads to wasted space near the square boundaries, limiting the achievable sum of radii.
+  - Pattern 2: Using a fixed margin that is too large or too small can either unnecessarily shrink radii or cause boundary violations, causing repeated feasibility failures.
+
+### Novel Discoveries:
+  - The hexagonal lattice placement dramatically improves packing density compared to concentric rings, demonstrating the advantage of a quasi-regular grid for circle packing.
+  - Incorporating a small margin (0.02) before the boundary allows the LP to assign non-zero radii to circles that would otherwise be forced to zero at the edges.
+
+### Error Patterns:
+  - Syntax truncation: 0 occurrences
+    Likely cause: Code excerpts were cut off in the provided samples, but no runtime errors are evident in the complete implementations.
+
+### Convergence Analysis:
+  - Trend: improving
+  - Best Score: 0.6157
+  - Approach Diversity: medium-high
+
+### Recommendations:
+  - Introduce stochastic perturbations to the hexagonal lattice (e.g., small random shifts) followed by a local search or simulated annealing to escape local optima and potentially increase the total radius.
+  - After obtaining a feasible LP solution, perform a gradient-based refinement of radii (e.g., using a nonlinear solver) while keeping centers fixed to fine-tune the objective beyond the linear approximation.
+  - Explore hybrid placements that combine hexagonal rows with a few strategically placed outer circles near the corners to better utilize the square’s perimeter and further increase the sum of radii.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_1):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)**  
+- **OUTPUT ONLY** the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **DO NOT** include the markers themselves, any surrounding code, or calls such as `run_packing()` or `visualize()`.  
+- The harness will automatically merge your snippet with the preserved surrounding code.  
+
+**IMPORTS**  
+- You may add additional import statements inside the block if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available.  
+
+**FOCUS**  
+- Improve the construction of a 26‑circle packing inside the unit square.  
+- You may add new helper routines, but **every function that you call must be defined within the block**.  
+
+**ALGORITHMIC GUIDELINES**  
+
+1. **Base placement strategy** – Use a dense, quasi‑regular layout such as a hexagonal (triangular) lattice.  
+   - Arrange points in several rows; alternate rows are offset by half the horizontal spacing to obtain the hexagonal pattern.  
+   - Choose a modest margin from the square edges (e.g., 0.02 – 0.03) so that the linear‑programming stage has room to enlarge radii without forcing them to zero.  
+
+2. **Radius optimisation** – After fixing the centers, formulate a linear program that maximises the sum of radii subject to:  
+   - Non‑overlap: for every pair *i, j*, `dist(i,j) ≥ r_i + r_j`.  
+   - Boundary constraints: each radius must satisfy `r_i ≤ min(x_i, 1‑x_i, y_i, 1‑y_i)`.  
+   - All radii are non‑negative.  
+
+3. **Enhancement ideas** – To potentially exceed the current best score, consider one (or more) of the following after the LP step:  
+   - **Small random perturbations** of the lattice points (e.g., add a uniform noise in `[-δ, δ]` with `δ≈0.01`) followed by a fresh LP solve; keep the best feasible outcome.  
+   - **Local greedy refinement**: iterate over circles, temporarily increase a single radius while decreasing neighbours proportionally to maintain feasibility, accepting the change if the total sum grows.  
+   - **Hybrid edge circles**: replace a few interior lattice points near the corners with circles placed closer to the corners, then re‑optimise radii.  
+
+4. **Avoid** –  
+   - Relying exclusively on concentric‑ring layouts; they waste space near the square borders and have shown limited improvement.  
+   - Using an overly large fixed margin; it unnecessarily caps the achievable radii and reduces the objective.  
+   - Omitting the definition of any helper routine you invoke; missing definitions cause `NameError` and abort the evaluation.  
+
+**VALIDITY CHECKS**  
+- After computing radii, verify that every circle lies completely inside the unit square (`0 ≤ x_i‑r_i` and `x_i+r_i ≤ 1`, similarly for *y*).  
+- Confirm that for all pairs the distance between centers is at least the sum of their radii (allow a tiny tolerance like `1e-9`).  
+- If any check fails, fall back to the last feasible solution obtained from the linear program.  
+
+**OUTPUT INSTRUCTION (REPEAT)**  
+- Produce **only** the Python code that will sit between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+- Do **not** include the markers, surrounding harness code, or any explanatory text.  
+- Ensure every referenced function or class is defined within the submitted snippet.

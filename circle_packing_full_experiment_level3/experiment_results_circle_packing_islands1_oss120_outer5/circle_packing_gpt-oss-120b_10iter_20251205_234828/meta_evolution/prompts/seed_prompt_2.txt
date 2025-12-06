@@ -1,0 +1,60 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**OUTPUT REQUIREMENTS**  
+- Produce **only** the Python code that belongs between the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers.  
+- **Do not** include the marker lines themselves, any surrounding code, or calls such as `run_packing()` or `visualize()`.  
+- The harness will automatically insert your snippet into the surrounding program.
+
+**IMPORTS**  
+- You may add additional import statements inside the block if needed (e.g., `from scipy.optimize import minimize`).  
+- `numpy as np` and `scipy.optimize.linprog` are already available.
+
+**WHAT THE CODE MUST DO**  
+1. **Place 26 circle centers** deterministically inside the unit square.  
+   - Use a staggered hexagonal (triangular) lattice with a small uniform margin (e.g., 0.02) from the square edges.  
+   - Arrange the points in several rows (e.g., 5‑5‑5‑5‑6) with alternating horizontal offsets to achieve a dense, regular pattern.  
+
+2. **Determine feasible radii** for the fixed centers by solving a linear program that maximizes the total sum of radii.  
+   - For each circle, create a variable representing its radius.  
+   - Add a boundary constraint for each circle: radius ≤ distance from its center to the nearest square edge.  
+   - Add a non‑overlap constraint for every unordered pair of circles: r_i + r_j ≤ Euclidean distance between their centers.  
+   - Set the objective to maximize the sum of all radius variables.  
+
+3. **Optionally improve the solution** after the LP:  
+   - Perform a short, deterministic local refinement (e.g., a few iterations of a simple gradient‑free adjustment) that nudges each center slightly to increase its allowable radius while keeping all constraints satisfied.  
+   - This refinement must remain deterministic (no random seeds) and must not introduce new undefined functions.  
+
+4. **Return the final data** in the format expected by the surrounding harness (e.g., two arrays: one for the 2‑D coordinates of the centers, one for the corresponding radii).  
+
+**ALGORITHMIC GUIDELINES**  
+- Keep the code concise and free of syntax errors; every opened parenthesis, bracket, or block must be properly closed.  
+- Do **not** rely on concentric‑ring or central‑circle layouts; those patterns have consistently yielded lower packing densities.  
+- Do **not** reference or call any functions that are not defined within this block. If you need helper utilities (e.g., distance calculations, LP setup, refinement loops), define them explicitly in the snippet.  
+- Ensure all constraints are linear so that `scipy.optimize.linprog` can solve the problem directly.  
+- Avoid excessive computational complexity; the LP size is modest (26 variables, ≤ 351 pairwise constraints plus 26 boundary constraints).  
+
+**COMMON PITFALLS TO AVOID**  
+- Missing or mismatched parentheses/brackets causing a syntax error.  
+- Calling a helper that was omitted or misspelled, leading to a `NameError`.  
+- Introducing randomness without a fixed seed, which makes results nondeterministic and may break reproducibility checks.  
+- Using non‑linear constraints (e.g., squaring distances) with `linprog`; keep everything linear.  
+
+**REMINDER**  
+All functions, classes, and variables you use must be fully defined inside the provided code block. The outer harness will automatically handle execution, visualization, and the final `run_packing()` call.

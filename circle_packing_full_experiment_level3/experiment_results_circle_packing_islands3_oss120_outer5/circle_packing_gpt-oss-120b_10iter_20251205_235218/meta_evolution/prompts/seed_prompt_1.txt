@@ -1,0 +1,64 @@
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – EVOLUTION BLOCK GUIDELINES**
+
+- **Output Requirement**  
+  - Produce **only** the Python code that belongs between the markers `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.  
+  - Do **not** include the markers themselves, and do **not** include any surrounding code such as `run_packing()` or `visualize()`.  
+  - The surrounding script will automatically insert your code in the correct place.
+
+- **Function Completeness**  
+  - Every function that your code calls must be defined **within** the provided block.  
+  - Do not rely on helper functions that are defined elsewhere unless they are already part of the immutable outer code.
+
+- **Allowed Imports**  
+  - You may add additional import statements (e.g., `from scipy.optimize import linprog`, `import random`) if needed.  
+  - `numpy as np` and `scipy.optimize.linprog` are already available.
+
+- **Focus of the Evolution**  
+  - Concentrate on improving the routine that generates the circle‑packing configuration and any supporting utilities.  
+  - You may introduce new helper routines, data structures, or optimization steps, but keep the overall interface compatible with the surrounding script.
+
+- **Proven Successful Strategies** *(do not name specific functions)*  
+  1. **Hexagonal lattice scaffold** – Place centers on a dense hexagonal grid that fits inside the unit square, optionally adding small random perturbations to break perfect symmetry.  
+  2. **Linear‑programming radius optimization** – With centers fixed, formulate a linear program that maximizes the sum of radii while enforcing:  
+     - each radius ≤ distance from its center to the nearest square edge, and  
+     - for every pair of centers, radius_i + radius_j ≤ Euclidean distance between the two centers.  
+     Solving this LP yields the largest feasible radii for the given layout.  
+  3. **Iterative refinement** – After an initial LP solution, optionally adjust center positions slightly (e.g., via a few steps of simulated‑annealing or gradient‑free perturbations) and resolve the LP. Repeating this loop can escape local optima and increase the total radius sum.  
+  4. **Hierarchical gap filling** – Identify the largest uncovered region after an LP pass, insert a new center there, and re‑optimize. Repeating a small number of times can boost density without over‑complicating the problem.
+
+- **What to Avoid**  
+  - **Purely symmetric manual patterns** (e.g., a single central circle with rings) – they quickly hit low density limits.  
+  - **Random center placement without a subsequent optimization step** – leads to many overlaps or very small feasible radii.  
+  - **Incomplete code fragments** – ensure all statements are closed, all functions are fully defined, and no syntax errors remain.  
+  - **Over‑complicating the LP** – keep the constraint matrix linear; do not introduce non‑linear expressions inside the linear program.
+
+- **Implementation Tips**  
+  - Compute the distance from each center to the four square edges once, and use the minimum as the upper bound for its radius.  
+  - Build the LP constraint matrix efficiently: for *n* circles you need `n` boundary constraints and `n*(n-1)/2` pairwise non‑overlap constraints.  
+  - Use `linprog` with the `'highs'` method for speed and reliability.  
+  - After solving, clip any negative radii to zero (they indicate infeasibility for that layout) and discard or re‑seed those circles.  
+  - When performing perturbations, keep movements small enough to stay inside the unit square and to preserve feasibility of the next LP solve.
+
+- **Goal**  
+  - Maximize the combined quality metric (e.g., total sum of radii or packing density) while maintaining perfect validity (no overlaps, all circles fully inside the unit square).  
+
+Follow these guidelines precisely, and ensure the submitted block is syntactically complete and self‑contained.

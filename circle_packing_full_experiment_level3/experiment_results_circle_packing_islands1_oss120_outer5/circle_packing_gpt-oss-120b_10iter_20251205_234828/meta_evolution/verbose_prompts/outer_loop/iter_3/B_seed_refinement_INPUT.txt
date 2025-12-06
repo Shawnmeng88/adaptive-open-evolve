@@ -1,0 +1,161 @@
+# Prompt Type: B
+# Outer Iteration: 3
+# This is the INPUT to the MetaLLM
+# ======================================================================
+
+# PROMPT REFINEMENT VIA METALLM - ITERATION 3
+# ============================================
+
+## Input to MetaLLM:
+- Problem: ## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the m...
+- Best code length: 5146 chars
+- Current best prompt length: 4177 chars
+
+## Convergence History:
+### Successful Patterns:
+- Change that helped: added 'step'; condensed by 887 chars
+- Explicit constraint mentions helped
+- Negative guidance (what to avoid) helped
+- Change that helped: removed 'step'
+
+### Stuck Patterns:
+(none)
+
+### Last Iteration Metrics:
+- Final best score: 0.6257
+- Valid: 2, Invalid: 0
+- Failure modes: []
+
+## CODE ANALYSIS (What Actually Happened):
+## Code Analysis from Recent Iterations
+
+*Analysis performed by LLM*
+
+### Approaches Tried:
+  - **CentralCirclePlusRings** (2 attempts, mixed)
+    Deterministic placement of a central circle followed by two concentric rings of 8 and 16 circles, respectively. Radii are later optimized via linear programming.
+  - **HexagonalLatticeWithMargin** (2 attempts, worked)
+    A structured hexagonal‑like lattice with 5 rows (counts [5,5,5,5,6]) and a small margin to keep circles inside the unit square. Centers are offset by half a grid spacing on odd rows.
+  - **HexagonalLatticeWithInvertOffset** (1 attempts, worked)
+    Same lattice as above but with an optional inversion of the horizontal offset on odd rows, exploring symmetry and potentially reducing boundary conflicts.
+
+### Best Result (score: 0.6257):
+  **Main Idea:** Use a fixed hexagonal lattice with a small margin and optionally invert the offset on odd rows, then solve a linear program that maximizes the sum of radii while enforcing non‑overlap and boundary constraints.
+  **Placement:** 26 centers are placed on a 5‑row hexagonal grid (row counts [5,5,5,5,6]) with a 0.02 margin. Odd rows are shifted by half a grid spacing; the 'invert' flag can flip this shift.
+  **Radius:** A linear program maximizes the sum of radii with constraints: for every pair of circles, the sum of their radii ≤ Euclidean distance between centers; for each circle, its radius ≤ distance to each boundary minus the margin.
+  **Constraints:** The LP formulation guarantees all constraints are satisfied, ensuring no overlap and that all circles stay within the unit square. The margin provides a safety buffer.
+
+### Score Improvements:
+  - Iter 1: +0.1444 - Introduced a second concentric ring and switched from a naive pattern to a more regular layout.
+  - Iter 2: +0.1071 - Replaced concentric rings with a hexagonal lattice, improving packing density.
+
+### Stuck Patterns (AVOID THESE):
+  - Repeated attempts to tweak ring radii or the number of circles in each ring yielded diminishing returns after the first two iterations.
+  - Syntax and incomplete function definitions caused execution failures, preventing further exploration of those designs.
+
+### Novel Discoveries:
+  - The optional 'invert' flag for odd‑row offsets was a creative tweak that slightly increased the feasible radius sum by reducing edge conflicts.
+
+### Error Patterns:
+  - SyntaxError: mismatched parentheses: 1 occurrences
+    Likely cause: A stray '[' or '(' left unclosed in the code, causing the interpreter to abort.
+  - Incomplete function definitions: 1 occurrences
+    Likely cause: The code was truncated mid‑definition (e.g., 'def compute' with no body), leading to a syntax error.
+
+### Convergence Analysis:
+  - Trend: improving early, then plateauing after iteration 2 with only marginal gains thereafter.
+  - Best Score: 0.6257
+  - Iterations Since Improvement: 2
+  - Approach Diversity: high
+
+### Recommendations:
+  - Introduce small random perturbations to the hexagonal lattice centers and re‑optimize radii; this could help escape the local optimum seen after iteration 2.
+  - Replace the linear program with a nonlinear or heuristic optimizer (e.g., simulated annealing) that allows simultaneous adjustment of centers and radii, potentially discovering denser packings.
+  - Experiment with varying the margin size or using a non‑uniform margin that is larger near the boundaries, which may permit slightly larger radii while still satisfying boundary constraints.
+
+
+# ============================================
+# FINAL REFINED PROMPT (seed_prompt_3):
+# ============================================
+
+## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)
+## OUTPUT FORMAT (CRITICAL)
+- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers
+- Do NOT include the markers themselves in your output
+- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically
+- The system will automatically merge your output with the preserved code sections
+
+## IMPORTS
+- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)
+- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block
+
+## FOCUS
+- Improve ONLY the `construct_packing()` function and helper functions
+- You can add new helper functions if needed
+
+Violating these requirements will cause the program to fail evaluation.
+
+---
+
+**SYSTEM MESSAGE – EVOLUTION BLOCK GUIDELINES**
+
+You are to generate **only** the Python code that will be placed between the markers  
+
+```
+# EVOLVE-BLOCK-START
+...
+# EVOLVE-BLOCK-END
+```  
+
+Do **not** include the marker lines themselves, any surrounding code, or calls such as `run_packing()` or `visualize()`. The harness will automatically merge your snippet with the preserved surrounding program.
+
+---
+
+### ✅ REQUIRED OUTPUT FORMAT  
+- Output **exactly** the code that belongs inside the evolve block.  
+- No extra text, comments outside the code, or marker lines.  
+- Every function you call must be **fully defined** within this block. Missing definitions will raise `NameError`.  
+
+---
+
+### 📦 IMPORTS  
+You may add import statements inside the block if needed (e.g., `from scipy.optimize import minimize`).  
+`numpy as np` and `scipy.optimize.linprog` are already available.
+
+---
+
+### 🎯 FOCUS OF THE CODE  
+1. **Deterministic placement of 26 circle centers** inside the unit square:  
+   - Use a compact hexagonal‑like lattice with five rows (row counts ≈ [5, 5, 5, 5, 6]) and a small margin (≈ 0.02) to keep circles away from the borders.  
+   - Apply a half‑grid horizontal offset on every other row; optionally allow the offset direction to be flipped to explore a symmetric variant.  
+
+2. **Radius optimisation** after the centers are fixed:  
+   - Formulate a linear program that maximises the total sum of radii.  
+   - Include constraints for every pair of circles: `r_i + r_j ≤ distance(centers_i, centers_j)`.  
+   - Include boundary constraints for each circle: `r_i ≤ min(x_i, 1‑x_i, y_i, 1‑y_i) – margin`.  
+   - Solve the LP with `scipy.optimize.linprog` and return the optimal radii.
+
+3. **Optional enhancements** (you may add helper functions):  
+   - Introduce tiny random perturbations to the lattice points before re‑optimising; this can escape the local optimum of the pure lattice.  
+   - Experiment with a non‑linear optimiser (e.g., `scipy.optimize.minimize`) that simultaneously adjusts centers and radii for potentially higher density.  
+   - Allow the margin size to be a parameter that can be tuned, possibly larger near the square edges.
+
+---
+
+### ⚠️ WHAT TO AVOID (based on past failures)  
+- **Syntax errors**: ensure every parenthesis, bracket, and brace is correctly closed.  
+- **Incomplete definitions**: do not leave a function header without a body.  
+- **Undeclared helpers**: any auxiliary routine you invoke must be fully implemented in this block.  
+- **Infeasible constraints**: keep the margin reasonable; overly large margins or contradictory constraints will cause the LP to fail.  
+
+---
+
+### 🛠️ IMPLEMENTATION NOTES  
+- Keep the code self‑contained: all constants, helper routines, and the main packing‑construction logic must reside inside the block.  
+- Use clear variable names (`centers`, `radii`, `margin`, `invert_offset`, etc.) to aid readability.  
+- Return the final data structures (e.g., a tuple `(centers, radii)`) that the outer harness expects.  
+
+Follow these guidelines precisely to produce a valid, high‑performing packing solution. Good luck!
