@@ -7,55 +7,20 @@ def construct_packing():
     """
     Construct a high‑quality packing of 26 circles in the unit square.
     Strategy:
-      1. Generate many hexagonal candidate grids with modest random spacing and jitter.
-      2. Solve a linear programme for all candidates to obtain feasible radii.
-      3. Keep the 26 circles with the largest radii as a starting layout.
-      4. Refine positions and radii jointly with SLSQP.
-      5. Perform a few local‑perturbation rounds on the best layout.
-    Returns
-    -------
-    centers : np.ndarray shape (26, 2)
-    radii   : np.ndarray shape (26,)
-    total   : float   (sum of radii)
+        1. Generate dense candidate sets (hexagonal grids + large random pools).
+        2. Prune each set to exactly 26 points using an LP that maximises radii.
+        3. Refine the selected 26‑point configuration with a short SLSQP optimisation.
+        4. Keep the best result over many stochastic restarts.
     """
     import numpy as np
     from scipy.optimize import linprog, minimize
 
-    # ----------------------------------------------------------------------
-    # Helper: hexagonal lattice generator
-    # ----------------------------------------------------------------------
-    def hex_grid(spacing: float) -> np.ndarray:
-        """Points of a hexagonal lattice confined to the unit square."""
-        dy = spacing * np.sqrt(3.0) / 2.0
-        pts = []
-        row = 0
-        while True:
-            y = row * dy + spacing / 2.0
-            if y > 1.0 - spacing / 2.0:
-                break
-            x_off = spacing / 2.0 if (row % 2) else 0.0
-            col = 0
-            while True:
-                x = x_off + col * spacing + spacing / 2.0
-                if x > 1.0 - spacing / 2.0:
-                    break
-                pts.append([x, y])
-                col += 1
-            row += 1
-        return np.asarray(pts)
-
-    # ----------------------------------------------------------------------
-    # Helper: linear programme for fixed centres
-    # ----------------------------------------------------------------------
-    def lp_max_radii(centers: np.ndarray) -> np.ndarray:
-        """Return radii that maximise total sum for given centres."""
+    # ----- linear programme for a fixed set of centres --------------------
+    def lp_opt(centers):
         n = centers.shape[0]
         c = -np.ones(n)                     # maximise sum(r) → minimise -sum(r)
-        bounds = [(0.0, None)] * n
-
-        A = []
-        b = []
-
+        bounds = [(0, None)] * n
+        A, b = [], []
         # border constraints
         for i, (x, y) in enumerate(centers):
             for d in (x, y, 1.0 - x, 1.0 - y):
@@ -63,8 +28,7 @@ def construct_packing():
                 row[i] = 1.0
                 A.append(row)
                 b.append(d)
-
-        # pairwise non‑overlap constraints
+        # non‑overlap constraints
         for i in range(n):
             for j in range(i + 1, n):
                 d = np.linalg.norm(centers[i] - centers[j])
@@ -72,111 +36,122 @@ def construct_packing():
                 row[i] = row[j] = 1.0
                 A.append(row)
                 b.append(d)
-
-        res = linprog(c, A_ub=np.array(A), b_ub=np.array(b),
-                      bounds=bounds, method='highs', options={'presolve': True})
+        res = linprog(c, A_ub=np.asarray(A), b_ub=np.asarray(b),
+                      bounds=bounds, method='highs')
         return res.x if res.success else np.zeros(n)
 
-    # ----------------------------------------------------------------------
-    # Helper: SLSQP refinement of centres & radii
-    # ----------------------------------------------------------------------
-    def refine_layout(centers: np.ndarray, radii0: np.ndarray):
-        """Jointly optimise centres and radii using SLSQP."""
+    # ----- prune a candidate pool to exactly `target` points -------------
+    def prune_to_n(pool, target, rng):
+        pts = pool.copy()
+        while pts.shape[0] > target:
+            radii = lp_opt(pts)
+            if np.all(radii == 0):
+                drop = rng.integers(pts.shape[0])
+            else:
+                drop = np.argmin(radii)
+            pts = np.delete(pts, drop, axis=0)
+        return pts, lp_opt(pts)
+
+    # ----- SLSQP refinement ---------------------------------------------
+    def refine(centers, radii0):
         n = centers.shape[0]
         x0 = np.column_stack([centers, radii0]).ravel()
         bounds = [(0.0, 1.0)] * (2 * n) + [(0.0, None)] * n
 
         def border(v):
             xs, ys, rs = v[0::3], v[1::3], v[2::3]
-            return np.concatenate([xs - rs,
-                                   1.0 - xs - rs,
-                                   ys - rs,
-                                   1.0 - ys - rs])
+            return np.concatenate([xs - rs, 1.0 - xs - rs,
+                                   ys - rs, 1.0 - ys - rs])
 
         def overlap(v):
             xs, ys, rs = v[0::3], v[1::3], v[2::3]
-            dx = xs[:, None] - xs
-            dy = ys[:, None] - ys
-            dist2 = dx ** 2 + dy ** 2
-            rad2 = (rs[:, None] + rs) ** 2
-            mask = np.triu(np.ones((n, n), dtype=bool), k=1)
-            return (dist2 - rad2)[mask]
+            cons = []
+            for i in range(n):
+                for j in range(i + 1, n):
+                    dx = xs[i] - xs[j]
+                    dy = ys[i] - ys[j]
+                    cons.append(dx * dx + dy * dy - (rs[i] + rs[j]) ** 2)
+            return np.array(cons)
 
-        cons = [{'type': 'ineq', 'fun': border},
-                {'type': 'ineq', 'fun': overlap}]
+        constraints = [
+            {'type': 'ineq', 'fun': border},
+            {'type': 'ineq', 'fun': overlap}
+        ]
 
-        def objective(v):
-            return -np.sum(v[2::3])          # maximise total radius
+        def obj(v):
+            return -np.sum(v[2::3])
 
-        res = minimize(objective, x0, method='SLSQP', bounds=bounds,
-                       constraints=cons,
-                       options={'maxiter': 300, 'ftol': 1e-8, 'disp': False})
+        res = minimize(obj, x0, method='SLSQP', bounds=bounds,
+                       constraints=constraints,
+                       options={'maxiter': 500, 'ftol': 1e-9, 'disp': False})
         if res.success:
             v = res.x
-            centers_opt = np.column_stack([v[0::3], v[1::3]])
-            radii_opt = v[2::3]
-            return centers_opt, radii_opt, float(radii_opt.sum())
-        # fallback to the LP solution
+            return np.column_stack([v[0::3], v[1::3]]), v[2::3], float(v[2::3].sum())
         return centers, radii0, float(radii0.sum())
+
+    # ----- hexagonal lattice generator ------------------------------------
+    def hex_grid(spacing):
+        dy = spacing * np.sqrt(3) / 2.0
+        pts = []
+        row = 0
+        while True:
+            y = row * dy + spacing / 2.0
+            if y > 1 - spacing / 2.0:
+                break
+            offset = spacing / 2.0 if (row % 2) else 0.0
+            col = 0
+            while True:
+                x = offset + col * spacing + spacing / 2.0
+                if x > 1 - spacing / 2.0:
+                    break
+                pts.append([x, y])
+                col += 1
+            row += 1
+        return np.array(pts)
 
     rng = np.random.default_rng()
     best_sum = -1.0
     best_centers = best_radii = None
 
-    # ----------------------------------------------------------------------
-    # Main search – many randomised grid attempts
-    # ----------------------------------------------------------------------
-    for attempt in range(20):
-        # modest spacing range that reliably yields enough points
-        spacing = rng.uniform(0.11, 0.16)
-        candidates = hex_grid(spacing)
-
-        # ensure we have enough points; if not, fall back to a finer grid
-        if candidates.shape[0] < 30:
-            candidates = hex_grid(0.10)
-
-        # gentle jitter to break symmetry without destroying feasibility
-        jitter = rng.uniform(-0.008, 0.008, candidates.shape)
-        candidates = np.clip(candidates + jitter, 0.0, 1.0)
-
-        # LP radii for all candidates
-        radii_all = lp_max_radii(candidates)
-
-        if candidates.shape[0] < 26:
+    # 1. Hex‑grid candidates (dense grids, then prune)
+    for spacing in np.linspace(0.12, 0.22, 9):
+        pool = hex_grid(spacing)
+        if pool.shape[0] <= 26:
             continue
+        centers, radii0 = prune_to_n(pool, 26, rng)
+        c, r, s = refine(centers, radii0)
+        if s > best_sum:
+            best_sum, best_centers, best_radii = s, c, r
+        # jittered variants of the pruned set
+        for _ in range(4):
+            jitter = rng.uniform(-0.015, 0.015, centers.shape)
+            cand = np.clip(centers + jitter, 0.0, 1.0)
+            radii0_j = lp_opt(cand)
+            c, r, s = refine(cand, radii0_j)
+            if s > best_sum:
+                best_sum, best_centers, best_radii = s, c, r
 
-        # select 26 circles with largest LP radii
-        idx = np.argpartition(radii_all, -26)[-26:]
-        idx = idx[np.argsort(-radii_all[idx])]   # sort descending for determinism
-        centers_sel = candidates[idx]
-        radii_sel = radii_all[idx]
+    # 2. Large random pools (150 points) pruned to 26
+    for _ in range(80):
+        pool = rng.uniform(0.0, 1.0, (150, 2))
+        centers, radii0 = prune_to_n(pool, 26, rng)
+        c, r, s = refine(centers, radii0)
+        if s > best_sum:
+            best_sum, best_centers, best_radii = s, c, r
 
-        # refinement via SLSQP
-        cen_opt, rad_opt, total = refine_layout(centers_sel, radii_sel)
-        if total > best_sum:
-            best_sum, best_centers, best_radii = total, cen_opt, rad_opt
+    # 3. Direct 26‑point random attempts (fallback)
+    for _ in range(100):
+        cand = rng.uniform(0.0, 1.0, (26, 2))
+        radii0 = lp_opt(cand)
+        c, r, s = refine(cand, radii0)
+        if s > best_sum:
+            best_sum, best_centers, best_radii = s, c, r
 
-    # ----------------------------------------------------------------------
-    # Local perturbation rounds on the current best layout
-    # ----------------------------------------------------------------------
-    if best_centers is not None:
-        for _ in range(6):
-            pert = rng.uniform(-0.003, 0.003, best_centers.shape)
-            cand_centers = np.clip(best_centers + pert, 0.0, 1.0)
-
-            cand_radii0 = lp_max_radii(cand_centers)
-
-            cen_opt, rad_opt, total = refine_layout(cand_centers, cand_radii0)
-            if total > best_sum:
-                best_sum, best_centers, best_radii = total, cen_opt, rad_opt
-
-    # ----------------------------------------------------------------------
-    # Fallback – pure random points if nothing succeeded
-    # ----------------------------------------------------------------------
+    # guaranteed valid result
     if best_centers is None:
-        rand = rng.uniform(0.0, 1.0, (26, 2))
-        rad0 = lp_max_radii(rand)
-        best_centers, best_radii, best_sum = refine_layout(rand, rad0)
+        cand = rng.uniform(0.0, 1.0, (26, 2))
+        radii0 = lp_opt(cand)
+        best_centers, best_radii, best_sum = refine(cand, radii0)
 
     return best_centers, best_radii, best_sum
 # EVOLVE-BLOCK-END

@@ -183,8 +183,28 @@
           "Iteration 3: +0.0011 (changes: unknown)"
         ]
       }
+    },
+    {
+      "seed_prompt": "## CRITICAL FORMAT REQUIREMENTS (DO NOT VIOLATE)\n## OUTPUT FORMAT (CRITICAL)\n- Output ONLY the code that goes BETWEEN the `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END` markers\n- Do NOT include the markers themselves in your output\n- Do NOT include `run_packing()` or `visualize()` - those are preserved automatically\n- The system will automatically merge your output with the preserved code sections\n\n## IMPORTS\n- You MAY include import statements if you need additional libraries (e.g., `from scipy.optimize import minimize`)\n- `numpy as np` and `scipy.optimize.linprog` are already available from outside the block\n\n## FOCUS\n- Improve ONLY the `construct_packing()` function and helper functions\n- You can add new helper functions if needed\n\nViolating these requirements will cause the program to fail evaluation.\n\n---\n\n**System Prompt \u2013 Evolve Block Generation**\n\nYou must output **only** the Python code that will replace the contents of the evolve block (the region between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`).  \n\n**Output Rules**\n- Do **not** include the marker lines themselves, any surrounding code, or calls such as `run_packing()` or `visualize()`.  \n- Do **not** wrap the code in markdown fences or add any non\u2011code text.  \n- The submitted text must be a syntactically valid Python fragment that can be inserted directly between the two markers.  \n\n**Imports**\n- You may add additional import statements if needed (e.g., `from scipy.optimize import minimize`).  \n- `numpy as np` and `scipy.optimize.linprog` are already available.\n\n**Focus**\n- Improve the packing construction logic and any helper routines it uses.  \n- You may create new helper functions, but **every function that is called must be defined within this block**; missing definitions will cause a `NameError`.  \n\n**Algorithmic Guidance (what has worked)**\n1. **Dense, jittered hexagonal candidate set** \u2013 generate many candidate circle centers using a hexagonal lattice that covers the unit square, then add a small random displacement to each point. This creates a rich, uniform search space.  \n2. **Linear\u2011programming radius maximization** \u2013 formulate a linear program that maximizes the sum of radii while enforcing:\n   - each radius stays inside the unit square,\n   - pairwise non\u2011overlap constraints between every candidate pair.  \n   Solving this LP yields a feasible set of radii for all candidates.  \n3. **Select the largest N circles** \u2013 after the LP, keep the N circles (N\u202f=\u202f26) with the greatest radii.  \n4. **Non\u2011linear refinement** \u2013 run a constrained optimizer (e.g., `scipy.optimize.minimize` with method `'SLSQP'`) on the selected circles, optimizing both positions and radii simultaneously while preserving the border and non\u2011overlap constraints.  \n5. **Stochastic local search (optional but beneficial)** \u2013 after the SLSQP stage, perform a short simulated\u2011annealing or random\u2011perturbation loop that accepts only moves that keep all constraints satisfied. This can escape local minima and push the packing density higher.  \n6. **Adaptive candidate enrichment (optional)** \u2013 if the layout leaves large empty regions, generate additional candidate centers near the boundaries or in sparse zones and re\u2011run the LP/refinement steps to allow tighter packing.\n\n**Pitfalls to Avoid (what has failed)**\n- **Missing helper definitions** \u2013 referencing functions that are not defined in the block leads to `NameError`. Ensure every invoked routine is present.  \n- **Shape mismatches** \u2013 when constructing the candidate grid or assembling LP constraint matrices, verify that all arrays have compatible dimensions; broadcasting errors cause `ValueError`.  \n- **Infeasible constraints** \u2013 overly aggressive radius bounds or jitter amplitudes can make the LP or SLSQP infeasible; keep constraints realistic and add small safety margins (e.g., subtract `1e-6` from border distances).  \n- **Excessive runtime** \u2013 generating an extremely large candidate set or using too many optimizer restarts can exceed time limits; balance candidate count (e.g., a few thousand) with performance.  \n\n**Reminder**\nAll functions you call\u2014whether existing, modified, or newly created\u2014must be defined inside this block. The outer framework will automatically supply `run_packing()` and `visualize()`, so you should not reference them here.  \n\nFollow the rules above exactly; any deviation will cause the evaluation to fail.",
+      "outer_iteration": 9,
+      "timestamp": "2025-12-05T22:46:39.054890",
+      "was_improvement": true,
+      "key_changes": "expanded by 129 chars",
+      "metrics": {
+        "convergence_rate": 10.002686102960466,
+        "final_best_score": 0.9997314618360691,
+        "iterations_to_plateau": 10,
+        "total_valid": 6,
+        "total_invalid": 4,
+        "stuck_patterns": [],
+        "successful_strategies": [
+          "Made 2 improvements",
+          "Iteration 0: +0.9960 (changes: unknown)",
+          "Iteration 3: +0.0037 (changes: unknown)"
+        ]
+      }
     }
   ],
-  "best_convergence_rate": 10.017416584057433,
-  "best_prompt_index": 6
+  "best_convergence_rate": 10.002686102960466,
+  "best_prompt_index": 9
 }
