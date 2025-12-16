@@ -1,6 +1,7 @@
 # MetaEvolve 
 <img width="2500" height="1666" alt="image" src="https://github.com/user-attachments/assets/086d5696-3e95-4142-8488-988703d531d6" />
 (Capstone project for CMSC 35200 Deep Learning Systems University of Chicago)
+
 # OpenEvolve
 
 <div align="center">
