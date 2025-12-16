@@ -1,9 +1,8 @@
-# MetaEvolve
+# MetaEvolve (Capstone project for CMSC 35200 Deep Learning Systems University of Chicago)
 <img width="2500" height="1666" alt="image" src="https://github.com/user-attachments/assets/086d5696-3e95-4142-8488-988703d531d6" />
-Capstone project for CMSC 35200 Deep Learning Systems University of Chicago
-</p>
-**# OpenEvolve
-**
+
+# OpenEvolve
+
 <div align="center">
 
 <img src="openevolve-logo.png" alt="OpenEvolve Logo" width="400">
